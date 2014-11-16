@@ -34,4 +34,11 @@ public class HazelcastClusteredAsynchronousLockTest extends ClusteredAsynchronou
     return new HazelcastClusterManager();
   }
 
+//  @Override
+//  @Test
+//  @Repeat(times = 100000)
+//  public void testAcquire() {
+//    super.testAcquire();
+//  }
+
 }

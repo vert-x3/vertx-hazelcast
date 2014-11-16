@@ -116,7 +116,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         return null;
       }
-    }, resultHandler);
+    }, res -> {
+      if (res.succeeded()) {
+        vertx.setTimer(2000, id -> resultHandler.handle(Future.completedFuture(null)));
+      } else {
+        resultHandler.handle(Future.completedFuture(res.cause()));
+      }
+    });
   }
 
 	/**
