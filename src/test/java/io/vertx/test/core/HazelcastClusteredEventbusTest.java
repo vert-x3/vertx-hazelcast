@@ -34,4 +34,11 @@ public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
     return new HazelcastClusterManager();
   }
 
+//  @Override
+//  @Test
+//  @Repeat(times = 100000)
+//  public void testReplyString() {
+//    super.testReplyString();
+//  }
+
 }
