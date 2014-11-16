@@ -28,8 +28,7 @@ import org.junit.Test;
 public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   static {
-    System.setProperty("hazelcast.wait.seconds.before.join", "0");
-    System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+    HazelcastTestProperties.setProperties();
   }
 
   private void testProgrammatic(HazelcastClusterManager mgr, Config config) throws Exception {
