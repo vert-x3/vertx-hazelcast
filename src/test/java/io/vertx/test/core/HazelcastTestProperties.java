@@ -21,7 +21,7 @@ package io.vertx.test.core;
  */
 public class HazelcastTestProperties {
   public static void setProperties() {
-    System.setProperty("hazelcast.wait.seconds.before.join", "0");
+//    System.setProperty("hazelcast.wait.seconds.before.join", "0");
     System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
 //    System.setProperty("hazelcast.icmp.enabled","true");
 //    System.setProperty("hazelcast.icmp.timeout","5000");
