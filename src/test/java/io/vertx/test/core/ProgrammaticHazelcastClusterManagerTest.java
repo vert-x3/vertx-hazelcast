@@ -36,7 +36,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     mgr.setConfig(config);
     assertEquals(config, mgr.getConfig());
     VertxOptions options = new VertxOptions().setClusterManager(mgr).setClustered(true);
-    Vertx.vertxAsync(options, res -> {
+    Vertx.clusteredVertx(options, res -> {
       assertTrue(res.succeeded());
       testComplete();
     });

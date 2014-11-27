@@ -136,9 +136,9 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return multiMap;
     }, ar -> {
       if (ar.succeeded()) {
-        resultHandler.handle(Future.completedFuture(new HazelcastAsyncMultiMap<>(vertx, ar.result())));
+        resultHandler.handle(Future.succeededFuture(new HazelcastAsyncMultiMap<>(vertx, ar.result())));
       } else {
-        resultHandler.handle(Future.completedFuture(ar.cause()));
+        resultHandler.handle(Future.failedFuture(ar.cause()));
       }
     });
   }
@@ -170,9 +170,9 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return map;
     }, ar -> {
       if (ar.succeeded()) {
-        resultHandler.handle(Future.completedFuture(new HazelcastAsyncMap<>(vertx, ar.result())));
+        resultHandler.handle(Future.succeededFuture(new HazelcastAsyncMap<>(vertx, ar.result())));
       } else {
-        resultHandler.handle(Future.completedFuture(ar.cause()));
+        resultHandler.handle(Future.failedFuture(ar.cause()));
       }
     });
   }
