@@ -15,12 +15,16 @@
 
   <name>Vert.x Hazelcast Cluster Manager</name>
 
+  <properties>
+    <vertx.version>3.0.0-SNAPSHOT</vertx.version>
+  </properties>
+
   <dependencies>
 
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>${vertx.version}</version>
     </dependency>
     <dependency>
       <groupId>com.hazelcast</groupId>
@@ -42,7 +46,7 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>${vertx.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
