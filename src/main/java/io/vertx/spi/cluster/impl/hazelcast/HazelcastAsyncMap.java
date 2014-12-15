@@ -28,6 +28,7 @@ import io.vertx.core.shareddata.impl.ClusterSerializable;
 import io.vertx.core.spi.cluster.VertxSPI;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
 
@@ -60,6 +61,24 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(v);
     vertx.executeBlocking(() ->  convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv))), resultHandler);
+  }
+
+  @Override
+  public void put(K k, V v, long timeout, Handler<AsyncResult<Void>> completionHandler) {
+    K kk = convertParam(k);
+    V vv = convertParam(v);
+    vertx.executeBlocking(() -> {
+      map.put(kk, HazelcastServerID.convertServerID(vv), timeout, TimeUnit.MILLISECONDS);
+      return null;
+    }, completionHandler);
+  }
+
+  @Override
+  public void putIfAbsent(K k, V v, long timeout, Handler<AsyncResult<V>> resultHandler) {
+    K kk = convertParam(k);
+    V vv = convertParam(v);
+    vertx.executeBlocking(() ->  convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), timeout,
+                                               TimeUnit.MILLISECONDS)), resultHandler);
   }
 
   @Override
@@ -96,6 +115,11 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
       map.clear();
       return null;
     }, resultHandler);
+  }
+
+  @Override
+  public void size(Handler<AsyncResult<Integer>> resultHandler) {
+    vertx.executeBlocking(() -> map.size(), resultHandler);
   }
 
   @SuppressWarnings("unchecked")
