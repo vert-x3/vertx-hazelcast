@@ -265,7 +265,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public synchronized boolean isActive() {
+  public boolean isActive() {
     return active;
   }
 
