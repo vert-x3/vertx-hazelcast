@@ -11,12 +11,12 @@
   </parent>
 
   <artifactId>vertx-hazelcast</artifactId>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>3.0.0-milestone3</version>
 
   <name>Vert.x Hazelcast Cluster Manager</name>
 
   <properties>
-    <stack.version>3.0.0-SNAPSHOT</stack.version>
+    <stack.version>3.0.0-milestone3</stack.version>
   </properties>
 
   <dependencyManagement>
