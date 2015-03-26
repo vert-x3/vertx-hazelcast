@@ -22,20 +22,20 @@ import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.impl.ClusterSerializable;
-import io.vertx.core.spi.cluster.VertxSPI;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
 
-  private final VertxSPI vertx;
+  private final Vertx vertx;
   private final IMap<K, V> map;
 
-  public HazelcastAsyncMap(VertxSPI vertx, IMap<K, V> map) {
+  public HazelcastAsyncMap(Vertx vertx, IMap<K, V> map) {
     this.vertx = vertx;
     this.map = map;
   }
@@ -43,16 +43,16 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   @Override
   public void get(K k, Handler<AsyncResult<V>> asyncResultHandler) {
     K kk = convertParam(k);
-    vertx.executeBlocking(() -> convertReturn(map.get(kk)), asyncResultHandler);
+    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))), asyncResultHandler);
   }
 
   @Override
   public void put(K k, V v, Handler<AsyncResult<Void>> completionHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(() -> {
+    vertx.executeBlocking(fut -> {
       map.put(kk, HazelcastServerID.convertServerID(vv));
-      return null;
+      fut.complete();
     }, completionHandler);
   }
 
@@ -60,16 +60,17 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   public void putIfAbsent(K k, V v, Handler<AsyncResult<V>> resultHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(() ->  convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv))), resultHandler);
+    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv)))),
+                          resultHandler);
   }
 
   @Override
   public void put(K k, V v, long timeout, Handler<AsyncResult<Void>> completionHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(() -> {
+    vertx.executeBlocking(fut -> {
       map.put(kk, HazelcastServerID.convertServerID(vv), timeout, TimeUnit.MILLISECONDS);
-      return null;
+      fut.complete();
     }, completionHandler);
   }
 
@@ -77,28 +78,28 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   public void putIfAbsent(K k, V v, long timeout, Handler<AsyncResult<V>> resultHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(() ->  convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), timeout,
-                                               TimeUnit.MILLISECONDS)), resultHandler);
+    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
+      timeout, TimeUnit.MILLISECONDS))), resultHandler);
   }
 
   @Override
   public void remove(K k, Handler<AsyncResult<V>> resultHandler) {
     K kk = convertParam(k);
-    vertx.executeBlocking(() -> convertReturn(map.remove(kk)), resultHandler);
+    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.remove(kk))), resultHandler);
   }
 
   @Override
   public void removeIfPresent(K k, V v, Handler<AsyncResult<Boolean>> resultHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(() -> map.remove(kk, vv), resultHandler);
+    vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)), resultHandler);
   }
 
   @Override
   public void replace(K k, V v, Handler<AsyncResult<V>> resultHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(() -> convertReturn(map.replace(kk, vv)), resultHandler);
+    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))), resultHandler);
   }
 
   @Override
@@ -106,20 +107,20 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(oldValue);
     V vvv = convertParam(newValue);
-    vertx.executeBlocking(() -> map.replace(kk, vv, vvv), resultHandler);
+    vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)), resultHandler);
   }
 
   @Override
   public void clear(Handler<AsyncResult<Void>> resultHandler) {
-    vertx.executeBlocking(() -> {
+    vertx.executeBlocking(fut -> {
       map.clear();
-      return null;
+      fut.complete();
     }, resultHandler);
   }
 
   @Override
   public void size(Handler<AsyncResult<Integer>> resultHandler) {
-    vertx.executeBlocking(() -> map.size(), resultHandler);
+    vertx.executeBlocking(fut -> fut.complete(map.size()), resultHandler);
   }
 
   @SuppressWarnings("unchecked")

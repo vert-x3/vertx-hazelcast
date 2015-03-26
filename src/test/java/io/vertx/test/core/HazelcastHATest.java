@@ -33,5 +33,5 @@ public class HazelcastHATest extends HATest {
   protected ClusterManager getClusterManager() {
     return new HazelcastClusterManager();
   }
-
+  
 }
