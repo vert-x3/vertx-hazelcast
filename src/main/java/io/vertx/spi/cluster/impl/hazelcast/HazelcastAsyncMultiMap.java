@@ -113,7 +113,7 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
 
   @Override
   public void remove(K k, V v, Handler<AsyncResult<Boolean>> completionHandler) {
-    vertx.executeBlocking(fut -> fut.complete(map.remove(k, v)), completionHandler);
+    vertx.executeBlocking(fut -> fut.complete(map.remove(k, HazelcastServerID.convertServerID(v))), completionHandler);
   }
 
   @Override
