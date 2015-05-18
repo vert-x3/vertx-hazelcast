@@ -157,7 +157,9 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     @Override
     public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
       objectDataOutput.writeUTF(clusterSerializable.getClass().getName());
-      byte[] bytes = clusterSerializable.writeToBuffer().getBytes();
+      Buffer buffer = Buffer.buffer();
+      clusterSerializable.writeToBuffer(buffer);
+      byte[] bytes = buffer.getBytes();
       objectDataOutput.writeInt(bytes.length);
       objectDataOutput.write(bytes);
     }
@@ -171,7 +173,7 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
       try {
         Class<?> clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
         clusterSerializable = (ClusterSerializable)clazz.newInstance();
-        clusterSerializable.readFromBuffer(Buffer.buffer(bytes));
+        clusterSerializable.readFromBuffer(0, Buffer.buffer(bytes));
       } catch (Exception e) {
         throw new IllegalStateException("Failed to load class " + e.getMessage(), e);
       }
