@@ -16,10 +16,17 @@
 
 package io.vertx.spi.cluster.impl.hazelcast;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -29,7 +36,8 @@ import java.util.Set;
  */
 class ChoosableSet<T> implements ChoosableIterable<T> {
 
-  private volatile boolean initialised;
+  private boolean initialised;
+  private final LinkedList<Handler<AsyncResult<ChoosableIterable<T>>>> waiters = new LinkedList<>();
   private final Set<T> ids;
   private volatile Iterator<T> iter;
 
@@ -41,12 +49,40 @@ class ChoosableSet<T> implements ChoosableIterable<T> {
     return ids.size();
   }
 
-  public boolean isInitialised() {
-    return initialised;
+  public void setInitialised() {
+    setInitialised(null);
   }
 
-  public void setInitialised() {
-    this.initialised = true;
+  void setInitialised(Throwable failure) {
+    while (true) {
+      Handler<AsyncResult<ChoosableIterable<T>>> handler;
+      synchronized (this) {
+        if (waiters.isEmpty()) {
+          initialised = true;
+          return;
+        }
+        handler = waiters.removeFirst();
+      }
+      if (failure == null) {
+        handler.handle(Future.succeededFuture(this));
+      } else {
+        handler.handle(Future.failedFuture(failure));
+      }
+    }
+  }
+
+  boolean isInitialized(Context context, Handler<AsyncResult<ChoosableIterable<T>>> handler) {
+    synchronized (this) {
+      if (!initialised) {
+        waiters.add(ar -> {
+          context.runOnContext(v -> {
+            handler.handle(ar);
+          });
+        });
+        return false;
+      }
+    }
+    return true;
   }
 
   public void add(T elem) {

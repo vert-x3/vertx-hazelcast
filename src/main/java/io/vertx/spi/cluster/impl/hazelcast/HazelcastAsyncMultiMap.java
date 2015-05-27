@@ -20,6 +20,7 @@ import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.MapEvent;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -84,30 +85,34 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
 
   @Override
   public void get(K k, Handler<AsyncResult<ChoosableIterable<V>>> resultHandler) {
-    ChoosableSet<V> entries = cache.get(k);
-    if (entries != null && entries.isInitialised()) {
-      resultHandler.handle(Future.succeededFuture(entries));
-    } else {
-      vertx.executeBlocking(fut -> {
-        Collection<V> entries2 = map.get(k);
-        ChoosableSet<V> sids;
-        if (entries2 != null) {
-          sids = new ChoosableSet<>(entries2.size());
-          for (V hid : entries2) {
-            sids.add(hid);
-          }
-        } else {
-          sids = new ChoosableSet<>(0);
+    while (true) {
+      ChoosableSet<V> entries = cache.get(k);
+      if (entries != null) {
+        Context ctx = vertx.getOrCreateContext();
+        if (entries.isInitialized(ctx, resultHandler)) {
+          resultHandler.handle(Future.succeededFuture(entries));
         }
-        ChoosableSet<V> prev = cache.putIfAbsent(k, sids);
-        if (prev != null) {
-          // Merge them
-          prev.merge(sids);
-          sids = prev;
+        break;
+      } else {
+        ChoosableSet<V> inserted = new ChoosableSet<>(0);
+        if (cache.putIfAbsent(k, inserted) == null) {
+          vertx.<Collection<V>>executeBlocking(
+              fut -> fut.complete(map.get(k)),
+              ar -> {
+            if (ar.succeeded()) {
+              Collection<V> entries2 = ar.result();
+              if (entries2 != null) {
+                entries2.forEach(inserted::add);
+              }
+              resultHandler.handle(Future.succeededFuture(inserted));
+              inserted.setInitialised();
+            } else {
+              resultHandler.handle(Future.failedFuture(ar.cause()));
+            }
+          });
+          break;
         }
-        sids.setInitialised();
-        fut.complete(sids);
-      }, resultHandler);
+      }
     }
   }
 
@@ -126,7 +131,11 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
     if (entries == null) {
       entries = new ChoosableSet<>(1);
       ChoosableSet<V> prev = cache.putIfAbsent(k, entries);
-      if (prev != null) {
+      entries.add(v);
+      entries.setInitialised();
+      if (prev == null) {
+        return;
+      } else {
         entries = prev;
       }
     }
