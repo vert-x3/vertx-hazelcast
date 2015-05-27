@@ -186,6 +186,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
           }
           while (hazelcast.getLifecycleService().isRunning()) {
             try {
+              System.out.println("Shutting down HZ");
               // This can sometimes throw java.util.concurrent.RejectedExecutionException so we retry.
               hazelcast.getLifecycleService().shutdown();
             } catch (RejectedExecutionException ignore) {
@@ -193,6 +194,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
             }
             Thread.sleep(1);
           }
+          System.out.println("Shutting HZ complete");
         } catch (Throwable t) {
           throw new RuntimeException(t.getMessage());
         }

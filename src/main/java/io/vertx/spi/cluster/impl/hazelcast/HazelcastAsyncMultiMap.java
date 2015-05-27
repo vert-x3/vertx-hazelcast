@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -82,13 +83,16 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
     }, completionHandler);
   }
 
+  private AtomicInteger inprogressCount = new AtomicInteger();
+
   @Override
   public void get(K k, Handler<AsyncResult<ChoosableIterable<V>>> resultHandler) {
     ChoosableSet<V> entries = cache.get(k);
-    if (entries != null && entries.isInitialised()) {
+    if (entries != null && entries.isInitialised() && inprogressCount.get() == 0) {
       resultHandler.handle(Future.succeededFuture(entries));
     } else {
-      vertx.executeBlocking(fut -> {
+      inprogressCount.incrementAndGet();
+      vertx.<ChoosableIterable<V>>executeBlocking(fut -> {
         Collection<V> entries2 = map.get(k);
         ChoosableSet<V> sids;
         if (entries2 != null) {
@@ -107,7 +111,10 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
         }
         sids.setInitialised();
         fut.complete(sids);
-      }, resultHandler);
+      }, res -> {
+        inprogressCount.decrementAndGet();
+        resultHandler.handle(res);
+      });
     }
   }
 

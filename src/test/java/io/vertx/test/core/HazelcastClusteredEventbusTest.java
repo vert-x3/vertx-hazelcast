@@ -18,6 +18,7 @@ package io.vertx.test.core;
 
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.impl.hazelcast.HazelcastClusterManager;
+import org.junit.Test;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -34,11 +35,13 @@ public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
     return new HazelcastClusterManager();
   }
 
-//  @Override
-//  @Test
-//  @Repeat(times = 100000)
-//  public void testReplyString() {
-//    super.testReplyString();
-//  }
+  @Override
+  @Test
+  @Repeat(times = 100000)
+  public void sendNoContext() throws Exception {
+    super.sendNoContext();
+  }
+
+
 
 }
