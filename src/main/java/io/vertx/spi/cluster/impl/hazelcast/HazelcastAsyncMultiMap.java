@@ -43,6 +43,8 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
 
   private final Vertx vertx;
   private final com.hazelcast.core.MultiMap<K, V> map;
+  private final AtomicInteger getInProgressCount = new AtomicInteger();
+
 
   /*
    The Hazelcast near cache is very slow so we use our own one.
@@ -83,15 +85,13 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
     }, completionHandler);
   }
 
-  private AtomicInteger inprogressCount = new AtomicInteger();
-
   @Override
   public void get(K k, Handler<AsyncResult<ChoosableIterable<V>>> resultHandler) {
     ChoosableSet<V> entries = cache.get(k);
-    if (entries != null && entries.isInitialised() && inprogressCount.get() == 0) {
+    if (entries != null && entries.isInitialised() && getInProgressCount.get() == 0) {
       resultHandler.handle(Future.succeededFuture(entries));
     } else {
-      inprogressCount.incrementAndGet();
+      getInProgressCount.incrementAndGet();
       vertx.<ChoosableIterable<V>>executeBlocking(fut -> {
         Collection<V> entries2 = map.get(k);
         ChoosableSet<V> sids;
@@ -112,7 +112,7 @@ class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener
         sids.setInitialised();
         fut.complete(sids);
       }, res -> {
-        inprogressCount.decrementAndGet();
+        getInProgressCount.decrementAndGet();
         resultHandler.handle(res);
       });
     }
