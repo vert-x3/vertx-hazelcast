@@ -16,8 +16,13 @@
 
 package io.vertx.test.core;
 
+import io.vertx.core.Context;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.impl.hazelcast.HazelcastClusterManager;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -34,4 +39,36 @@ public class HazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
     return new HazelcastClusterManager();
   }
 
+  @Test
+  public void testKeepOrderOfGetsOnSameContext() {
+    int size = 100;
+    ConcurrentLinkedDeque<Integer> result = new ConcurrentLinkedDeque<>();
+    ConcurrentLinkedDeque<Integer> expected = new ConcurrentLinkedDeque<>();
+    Context context = vertices[0].getOrCreateContext();
+    context.runOnContext(v -> {
+      for (int i = 0;i < size;i++) {
+        expected.add(i);
+        int i2 = i;
+        map.get("some-sub", onSuccess(res -> {
+          assertTrue(res.isEmpty());
+          result.add(i2);
+          if (result.size() == size) {
+            // Now it should be initialized
+            for (int j = size;j < size * 2;j++) {
+              int j2 = j;
+              expected.add(j);
+              map.get("some-sub", onSuccess(res2 -> {
+                result.add(j2);
+                if (result.size() == size * 2) {
+                  assertEquals(new ArrayList<>(expected), new ArrayList<>(result));
+                  testComplete();
+                }
+              }));
+            }
+          }
+        }));
+      }
+    });
+    await();
+  }
 }
