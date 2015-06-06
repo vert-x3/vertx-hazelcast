@@ -21,7 +21,7 @@ import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.*;
 import io.vertx.core.*;
 import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
