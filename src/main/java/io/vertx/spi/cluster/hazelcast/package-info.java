@@ -76,7 +76,13 @@
  * VPN software on your machine), then Hazelcast may be using the wrong one.
  *
  * To tell Hazelcast to use a specific interface you can provide the IP address of the interface in the `interfaces`
- * element of the configuration. Make sure you set the `enabled` attribute to `true`.
+ * element of the configuration. Make sure you set the `enabled` attribute to `true`. For example:
+ *
+ * ----
+ * <interfaces enabled="true">
+ *   <interface>192.168.1.20</interface>
+ * </interfaces>
+ * ----
  *
  * When running Vert.x is in clustered mode, you should also make sure that Vert.x knows about the correct interface.
  * When running at the command line this is done by specifying the `cluster-host` option:
@@ -97,6 +103,14 @@
  *
  * So, if you have a VPN running you may have to configure both the Hazelcast and Vert.x to use the correct interface as
  * described in the previous section.
+ *
+ * === When multicast is not available
+ *
+ * In some cases you may not be able to use multicast as it might not be available in your environment. In that case
+ * you should configure another transport, e.g. TCP  to use TCP sockets, or AWS when running on Amazon EC2.
+ *
+ * For more information on available Hazelcast transports and how to configure them please consult the Hazelcast
+ * documentation.
  *
  * === Enabling logging
  *
