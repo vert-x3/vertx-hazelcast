@@ -14,24 +14,10 @@
  *  You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.test.core;
-
-import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-
 /**
- * @author <a href="http://tfox.org">Tim Fox</a>
+ * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-public class HazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
+@Source
+package io.vertx.spi.cluster.hazelcast.examples;
 
-  static {
-    System.setProperty("hazelcast.wait.seconds.before.join", "0");
-    System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
-  }
-
-  @Override
-  protected ClusterManager getClusterManager() {
-    return new HazelcastClusterManager();
-  }
-
-}
+import io.vertx.docgen.Source;

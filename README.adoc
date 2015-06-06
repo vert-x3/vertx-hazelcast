@@ -1,0 +1,12 @@
+= Hazelcast Cluster Manager
+
+This is a cluster manager implementation for Vert.x that uses http://hazelcast.com[Hazelcast].
+
+It is the default cluster manager in the Vert.x distribution, but it can be replaced with another implementation as Vert.x
+cluster managers are pluggable.
+
+Please see the in source asciidoc documentation or the main documentation on the web-site for a full description
+of this component:
+
+* Web-site docs
+* link:src/main/asciidoc/java/index.adoc[in-source docs]

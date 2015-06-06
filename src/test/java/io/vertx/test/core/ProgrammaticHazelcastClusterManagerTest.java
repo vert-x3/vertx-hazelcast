@@ -19,7 +19,7 @@ package io.vertx.test.core;
 import com.hazelcast.config.Config;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.spi.cluster.impl.hazelcast.HazelcastClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Test;
 
 /**

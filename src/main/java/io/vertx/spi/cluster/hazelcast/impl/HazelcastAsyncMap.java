@@ -14,7 +14,7 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.spi.cluster.impl.hazelcast;
+package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.core.IMap;
 import com.hazelcast.nio.ObjectDataInput;
@@ -30,7 +30,7 @@ import io.vertx.core.shareddata.impl.ClusterSerializable;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
+public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
 
   private final Vertx vertx;
   private final IMap<K, V> map;

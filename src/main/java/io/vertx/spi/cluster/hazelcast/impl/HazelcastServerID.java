@@ -14,7 +14,7 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.spi.cluster.impl.hazelcast;
+package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-class HazelcastServerID extends ServerID implements DataSerializable {
+public class HazelcastServerID extends ServerID implements DataSerializable {
 
   public HazelcastServerID() {
   }
