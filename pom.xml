@@ -17,6 +17,7 @@
 
   <properties>
     <stack.version>3.0.0-SNAPSHOT</stack.version>
+    <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
   </properties>
 
   <dependencyManagement>
@@ -48,6 +49,18 @@
         </exclusion>
       </exclusions>
     </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-docgen</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-codetrans</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -64,24 +77,64 @@
   </dependencies>
 
   <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <configuration>
-            <systemPropertyVariables>
-              <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
-            </systemPropertyVariables>
-            <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
-            <argLine>-Xmx1500M</argLine>
-            <forkCount>1</forkCount>
-            <reuseForks>false</reuseForks>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <configuration>
+              <annotationProcessors>
+                <annotationProcessor>io.vertx.docgen.JavaDocGenProcessor</annotationProcessor>
+              </annotationProcessors>
+              <compilerArgs>
+                <arg>-Adocgen.output=${asciidoc.dir}</arg>
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.asciidoctor</groupId>
+        <artifactId>asciidoctor-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>process-asciidoc</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>${asciidoc.dir}</sourceDirectory>
+              <outputDirectory>${project.build.directory}/docs/${project.artifactId}</outputDirectory>
+              <sourceHighlighter>coderay</sourceHighlighter>
+              <preserveDirectories>true</preserveDirectories>
+              <relativeBaseDir>true</relativeBaseDir>
+              <backend>html</backend>
+              <doctype>book</doctype>
+            </configuration>
+            <phase>prepare-package</phase>
+          </execution>
+        </executions>
+      </plugin>
 
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
+        <configuration>
+          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+          <systemPropertyVariables>
+            <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
+            <buildDirectory>${project.build.directory}</buildDirectory>
+            <vertxVersion>${project.version}</vertxVersion>
+          </systemPropertyVariables>
+          <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
+          <argLine>-Xmx1200M</argLine>
+          <forkCount>1</forkCount>
+          <reuseForks>true</reuseForks>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
 
 </project>

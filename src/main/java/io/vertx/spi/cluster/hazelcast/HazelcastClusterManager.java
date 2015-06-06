@@ -14,7 +14,7 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.spi.cluster.impl.hazelcast;
+package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
@@ -28,6 +28,8 @@ import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
