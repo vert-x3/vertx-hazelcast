@@ -19,14 +19,17 @@ package io.vertx.spi.cluster.hazelcast;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.*;
-import io.vertx.core.*;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxException;
+import io.vertx.core.impl.ExtendedClusterManager;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
-import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
@@ -43,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * 
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusterManager implements ClusterManager, MembershipListener {
+public class HazelcastClusterManager implements ExtendedClusterManager, MembershipListener {
 
   private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
@@ -284,6 +287,15 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       log.error("Failed to read config", ex);
     }
     return cfg;
+  }
+
+  public void beforeLeave() {
+    ILock lock = hazelcast.getLock("vertx.shutdownlock");
+    try {
+      lock.tryLock(30, TimeUnit.SECONDS);
+    } catch (InterruptedException ignore) {
+    }
+    // The lock should be automatically released when the node is shutdown
   }
 
   private class HazelcastCounter implements Counter {
