@@ -290,12 +290,14 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   public void beforeLeave() {
-    ILock lock = hazelcast.getLock("vertx.shutdownlock");
-    try {
-      lock.tryLock(30, TimeUnit.SECONDS);
-    } catch (InterruptedException ignore) {
+    if (isActive()) {
+      ILock lock = hazelcast.getLock("vertx.shutdownlock");
+      try {
+        lock.tryLock(30, TimeUnit.SECONDS);
+      } catch (InterruptedException ignore) {
+      }
+      // The lock should be automatically released when the node is shutdown
     }
-    // The lock should be automatically released when the node is shutdown
   }
 
   private class HazelcastCounter implements Counter {
