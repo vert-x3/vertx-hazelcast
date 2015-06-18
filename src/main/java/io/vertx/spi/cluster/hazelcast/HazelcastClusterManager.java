@@ -300,6 +300,10 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     }
   }
 
+  public HazelcastInstance getHazelcastInstance() {
+    return hazelcast;
+  }
+
   private class HazelcastCounter implements Counter {
     private IAtomicLong atomicLong;
 
