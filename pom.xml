@@ -41,7 +41,7 @@
     <dependency>
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast</artifactId>
-      <version>3.4.3</version>
+      <version>3.4.2</version>
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.findbugs</groupId>
