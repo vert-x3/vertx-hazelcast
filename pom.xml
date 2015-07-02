@@ -53,6 +53,10 @@
           <groupId>com.hazelcast</groupId>
           <artifactId>hazelcast-code-generator</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>com.eclipsesource.minimal-json</groupId>
+          <artifactId>minimal-json</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
