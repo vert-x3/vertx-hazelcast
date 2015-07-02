@@ -42,10 +42,16 @@
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast</artifactId>
       <version>3.5</version>
+      <!-- Exclude some stuff that we don't need and probably are just hazelcast test time dependencies that leaked into
+      compile -->
       <exclusions>
         <exclusion>
           <groupId>net.sourceforge.findbugs</groupId>
           <artifactId>annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.hazelcast</groupId>
+          <artifactId>hazelcast-code-generator</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
