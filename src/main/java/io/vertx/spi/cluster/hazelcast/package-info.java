@@ -4,7 +4,16 @@
  * This is a cluster manager implementation for Vert.x that uses http://hazelcast.com[Hazelcast].
  *
  * It is the default cluster manager used in the Vert.x distribution, but it can be replaced with another implementation as Vert.x
- * cluster managers are pluggable.
+ * cluster managers are pluggable.  This implementation is packaged inside:
+ *
+ * [source,xml,subs="+attributes"]
+ * ----
+ * <dependency>
+ *   <groupId>{maven-groupId}</groupId>
+ *   <artifactId>{maven-artifactId}</artifactId>
+ *   <version>{maven-version}</version>
+ * </dependency>
+ * ----
  *
  * In Vert.x a cluster manager is used for various functions including:
  *
