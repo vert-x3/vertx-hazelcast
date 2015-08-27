@@ -41,7 +41,7 @@
     <dependency>
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast</artifactId>
-      <version>3.5</version>
+      <version>3.5.2</version>
       <!-- Exclude some stuff that we don't need and probably are just hazelcast test time dependencies that leaked into
       compile -->
       <exclusions>
