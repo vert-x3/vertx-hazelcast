@@ -103,7 +103,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
         } else {
           sids = new ChoosableSet<>(0);
         }
-        ChoosableSet<V> prev = cache.putIfAbsent(k, sids);
+        ChoosableSet<V> prev = (sids.isEmpty()) ? null : cache.putIfAbsent(k, sids);
         if (prev != null) {
           // Merge them
           prev.merge(sids);
