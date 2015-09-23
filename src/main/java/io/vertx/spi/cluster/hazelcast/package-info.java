@@ -141,7 +141,6 @@
  *
  */
 @Document(fileName = "index.adoc")
-@io.vertx.codegen.annotations.GenModule(name = "vertx")
 package io.vertx.spi.cluster.hazelcast;
 
 import io.vertx.docgen.Document;
