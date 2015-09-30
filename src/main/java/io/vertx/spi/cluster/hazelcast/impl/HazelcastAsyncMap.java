@@ -65,21 +65,21 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public void put(K k, V v, long timeout, Handler<AsyncResult<Void>> completionHandler) {
+  public void put(K k, V v, long ttl, Handler<AsyncResult<Void>> completionHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
     vertx.executeBlocking(fut -> {
-      map.put(kk, HazelcastServerID.convertServerID(vv), timeout, TimeUnit.MILLISECONDS);
+      map.put(kk, HazelcastServerID.convertServerID(vv), ttl, TimeUnit.MILLISECONDS);
       fut.complete();
     }, completionHandler);
   }
 
   @Override
-  public void putIfAbsent(K k, V v, long timeout, Handler<AsyncResult<V>> resultHandler) {
+  public void putIfAbsent(K k, V v, long ttl, Handler<AsyncResult<V>> resultHandler) {
     K kk = convertParam(k);
     V vv = convertParam(v);
     vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
-      timeout, TimeUnit.MILLISECONDS))), resultHandler);
+      ttl, TimeUnit.MILLISECONDS))), resultHandler);
   }
 
   @Override
