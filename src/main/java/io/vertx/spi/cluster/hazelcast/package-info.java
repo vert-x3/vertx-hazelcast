@@ -9,9 +9,9 @@
  * [source,xml,subs="+attributes"]
  * ----
  * <dependency>
- *   <groupId>{maven-groupId}</groupId>
- *   <artifactId>{maven-artifactId}</artifactId>
- *   <version>{maven-version}</version>
+ *   <groupId>${maven.groupId}</groupId>
+ *   <artifactId>${maven.artifactId}</artifactId>
+ *   <version>${maven.version}</version>
  * </dependency>
  * ----
  *
