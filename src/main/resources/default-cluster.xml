@@ -74,7 +74,7 @@
     <!--Queue capacity. 0 means Integer.MAX_VALUE.-->
     <queue-capacity>0</queue-capacity>
   </executor-service>
-  <map name="subs">
+  <map name="__vertx.subs">
 
     <!--
         Number of backups. If 1 is set as the backup-count for example,
