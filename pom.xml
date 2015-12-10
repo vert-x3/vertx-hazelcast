@@ -139,6 +139,7 @@
             <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
             <buildDirectory>${project.build.directory}</buildDirectory>
             <vertxVersion>${project.version}</vertxVersion>
+            <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
           </systemPropertyVariables>
           <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
           <argLine>-Xmx1200M</argLine>
