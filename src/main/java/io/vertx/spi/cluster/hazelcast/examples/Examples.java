@@ -17,6 +17,7 @@
 package io.vertx.spi.cluster.hazelcast.examples;
 
 import com.hazelcast.config.Config;
+import com.hazelcast.core.HazelcastInstance;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
@@ -52,6 +53,18 @@ public class Examples {
 
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
 
+    Vertx.clusteredVertx(options, res -> {
+      if (res.succeeded()) {
+        Vertx vertx = res.result();
+      } else {
+        // failed!
+      }
+    });
+  }
+
+  public void example3(HazelcastInstance hazelcastInstance) {
+    ClusterManager mgr = new HazelcastClusterManager(hazelcastInstance);
+    VertxOptions options = new VertxOptions().setClusterManager(mgr);
     Vertx.clusteredVertx(options, res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();

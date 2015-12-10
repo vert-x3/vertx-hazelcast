@@ -56,11 +56,13 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   private static final String DEFAULT_CONFIG_FILE = "default-cluster.xml";
   private static final String CONFIG_FILE = "cluster.xml";
 
+
   private Vertx vertx;
 
   private HazelcastInstance hazelcast;
   private String nodeID;
   private String membershipListenerId;
+  private boolean customHazelcastCluster;
 
   private NodeListener nodeListener;
   private volatile boolean active;
@@ -83,6 +85,12 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     this.conf = conf;
   }
 
+  public HazelcastClusterManager(HazelcastInstance instance) {
+    Objects.requireNonNull(instance, "The Hazelcast instance cannot be null.");
+    hazelcast = instance;
+    customHazelcastCluster = true;
+  }
+
   public void setVertx(Vertx vertx) {
     this.vertx = vertx;
   }
@@ -91,6 +99,15 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     vertx.executeBlocking(fut -> {
       if (!active) {
         active = true;
+
+        // The hazelcast instance has been passed using the constructor.
+        if (customHazelcastCluster) {
+          nodeID = hazelcast.getCluster().getLocalMember().getUuid();
+          membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
+          fut.complete();
+          return;
+        }
+
         if (conf == null) {
           conf = loadConfigFromClasspath();
           if (conf == null) {
@@ -189,7 +206,8 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
           if (!left) {
             log.warn("No membership listener");
           }
-          while (hazelcast.getLifecycleService().isRunning()) {
+          // Do not shutdown the cluster if we are not the owner.
+          while (! customHazelcastCluster  && hazelcast.getLifecycleService().isRunning()) {
             try {
               // This can sometimes throw java.util.concurrent.RejectedExecutionException so we retry.
               hazelcast.getLifecycleService().shutdown();

@@ -70,6 +70,17 @@
  * For full documentation on how to configure the transport differently or use a different transport please consult the
  * Hazelcast documentation.
  *
+ * == Using an existing Hazelcast cluster
+ *
+ * You can pass an existing `HazelcastInstance` in the cluster manager to reuse an existing cluster:
+ *
+ * [source,$lang]
+ * ----
+ * {@link io.vertx.spi.cluster.hazelcast.examples.Examples#example3(com.hazelcast.core.HazelcastInstance)}
+ * ----
+ *
+ * In this case, vert.x is not the cluster owner and so do not shutdown the cluster on close.
+ *
  * == Trouble shooting clustering
  *
  * If the default multicast configuration is not working here are some common causes:
