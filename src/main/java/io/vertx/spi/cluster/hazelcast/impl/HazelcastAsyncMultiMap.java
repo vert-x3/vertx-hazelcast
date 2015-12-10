@@ -148,9 +148,13 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
   private void removeEntry(K k, V v) {
     ChoosableSet<V> entries = cache.get(k);
     if (entries != null) {
-      entries.remove(v);
-      if (entries.isEmpty()) {
-        cache.remove(k);
+      // We forbid `null` values, but it can comes from another application using Hazelcast
+      // (but not in the context of vert.x)
+      if (v != null) {
+        entries.remove(v);
+        if (entries.isEmpty()) {
+          cache.remove(k);
+        }
       }
     }
   }
