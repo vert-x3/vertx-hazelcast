@@ -18,6 +18,6 @@
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 @Source
-package io.vertx.spi.cluster.hazelcast.examples;
+package examples;
 
 import io.vertx.docgen.Source;

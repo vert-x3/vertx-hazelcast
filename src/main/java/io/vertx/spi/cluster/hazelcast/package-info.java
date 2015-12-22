@@ -42,7 +42,7 @@
  *
  * [source,$lang]
  * ----
- * {@link io.vertx.spi.cluster.hazelcast.examples.Examples#example1()}
+ * {@link examples.Examples#example1()}
  * ----
  *
  * == Configuring this cluster manager
@@ -61,7 +61,7 @@
  *
  * [source,$lang]
  * ----
- * {@link io.vertx.spi.cluster.hazelcast.examples.Examples#example2()}
+ * {@link examples.Examples#example2()}
  * ----
  *
  * Hazelcast supports several different transports including multicast and TCP. The default configuration uses
@@ -76,7 +76,7 @@
  *
  * [source,$lang]
  * ----
- * {@link io.vertx.spi.cluster.hazelcast.examples.Examples#example3(com.hazelcast.core.HazelcastInstance)}
+ * {@link examples.Examples#example3(com.hazelcast.core.HazelcastInstance)}
  * ----
  *
  * In this case, vert.x is not the cluster owner and so do not shutdown the cluster on close.

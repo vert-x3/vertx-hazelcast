@@ -14,7 +14,7 @@
  *  You may elect to redistribute this code under either of these licenses.
  */
 
-package io.vertx.spi.cluster.hazelcast.examples;
+package examples;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
