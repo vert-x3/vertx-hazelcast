@@ -81,6 +81,24 @@
  *
  * In this case, vert.x is not the cluster owner and so do not shutdown the cluster on close.
  *
+ * Notice that the custom Hazelcast instance need to be configured with:
+ *
+ * [source, xml]
+ * ----
+ * <map name="__vertx.subs">
+ *   <backup-count>1</backup-count>
+ *   <time-to-live-seconds>0</time-to-live-seconds>
+ *   <max-idle-seconds>0</max-idle-seconds>
+ *   <eviction-policy>NONE</eviction-policy>
+ *   <max-size policy="PER_NODE">0</max-size>
+ *   <eviction-percentage>25</eviction-percentage>
+ *   <merge-policy>com.hazelcast.map.merge.LatestUpdateMapMergePolicy</merge-policy>
+ * </map>
+ * <semaphore name="__vertx.*">
+ *   <initial-permits>1</initial-permits>
+ * </semaphore>
+ * ----
+ *
  * == Trouble shooting clustering
  *
  * If the default multicast configuration is not working here are some common causes:
