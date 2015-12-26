@@ -16,7 +16,10 @@
 
 package io.vertx.test.core;
 
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
+import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.*;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -34,6 +37,9 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   static {
     System.setProperty("hazelcast.wait.seconds.before.join", "0");
     System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+
+    // this is only checked once every 10 seconds by Hazelcast on client disconnect
+    System.setProperty("hazelcast.client.max.no.heartbeat.seconds", "9");
   }
 
   private void testProgrammatic(HazelcastClusterManager mgr, Config config) throws Exception {
@@ -162,13 +168,16 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     vertx1.get().close(ar -> vertx1.set(null));
     vertx2.get().close(ar -> vertx2.set(null));
 
+    waitUntil(() -> vertx1.get() == null  && vertx2.get() == null);
+
+    // be sure stopping vertx did not cause or require our custom hazelcast to shutdown
+
     assertTrue(instance1.getLifecycleService().isRunning());
     assertTrue(instance2.getLifecycleService().isRunning());
 
     instance1.shutdown();
     instance2.shutdown();
 
-    waitUntil(() -> vertx1.get() == null  && vertx2.get() == null);
   }
 
   @Test
@@ -229,5 +238,69 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     vertx1.get().close(ar -> vertx1.set(null));
 
     waitUntil(() -> vertx1.get() == null);
+  }
+
+  @Test
+  public void testSharedDataUsingCustomHazelcastClients() throws Exception {
+    HazelcastInstance dataNode1 = Hazelcast.newHazelcastInstance(new Config());
+    HazelcastInstance dataNode2 = Hazelcast.newHazelcastInstance(new Config());
+
+    ClientConfig clientConfig = new ClientConfig().setGroupConfig(new GroupConfig("dev", "dev-pass"));
+
+    HazelcastInstance clientNode1 = HazelcastClient.newHazelcastClient(clientConfig);
+    HazelcastInstance clientNode2 = HazelcastClient.newHazelcastClient(clientConfig);
+
+    HazelcastClusterManager mgr1 = new HazelcastClusterManager(clientNode1);
+    HazelcastClusterManager mgr2 = new HazelcastClusterManager(clientNode2);
+    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1).setClustered(true).setClusterHost("127.0.0.1");
+    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2).setClustered(true).setClusterHost("127.0.0.1");
+
+    AtomicReference<Vertx> vertx1 = new AtomicReference<>();
+    AtomicReference<Vertx> vertx2 = new AtomicReference<>();
+
+    Vertx.clusteredVertx(options1, res -> {
+      assertTrue(res.succeeded());
+      assertNotNull(mgr1.getHazelcastInstance());
+      res.result().sharedData().getClusterWideMap("mymap1", ar -> {
+        ar.result().put("news", "hello", v -> {
+          vertx1.set(res.result());
+        });
+      });
+    });
+
+    waitUntil(() -> vertx1.get() != null);
+
+    Vertx.clusteredVertx(options2, res -> {
+      assertTrue(res.succeeded());
+      assertNotNull(mgr2.getHazelcastInstance());
+      vertx2.set(res.result());
+      res.result().sharedData().getClusterWideMap("mymap1", ar -> {
+        ar.result().get("news", r -> {
+          assertEquals("hello", r.result());
+          testComplete();
+        });
+      });
+    });
+
+    await();
+
+    vertx1.get().close(ar -> vertx1.set(null));
+    vertx2.get().close(ar -> vertx2.set(null));
+
+    waitUntil(() -> vertx1.get() == null && vertx2.get() == null);
+
+    // be sure stopping vertx did not cause or require our custom hazelcast to shutdown
+
+    assertTrue(clientNode1.getLifecycleService().isRunning());
+    assertTrue(clientNode2.getLifecycleService().isRunning());
+
+    clientNode1.shutdown();
+    clientNode2.shutdown();
+
+    assertTrue(dataNode1.getLifecycleService().isRunning());
+    assertTrue(dataNode2.getLifecycleService().isRunning());
+
+    dataNode1.shutdown();
+    dataNode2.shutdown();
   }
 }
