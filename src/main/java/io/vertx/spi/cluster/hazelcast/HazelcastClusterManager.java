@@ -102,7 +102,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
         // The hazelcast instance has been passed using the constructor.
         if (customHazelcastCluster) {
-          nodeID = hazelcast.getCluster().getLocalMember().getUuid();
+          nodeID = hazelcast.getLocalEndpoint().getUuid();
           membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
           fut.complete();
           return;
@@ -115,7 +115,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
           }
         }
         hazelcast = Hazelcast.newHazelcastInstance(conf);
-        nodeID = hazelcast.getCluster().getLocalMember().getUuid();
+        nodeID = hazelcast.getLocalEndpoint().getUuid();
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         fut.complete();
       }
@@ -309,12 +309,14 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   public void beforeLeave() {
     if (isActive()) {
-      ILock lock = hazelcast.getLock("vertx.shutdownlock");
-      try {
-        lock.tryLock(30, TimeUnit.SECONDS);
-      } catch (Exception ignore) {
+      if (! customHazelcastCluster  && hazelcast.getLifecycleService().isRunning()) {
+        ILock lock = hazelcast.getLock("vertx.shutdownlock");
+        try {
+          lock.tryLock(30, TimeUnit.SECONDS);
+        } catch (Exception ignore) {
+        }
+        // The lock should be automatically released when the node is shutdown
       }
-      // The lock should be automatically released when the node is shutdown
     }
   }
 
