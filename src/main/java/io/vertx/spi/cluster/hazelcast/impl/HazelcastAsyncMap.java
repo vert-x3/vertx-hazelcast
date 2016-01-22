@@ -51,7 +51,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(v);
     vertx.executeBlocking(fut -> {
-      map.put(kk, HazelcastServerID.convertServerID(vv));
+      map.set(kk, HazelcastServerID.convertServerID(vv));
       fut.complete();
     }, completionHandler);
   }
@@ -69,7 +69,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(v);
     vertx.executeBlocking(fut -> {
-      map.put(kk, HazelcastServerID.convertServerID(vv), ttl, TimeUnit.MILLISECONDS);
+      map.set(kk, HazelcastServerID.convertServerID(vv), ttl, TimeUnit.MILLISECONDS);
       fut.complete();
     }, completionHandler);
   }
