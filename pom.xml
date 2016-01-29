@@ -177,4 +177,33 @@
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>coverage</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${maven.surefire.plugin.version}</version>
+            <configuration>
+              <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+              <systemPropertyVariables>
+                <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
+                <buildDirectory>${project.build.directory}</buildDirectory>
+                <vertxVersion>${project.version}</vertxVersion>
+                <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+              </systemPropertyVariables>
+              <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
+              <!-- append computed argLine computed by jacoco -->
+              <argLine>-Xmx1200M @{surefireArgLine}</argLine>
+              <forkCount>1</forkCount>
+              <reuseForks>true</reuseForks>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
