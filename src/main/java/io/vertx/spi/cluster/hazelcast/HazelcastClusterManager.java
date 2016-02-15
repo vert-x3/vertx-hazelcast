@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A cluster manager that uses Hazelcast
- * 
+ *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class HazelcastClusterManager implements ExtendedClusterManager, MembershipListener {
@@ -123,11 +123,11 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
 	/**
-	 * Every eventbus handler has an ID. SubsMap (subscriber map) is a MultiMap which 
-	 * maps handler-IDs with server-IDs and thus allows the eventbus to determine where 
+	 * Every eventbus handler has an ID. SubsMap (subscriber map) is a MultiMap which
+	 * maps handler-IDs with server-IDs and thus allows the eventbus to determine where
 	 * to send messages.
-	 * 
-	 * @param name A unique name by which the the MultiMap can be identified within the cluster. 
+	 *
+	 * @param name A unique name by which the the MultiMap can be identified within the cluster.
 	 *     See the cluster config file (e.g. cluster.xml in case of HazelcastClusterManager) for
 	 *     additional MultiMap config parameters.
 	 * @return subscription map
@@ -385,7 +385,18 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
     @Override
     public void release() {
-      semaphore.release();
+      // Releasing a semaphore is blocking, so we execute it in a worker thread.
+      // To avoid changing the API we hide the fact that the semaphore is not necessarily "released" after this
+      // call.
+      vertx.executeBlocking(
+          (fut) -> {
+            semaphore.release();
+            fut.complete();
+          },
+          (v) -> {
+            // Do nothing.
+          }
+      );
     }
   }
 
