@@ -7,7 +7,7 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-parent</artifactId>
-    <version>8</version>
+    <version>9</version>
   </parent>
 
   <artifactId>vertx-hazelcast</artifactId>
@@ -74,7 +74,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>4.12</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -89,8 +89,7 @@
       <version>3.5.2</version>
       <scope>test</scope>
     </dependency>
-
-
+    
   </dependencies>
 
   <build>
@@ -122,15 +121,6 @@
             <goals>
               <goal>process-asciidoc</goal>
             </goals>
-            <configuration>
-              <sourceDirectory>${asciidoc.dir}</sourceDirectory>
-              <outputDirectory>${project.build.directory}/docs/${project.artifactId}</outputDirectory>
-              <sourceHighlighter>coderay</sourceHighlighter>
-              <preserveDirectories>true</preserveDirectories>
-              <relativeBaseDir>true</relativeBaseDir>
-              <backend>html</backend>
-              <doctype>book</doctype>
-            </configuration>
             <phase>prepare-package</phase>
           </execution>
         </executions>
