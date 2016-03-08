@@ -18,6 +18,7 @@
   <properties>
     <stack.version>3.3.0-SNAPSHOT</stack.version>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
+    <hazelcast.version>3.5.2</hazelcast.version>
   </properties>
 
   <dependencyManagement>
@@ -41,7 +42,7 @@
     <dependency>
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast</artifactId>
-      <version>3.5.2</version>
+      <version>${hazelcast.version}</version>
       <!-- Exclude some stuff that we don't need and probably are just hazelcast test time dependencies that leaked into
       compile -->
       <exclusions>
@@ -86,7 +87,7 @@
     <dependency>
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast-client</artifactId>
-      <version>3.5.2</version>
+      <version>${hazelcast.version}</version>
       <scope>test</scope>
     </dependency>
     
