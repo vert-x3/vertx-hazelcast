@@ -99,6 +99,10 @@
  * </semaphore>
  * ----
  *
+ * **IMPORTANT** Do not use Hazelcast clients or smart clients when using high-availability (HA, or fail-over) in your
+ * cluster as they do not notify when they leave the cluster and you may loose data, or leave the cluster in an
+ * inconsistent state. See https://github.com/vert-x3/vertx-hazelcast/issues/24 for more details.
+ *
  * == Trouble shooting clustering
  *
  * If the default multicast configuration is not working here are some common causes:
@@ -167,6 +171,55 @@
  * ----
  * java.util.logging.ConsoleHandler.level=INFO
  * java.util.logging.FileHandler.level=INFO
+ * ----
+ *
+ * == Hazelcast logging
+ *
+ * The logging backend used by Hazelcast is `jdk` by default (understand JUL). If you want to redirect the logging to
+ * another library, you need to set the `hazelcast.logging.type` system property such as in:
+ *
+ * ----
+ * -Dhazelcast.logging.type=slf4j
+ * ----
+ *
+ * See the http://docs.hazelcast.org/docs/3.6.1/manual/html-single/index.html#logging-configuration[hazelcast documentation] for more details.
+ *
+ * == Using a different Hazelcast version
+ *
+ * You may want to use a different version of Hazelcast. The default version is `${hazelcast.version}`. To do so, you
+ * need to:
+ *
+ * * put the version you want in the application classpath
+ * * if you are running a fat jar, configure your build manager to use the right version
+ *
+ * In this later case, you would need in Maven:
+ *
+ * [source,xml,subs="+attributes"]
+ * ----
+ * <dependency>
+ *   <groupId>com.hazelcast</groupId>
+ *   <artifactId>hazelcast</artifactId>
+ *   <version>ENTER_YOUR_VERSION_HERE</version>
+ * </dependency>
+ * <dependency>
+ *   <groupId>${maven.groupId}</groupId>
+ *   <artifactId>${maven.artifactId}</artifactId>
+ *   <version>${maven.version}</version>
+ * </dependency>
+ * ----
+ *
+ * Depending on the version, you may need to exclude some transitive dependencies.
+ *
+ * On Gradle, you can achieve the same overloading using:
+ *
+ * [source]
+ * ----
+ * dependencies {
+ *  compile ("${maven.groupId}:${maven.artifactId}:${maven.version}"){
+ *    exclude group: 'com.hazelcast', module: 'hazelcast'
+ *  }
+ *  compile "com.hazelcast:hazelcast:ENTER_YOUR_VERSION_HERE"
+ * }
  * ----
  *
  */
