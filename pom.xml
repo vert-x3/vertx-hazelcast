@@ -18,7 +18,7 @@
   <properties>
     <stack.version>3.3.0-SNAPSHOT</stack.version>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
-    <hazelcast.version>3.5.2</hazelcast.version>
+    <hazelcast.version>3.6.1</hazelcast.version>
   </properties>
 
   <dependencyManagement>
@@ -43,22 +43,6 @@
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast</artifactId>
       <version>${hazelcast.version}</version>
-      <!-- Exclude some stuff that we don't need and probably are just hazelcast test time dependencies that leaked into
-      compile -->
-      <exclusions>
-        <exclusion>
-          <groupId>net.sourceforge.findbugs</groupId>
-          <artifactId>annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.hazelcast</groupId>
-          <artifactId>hazelcast-code-generator</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.eclipsesource.minimal-json</groupId>
-          <artifactId>minimal-json</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -109,6 +93,7 @@
                 <arg>-Amaven.groupId=${project.groupId}</arg>
                 <arg>-Amaven.artifactId=${project.artifactId}</arg>
                 <arg>-Amaven.version=${project.version}</arg>
+                <arg>-Ahazelcast.version=${hazelcast.version}</arg>
               </compilerArgs>
             </configuration>
           </execution>
