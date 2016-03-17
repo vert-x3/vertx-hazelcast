@@ -298,9 +298,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     Config cfg = null;
     try (InputStream is = getConfigStream();
          InputStream bis = new BufferedInputStream(is)) {
-      if (is != null) {
-        cfg = new XmlConfigBuilder(bis).build();
-      }
+      cfg = new XmlConfigBuilder(bis).build();
     } catch (IOException ex) {
       log.error("Failed to read config", ex);
     }
@@ -308,16 +306,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   public void beforeLeave() {
-    if (isActive()) {
-      if (! customHazelcastCluster  && hazelcast.getLifecycleService().isRunning()) {
-        ILock lock = hazelcast.getLock("vertx.shutdownlock");
-        try {
-          lock.tryLock(30, TimeUnit.SECONDS);
-        } catch (Exception ignore) {
-        }
-        // The lock should be automatically released when the node is shutdown
-      }
-    }
+    // Do nothing.
   }
 
   public HazelcastInstance getHazelcastInstance() {
