@@ -19,6 +19,9 @@ package io.vertx.test.core;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
@@ -33,5 +36,9 @@ public class HazelcastHATest extends HATest {
   protected ClusterManager getClusterManager() {
     return new HazelcastClusterManager();
   }
-  
+
+  @Override
+  protected void awaitLatch(CountDownLatch latch) throws InterruptedException {
+    assertTrue(latch.await(30, TimeUnit.SECONDS));
+  }
 }
