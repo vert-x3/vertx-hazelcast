@@ -7,7 +7,6 @@
     <property name="hazelcast.memcache.enabled">false</property>
     <property name="hazelcast.rest.enabled">false</property>
     <property name="hazelcast.wait.seconds.before.join">0</property>
-    <property name="hazelcast.logging.type">jdk</property>
   </properties>
 
   <group>
