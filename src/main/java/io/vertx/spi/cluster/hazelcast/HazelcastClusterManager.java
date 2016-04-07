@@ -308,16 +308,18 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   public void beforeLeave() {
-    if (isActive()) {
-      if (! customHazelcastCluster  && hazelcast.getLifecycleService().isRunning()) {
-        ILock lock = hazelcast.getLock("vertx.shutdownlock");
-        try {
-          lock.tryLock(30, TimeUnit.SECONDS);
-        } catch (Exception ignore) {
+    vertx.executeBlocking(fut ->  {
+      if (isActive()) {
+        if (! customHazelcastCluster  && hazelcast.getLifecycleService().isRunning()) {
+          ILock lock = hazelcast.getLock("vertx.shutdownlock");
+          try {
+            lock.tryLock(30, TimeUnit.SECONDS);
+          } catch (Exception ignore) {
+          }
+          // The lock should be automatically released when the node is shutdown
         }
-        // The lock should be automatically released when the node is shutdown
       }
-    }
+    }, null);
   }
 
   public HazelcastInstance getHazelcastInstance() {
