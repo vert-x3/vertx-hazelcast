@@ -31,8 +31,10 @@ import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.NodeListener;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncCounter;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncMap;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -56,6 +58,26 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   private static final String DEFAULT_CONFIG_FILE = "default-cluster.xml";
   private static final String CONFIG_FILE = "cluster.xml";
 
+  /**
+   * Set "vertx.hazelcast.async-api" system property to {@code true} to use the
+   * (currently) non-public Hazelcast async API. When {@code true}, the {@link AsyncMap} implementation
+   * will be backed by {@link HazelcastInternalAsyncMap} and the {@link Counter} is supplied by
+   * {@link HazelcastInternalAsyncCounter}, otherwise default to {@link HazelcastAsyncMap}
+   * and {@link HazelcastCounter}.
+   */
+  private static final String OPTION_USE_HZ_ASYNC_API = "vertx.hazelcast.async-api";
+
+  private static final boolean USE_HZ_ASYNC_API;
+
+  static {
+    boolean b = false;
+    try {
+      b = Boolean.valueOf(System.getProperty(OPTION_USE_HZ_ASYNC_API, "false"));
+    }
+    catch (Exception e) {
+    }
+    USE_HZ_ASYNC_API = b;
+  }
 
   private Vertx vertx;
 
@@ -164,7 +186,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   public <K, V> void getAsyncMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
     vertx.executeBlocking(fut -> {
       IMap<K, V> map = hazelcast.getMap(name);
-      fut.complete(new HazelcastAsyncMap<>(vertx, map));
+      fut.complete(USE_HZ_ASYNC_API ? new HazelcastInternalAsyncMap<>(vertx, map) : new HazelcastAsyncMap<>(vertx, map));
     }, resultHandler);
   }
 
@@ -194,7 +216,13 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   @Override
   public void getCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
-    vertx.executeBlocking(fut ->  fut.complete(new HazelcastCounter(hazelcast.getAtomicLong(name))), resultHandler);
+    vertx.executeBlocking(fut ->
+      fut.complete(
+              USE_HZ_ASYNC_API ?
+                      new HazelcastInternalAsyncCounter(vertx, (AsyncAtomicLong) hazelcast.getAtomicLong(name)) :
+                      new HazelcastCounter(hazelcast.getAtomicLong(name))
+      )
+    , resultHandler);
   }
 
   public synchronized void leave(Handler<AsyncResult<Void>> resultHandler) {
