@@ -120,10 +120,11 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     assertTrue(instance1.getLifecycleService().isRunning());
     assertTrue(instance2.getLifecycleService().isRunning());
 
+    waitUntil(() -> vertx1.get() == null  && vertx2.get() == null);
+
     instance1.shutdown();
     instance2.shutdown();
 
-    waitUntil(() -> vertx1.get() == null  && vertx2.get() == null);
   }
 
   @Test
