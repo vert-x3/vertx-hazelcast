@@ -52,7 +52,19 @@
  * which is packaged inside the jar.
  *
  * If you want to override this configuration you can provide a file called `cluster.xml` on your classpath and this
- * will be used instead.
+ * will be used instead. If you want to embed the `cluster.xml` file in a fat jar, it must be located at the root of the
+ * fat jar. If it's an external file, the **directory** containing the file must be added to the classpath. For
+ * example, if you are using the _launcher_ class from vert.x, the classpath enhancement can be done as follows:
+ *
+ * [source]
+ * ----
+ * # If the cluster.xml is in the current directory:
+ * java -jar ... -cp . -cluster
+ * vertx run MyVerticle -cp . -cluster
+ *
+ * # If the cluster.xml is in the conf directory
+ * java -jar ... -cp conf -cluster
+ * ----
  *
  * The xml file is a Hazelcast configuration file and is described in detail in the documentation on the Hazelcast
  * web-site.
