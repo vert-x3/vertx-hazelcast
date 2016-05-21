@@ -11,4 +11,4 @@ Please see the in source asciidoc documentation or the main documentation on the
 of this component:
 
 * Web-site docs
-* link:src/main/asciidoc/index.adoc[in-source docs]
+* link:src/main/asciidoc/java/index.adoc[in-source docs]
