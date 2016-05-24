@@ -54,7 +54,7 @@
  * If you want to override this configuration you can provide a file called `cluster.xml` on your classpath and this
  * will be used instead. If you want to embed the `cluster.xml` file in a fat jar, it must be located at the root of the
  * fat jar. If it's an external file, the **directory** containing the file must be added to the classpath. For
- * example, if you are using the _launcher_ class from vert.x, the classpath enhancement can be done as follows:
+ * example, if you are using the _launcher_ class from Vert.x, the classpath enhancement can be done as follows:
  *
  * [source]
  * ----
@@ -68,6 +68,9 @@
  *
  * The xml file is a Hazelcast configuration file and is described in detail in the documentation on the Hazelcast
  * web-site.
+ *
+ * **Note** Configuration of Hazelcast using the http://docs.hazelcast.org/docs/3.6.1/manual/html-single/index.html#configuring-hazelcast[`-Dhazelcast.config`]
+ * system property is not supported by Vert.x and should not be used.
  *
  * You can also specify configuration programmatically if embedding:
  *
