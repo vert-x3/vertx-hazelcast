@@ -66,6 +66,20 @@
  * java -jar ... -cp conf -cluster
  * ----
  *
+ * Another way to override the configuration is by providing the system property `hazelcast.config` with a location:
+ *
+ * [source]
+ * ----
+ * # Use a cluster configuration located in an external file
+ * java -Dhazelcast.config=./config/my-cluster-config.xml -jar ... -cluster
+ *
+ * # Or use a custom configuration from the classpath
+ * java -Dhazelcast.config=classpath:my/package/config/my-cluster-config.xml -jar ... -cluster
+ * ----
+ *
+ * The `hazelcast.config` system property, when present, overrides any `cluster.xml` on the classpath, but if loading
+ * from this system property fails, then loading falls back to either `cluster.xml` or the Hazelcast default configuration.
+ *
  * The xml file is a Hazelcast configuration file and is described in detail in the documentation on the Hazelcast
  * web-site.
  *
