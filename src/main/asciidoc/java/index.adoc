@@ -219,7 +219,7 @@ documentation.
 
 When trouble-shooting clustering issues with Hazelcast it's often useful to get some logging output from Hazelcast
 to see if it's forming a cluster properly. You can do this (when using the default JUL logging) by adding a file
-called `vertx-default-jul-logging.properties` on your classpath. This is a standard java.util.loging (JUL)
+called `vertx-default-jul-logging.properties` on your classpath. This is a standard java.util.logging (JUL)
 configuration file. Inside it set:
 
 ----
