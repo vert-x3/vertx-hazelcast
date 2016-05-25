@@ -83,9 +83,6 @@
  * The xml file is a Hazelcast configuration file and is described in detail in the documentation on the Hazelcast
  * web-site.
  *
- * **Note** Configuration of Hazelcast using the http://docs.hazelcast.org/docs/3.6.1/manual/html-single/index.html#configuring-hazelcast[`-Dhazelcast.config`]
- * system property is not supported by Vert.x and should not be used.
- *
  * You can also specify configuration programmatically if embedding:
  *
  * [source,$lang]
