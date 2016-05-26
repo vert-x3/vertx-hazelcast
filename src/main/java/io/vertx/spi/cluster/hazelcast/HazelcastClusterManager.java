@@ -36,9 +36,7 @@ import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncMap;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -131,9 +129,9 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
         }
 
         if (conf == null) {
-          conf = loadConfigFromClasspath();
+          conf = loadConfig();
           if (conf == null) {
-            log.warn("Cannot find cluster configuration on classpath and none specified programmatically. Using default hazelcast configuration");
+            log.warn("Cannot find cluster configuration on 'hazelcast.config' system property, on the classpath, or specified programmatically. Using default hazelcast configuration");
           }
         }
         hazelcast = Hazelcast.newHazelcastInstance(conf);
@@ -292,15 +290,42 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   private InputStream getConfigStream() {
-    ClassLoader ctxClsLoader = Thread.currentThread().getContextClassLoader();
+    InputStream is = getConfigStreamFromSystemProperty();
+    if (is == null) {
+      is = getConfigStreamFromClasspath(CONFIG_FILE, DEFAULT_CONFIG_FILE);
+    }
+    return is;
+  }
+
+  private InputStream getConfigStreamFromSystemProperty() {
+    String configProp = System.getProperty("hazelcast.config");
     InputStream is = null;
+    if (configProp != null) {
+      if (configProp.startsWith("classpath:")) {
+        return getConfigStreamFromClasspath(configProp.substring("classpath:".length()), CONFIG_FILE);
+      }
+      File cfgFile = new File(configProp);
+      if (cfgFile.exists()) {
+        try {
+          is = new FileInputStream(cfgFile);
+        } catch (FileNotFoundException ex) {
+          log.warn("Failed to open file '" + configProp + "' defined in 'hazelcast.config'. Continuing classpath search for " + CONFIG_FILE);
+        }
+      }
+    }
+    return is;
+  }
+
+  private InputStream getConfigStreamFromClasspath(String configFile, String defaultConfig) {
+    InputStream is = null;
+    ClassLoader ctxClsLoader = Thread.currentThread().getContextClassLoader();
     if (ctxClsLoader != null) {
-      is = ctxClsLoader.getResourceAsStream(CONFIG_FILE);
+      is = ctxClsLoader.getResourceAsStream(configFile);
     }
     if (is == null) {
-      is = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE);
+      is = getClass().getClassLoader().getResourceAsStream(configFile);
       if (is == null) {
-        is = getClass().getClassLoader().getResourceAsStream(DEFAULT_CONFIG_FILE);
+        is = getClass().getClassLoader().getResourceAsStream(defaultConfig);
       }
     }
     return is;
@@ -322,7 +347,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     this.conf = config;
   }
 
-  public Config loadConfigFromClasspath() {
+  public Config loadConfig() {
     Config cfg = null;
     try (InputStream is = getConfigStream();
          InputStream bis = new BufferedInputStream(is)) {
