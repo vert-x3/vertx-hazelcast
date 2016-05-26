@@ -149,6 +149,17 @@ Notice that the custom Hazelcast instance need to be configured with:
 cluster as they do not notify when they leave the cluster and you may loose data, or leave the cluster in an
 inconsistent state. See https://github.com/vert-x3/vertx-hazelcast/issues/24 for more details.
 
+== Using Hazelcast async methods
+Hazelcast's `IMap` and `IAtomicLong` interfaces can be used with async methods returning `ICompletableFuture<V>`,
+a natural fit for Vert.x threading model. Even though these interfaces have been available for a long time, they are not
+provided by the public `HazelcastInstance` API.
+
+The default behavior of the `HazelcastClusterManager` is to use the public API. Supplying the option
+`-Dvertx.hazelcast.async-api=true` on JVM startup, will indicate that the async Hazelcast API methods will be used to
+communicate with the hazelcast cluster. Effectively, this means that when this option is enabled,
+execution of all `Counter` operations and `AsyncMap.get`,`AsyncMap.put` and `AsyncMap.remove` operations will
+occur in the calling thread (the event loop), instead of a worker thread with `vertx.executeBlocking`.
+
 == Trouble shooting clustering
 
 If the default multicast configuration is not working here are some common causes:
