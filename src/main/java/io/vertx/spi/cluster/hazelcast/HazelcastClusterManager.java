@@ -217,35 +217,44 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   @Override
   public void getCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
     vertx.executeBlocking(fut ->
-      fut.complete(
-              USE_HZ_ASYNC_API ?
-                      new HazelcastInternalAsyncCounter(vertx, (AsyncAtomicLong) hazelcast.getAtomicLong(name)) :
-                      new HazelcastCounter(hazelcast.getAtomicLong(name))
-      )
-    , resultHandler);
+            fut.complete(
+                USE_HZ_ASYNC_API ?
+                    new HazelcastInternalAsyncCounter(vertx, (AsyncAtomicLong) hazelcast.getAtomicLong(name)) :
+                    new HazelcastCounter(hazelcast.getAtomicLong(name))
+            )
+        , resultHandler);
   }
 
-  public synchronized void leave(Handler<AsyncResult<Void>> resultHandler) {
+  public void leave(Handler<AsyncResult<Void>> resultHandler) {
     vertx.executeBlocking(fut -> {
-      if (active) {
-        try {
-          active = false;
-          boolean left = hazelcast.getCluster().removeMembershipListener(membershipListenerId);
-          if (!left) {
-            log.warn("No membership listener");
-          }
-          // Do not shutdown the cluster if we are not the owner.
-          while (! customHazelcastCluster  && hazelcast.getLifecycleService().isRunning()) {
-            try {
-              // This can sometimes throw java.util.concurrent.RejectedExecutionException so we retry.
-              hazelcast.getLifecycleService().shutdown();
-            } catch (RejectedExecutionException ignore) {
-              ignore.printStackTrace();
+      // We need to synchronized on the cluster manager instance to avoid other call to happen while leaving the
+      // cluster, typically, memberRemoved and memberAdded
+      synchronized (HazelcastClusterManager.this) {
+        if (active) {
+          try {
+            active = false;
+            boolean left = hazelcast.getCluster().removeMembershipListener(membershipListenerId);
+            if (!left) {
+              log.warn("No membership listener");
             }
-            Thread.sleep(1);
+            // Do not shutdown the cluster if we are not the owner.
+            while (!customHazelcastCluster && hazelcast.getLifecycleService().isRunning()) {
+              try {
+                // This can sometimes throw java.util.concurrent.RejectedExecutionException so we retry.
+                hazelcast.getLifecycleService().shutdown();
+              } catch (RejectedExecutionException ignore) {
+                log.debug("Rejected execution of the shutdown operation, retrying");
+              }
+              try {
+                Thread.sleep(1);
+              } catch (InterruptedException t) {
+                // Manage the interruption in another handler.
+                Thread.currentThread().interrupt();
+              }
+            }
+          } catch (Throwable t) {
+            fut.fail(t);
           }
-        } catch (Throwable t) {
-          throw new RuntimeException(t.getMessage());
         }
       }
       fut.complete();
@@ -336,14 +345,15 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   public void beforeLeave() {
-    vertx.executeBlocking(fut ->  {
+    vertx.executeBlocking(fut -> {
       if (isActive()) {
-        if (! customHazelcastCluster  && hazelcast.getLifecycleService().isRunning()) {
+        if (!customHazelcastCluster && hazelcast.getLifecycleService().isRunning()) {
           ILock lock = hazelcast.getLock("vertx.shutdownlock");
           try {
             lock.tryLock(30, TimeUnit.SECONDS);
           } catch (Exception ignore) {
           }
+          fut.complete();
           // The lock should be automatically released when the node is shutdown
         }
       }
