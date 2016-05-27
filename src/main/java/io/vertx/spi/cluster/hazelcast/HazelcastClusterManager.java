@@ -131,7 +131,8 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
         if (conf == null) {
           conf = loadConfig();
           if (conf == null) {
-            log.warn("Cannot find cluster configuration on 'hazelcast.config' system property, on the classpath, or specified programmatically. Using default hazelcast configuration");
+            log.warn("Cannot find cluster configuration on 'vertx.hazelcast.config' system property, on the classpath, " +
+                "or specified programmatically. Using default hazelcast configuration");
           }
         }
         hazelcast = Hazelcast.newHazelcastInstance(conf);
@@ -150,7 +151,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 	 * @param name A unique name by which the the MultiMap can be identified within the cluster.
 	 *     See the cluster config file (e.g. cluster.xml in case of HazelcastClusterManager) for
 	 *     additional MultiMap config parameters.
-	 * @return subscription map
+	 * @param resultHandler handler receiving the multimap
 	 */
   @Override
   public <K, V> void getAsyncMultiMap(String name, Handler<AsyncResult<AsyncMultiMap<K, V>>> resultHandler) {
@@ -298,7 +299,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   private InputStream getConfigStreamFromSystemProperty() {
-    String configProp = System.getProperty("hazelcast.config");
+    String configProp = System.getProperty("vertx.hazelcast.config");
     InputStream is = null;
     if (configProp != null) {
       if (configProp.startsWith("classpath:")) {
@@ -309,7 +310,8 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
         try {
           is = new FileInputStream(cfgFile);
         } catch (FileNotFoundException ex) {
-          log.warn("Failed to open file '" + configProp + "' defined in 'hazelcast.config'. Continuing classpath search for " + CONFIG_FILE);
+          log.warn("Failed to open file '" + configProp + "' defined in 'vertx.hazelcast.config'. Continuing " +
+              "classpath search for " + CONFIG_FILE);
         }
       }
     }
