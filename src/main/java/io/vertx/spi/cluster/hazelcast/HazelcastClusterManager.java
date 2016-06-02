@@ -353,7 +353,6 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
             lock.tryLock(30, TimeUnit.SECONDS);
           } catch (Exception ignore) {
           }
-          fut.complete();
           // The lock should be automatically released when the node is shutdown
         }
       }
