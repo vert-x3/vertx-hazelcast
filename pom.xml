@@ -18,7 +18,7 @@
   <properties>
     <stack.version>3.3.0-SNAPSHOT</stack.version>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
-    <hazelcast.version>3.6.2</hazelcast.version>
+    <hazelcast.version>3.6.3</hazelcast.version>
   </properties>
 
   <dependencyManagement>
@@ -74,7 +74,7 @@
       <version>${hazelcast.version}</version>
       <scope>test</scope>
     </dependency>
-    
+
   </dependencies>
 
   <build>
