@@ -18,7 +18,17 @@ package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
-import com.hazelcast.core.*;
+import com.hazelcast.core.AsyncAtomicLong;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IAtomicLong;
+import com.hazelcast.core.ILock;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.ISemaphore;
+import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberAttributeEvent;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -31,15 +41,26 @@ import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.NodeListener;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncCounter;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncCounter;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncMap;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.*;
 
 /**
  * A cluster manager that uses Hazelcast
@@ -200,11 +221,16 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     vertx.executeBlocking(fut -> {
       ISemaphore iSemaphore = hazelcast.getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
-      try {
-        locked = iSemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
-      } catch (InterruptedException e) {
-        // OK continue
-      }
+      long remaining = timeout;
+      do {
+        long start = System.nanoTime();
+        try {
+          locked = iSemaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          // OK continue
+        }
+        remaining = remaining - MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
+      } while (!locked && remaining > 0);
       if (locked) {
         fut.complete(new HazelcastLock(iSemaphore));
       } else {
