@@ -10,7 +10,7 @@ cluster managers are pluggable.  This implementation is packaged inside:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-hazelcast</artifactId>
-  <version>3.3.2</version>
+  <version>3.3.3</version>
 </dependency>
 ----
 
@@ -277,7 +277,7 @@ In this later case, you would need in Maven:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-hazelcast</artifactId>
-  <version>3.3.2</version>
+  <version>3.3.3</version>
 </dependency>
 ----
 
@@ -288,7 +288,7 @@ On Gradle, you can achieve the same overloading using:
 [source]
 ----
 dependencies {
- compile ("io.vertx:vertx-hazelcast:3.3.2"){
+ compile ("io.vertx:vertx-hazelcast:3.3.3"){
    exclude group: 'com.hazelcast', module: 'hazelcast'
  }
  compile "com.hazelcast:hazelcast:ENTER_YOUR_VERSION_HERE"
