@@ -134,6 +134,16 @@
  * cluster as they do not notify when they leave the cluster and you may loose data, or leave the cluster in an
  * inconsistent state. See https://github.com/vert-x3/vertx-hazelcast/issues/24 for more details.
  *
+ * === Changing timeout for failed nodes
+ * By default a node will be removed from the cluster if Hazelcast didn't receive a heartbeat for 300 seconds. To change
+ * this value `hazelcast.max.no.heartbeat.seconds` system property such as in:
+ *
+ * ----
+ * -Dhazelcast.max.no.heartbeat.seconds=5
+ * ----
+ *
+ * Afterwards a node will be removed from the cluster after 5 seconds without a heartbeat.
+ *
  * == Using Hazelcast async methods
  * Hazelcast's `IMap` and `IAtomicLong` interfaces can be used with async methods returning `ICompletableFuture<V>`,
  * a natural fit for Vert.x threading model. Even though these interfaces have been available for a long time, they are not
