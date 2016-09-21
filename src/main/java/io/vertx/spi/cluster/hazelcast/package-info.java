@@ -197,6 +197,15 @@
  * For more information on available Hazelcast transports and how to configure them please consult the Hazelcast
  * documentation.
  *
+ * === When killing a node makes cluster unbalanced
+ * 
+ * When a node is killed in not graceful way cluster has to discover node is dead. Hazelcast has a parameter 
+ * `hazelcast.max.no.heartbeat.seconds` which defines Maximum timeout of heartbeat in seconds for a node to assume 
+ * it is dead. Default value is very long: 300sec. In most cases it should be much below 5sec. 
+ * See http://docs.hazelcast.org/docs/3.6/manual/html-single/index.html#system-properties[Hazelcast system-properties] and
+ * http://docs.hazelcast.org/docs/3.6/manual/html-single/index.html#configuring-with-system-properties[configuring Hazelcast 
+ * with system properties]
+ * 
  * === Enabling logging
  *
  * When trouble-shooting clustering issues with Hazelcast it's often useful to get some logging output from Hazelcast
