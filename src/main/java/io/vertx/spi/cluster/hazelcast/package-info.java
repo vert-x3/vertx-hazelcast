@@ -135,6 +135,7 @@
  * inconsistent state. See https://github.com/vert-x3/vertx-hazelcast/issues/24 for more details.
  *
  * === Changing timeout for failed nodes
+ *
  * By default a node will be removed from the cluster if Hazelcast didn't receive a heartbeat for 300 seconds. To change
  * this value `hazelcast.max.no.heartbeat.seconds` system property such as in:
  *
@@ -143,6 +144,11 @@
  * ----
  *
  * Afterwards a node will be removed from the cluster after 5 seconds without a heartbeat.
+ *
+ * See http://docs.hazelcast.org/docs/3.6/manual/html-single/index.html#system-properties[Hazelcast
+ * system-properties] and
+ * http://docs.hazelcast.org/docs/3.6/manual/html-single/index.html#configuring-with-system-properties[configuring Hazelcast
+ * with system properties] for the other properties you can configure.
  *
  * == Using Hazelcast async methods
  * Hazelcast's `IMap` and `IAtomicLong` interfaces can be used with async methods returning `ICompletableFuture<V>`,
