@@ -27,11 +27,11 @@
  *
  * == Using this cluster manager
  *
- * If you are using Vert.x from the command line, the jar corresponding to this cluster manager (it will be named `vertx-hazelcast-${version}`.jar`
+ * If you are using Vert.x from the command line, the jar corresponding to this cluster manager (it will be named `${maven.artifactId}-${maven.version}.jar`
  * should be in the `lib` directory of the Vert.x installation.
  *
  * If you want clustering with this cluster manager in your Vert.x Maven or Gradle project then just add a dependency to
- * the artifact: `io.vertx:vertx-hazelcast:${version}` in your project.
+ * the artifact: `${maven.groupId}:${maven.artifactId}:${maven.version}` in your project.
  *
  * If the jar is on your classpath as above then Vert.x will automatically detect this and use it as the cluster manager.
  * Please make sure you don't have any other cluster managers on your classpath or Vert.x might
