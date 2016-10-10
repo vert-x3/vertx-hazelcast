@@ -19,6 +19,8 @@ package io.vertx.test.core;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
+import java.math.BigInteger;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +32,14 @@ public class HazelcastHATest extends HATest {
   static {
     System.setProperty("hazelcast.wait.seconds.before.join", "0");
     System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    Random random = new Random();
+    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
+    System.setProperty("vertx.hazelcast.test.group.password", new BigInteger(128, random).toString(32));
+    super.setUp();
   }
 
   @Override

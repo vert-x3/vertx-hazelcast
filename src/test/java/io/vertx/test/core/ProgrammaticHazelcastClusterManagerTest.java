@@ -20,13 +20,19 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.GroupConfig;
-import com.hazelcast.core.*;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.MemberAttributeEvent;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -40,6 +46,14 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     // this is only checked once every 10 seconds by Hazelcast on client disconnect
     System.setProperty("hazelcast.client.max.no.heartbeat.seconds", "9");
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    Random random = new Random();
+    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
+    System.setProperty("vertx.hazelcast.test.group.password", new BigInteger(128, random).toString(32));
+    super.setUp();
   }
 
   private void testProgrammatic(HazelcastClusterManager mgr, Config config) throws Exception {

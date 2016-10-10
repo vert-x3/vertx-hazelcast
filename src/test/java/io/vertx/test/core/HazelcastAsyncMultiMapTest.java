@@ -16,16 +16,17 @@
 
 package io.vertx.test.core;
 
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.UUID;
-
-import org.junit.Test;
-
 import io.vertx.core.net.impl.ServerID;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Test;
+
+import java.lang.reflect.Field;
+import java.math.BigInteger;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -35,6 +36,14 @@ public class HazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
   static {
     System.setProperty("hazelcast.wait.seconds.before.join", "0");
     System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    Random random = new Random();
+    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
+    System.setProperty("vertx.hazelcast.test.group.password", new BigInteger(128, random).toString(32));
+    super.setUp();
   }
 
   @Override
