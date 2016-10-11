@@ -198,7 +198,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   @Test
   public void testThatExternalHZInstanceCanBeShutdown() {
     // This instance won't be used by vert.x
-    HazelcastInstance instance = Hazelcast.newHazelcastInstance(new Config());
+    GroupConfig groupConfig = new GroupConfig()
+      .setName(System.getProperty("vertx.hazelcast.test.group.name"))
+      .setPassword(System.getProperty("vertx.hazelcast.test.group.password"));
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(new Config().setGroupConfig(groupConfig));
     String nodeID = instance.getCluster().getLocalMember().getUuid();
     instance.getCluster().addMembershipListener(new MembershipListener() {
       @Override
