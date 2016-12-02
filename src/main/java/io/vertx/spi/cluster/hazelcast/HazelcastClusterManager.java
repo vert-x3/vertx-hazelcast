@@ -485,6 +485,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
             semaphore.release();
             fut.complete();
           },
+          false,
           (v) -> {
             // Do nothing.
           }
