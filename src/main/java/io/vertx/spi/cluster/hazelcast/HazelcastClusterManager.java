@@ -25,6 +25,8 @@ import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.ILock;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.ISemaphore;
+import com.hazelcast.core.LifecycleEvent;
+import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
@@ -54,10 +56,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -68,7 +73,7 @@ import static java.util.concurrent.TimeUnit.*;
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusterManager implements ExtendedClusterManager, MembershipListener {
+public class HazelcastClusterManager implements ExtendedClusterManager, MembershipListener, LifecycleListener {
 
   private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
@@ -94,7 +99,11 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   private HazelcastInstance hazelcast;
   private String nodeID;
   private String membershipListenerId;
+  private String lifecycleListenerId;
   private boolean customHazelcastCluster;
+  private Set<Member> members = new HashSet<>();
+  // Guarded by this
+  private Set<HazelcastAsyncMultiMap> multimaps = Collections.newSetFromMap(new WeakHashMap<>(1));
 
   private NodeListener nodeListener;
   private volatile boolean active;
@@ -137,6 +146,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
         if (customHazelcastCluster) {
           nodeID = hazelcast.getLocalEndpoint().getUuid();
           membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
+          lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
           fut.complete();
           return;
         }
@@ -151,6 +161,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
         hazelcast = Hazelcast.newHazelcastInstance(conf);
         nodeID = hazelcast.getLocalEndpoint().getUuid();
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
+        lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
         fut.complete();
       }
     }, resultHandler);
@@ -170,7 +181,11 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   public <K, V> void getAsyncMultiMap(String name, Handler<AsyncResult<AsyncMultiMap<K, V>>> resultHandler) {
     vertx.executeBlocking(fut -> {
       com.hazelcast.core.MultiMap<K, V> multiMap = hazelcast.getMultiMap(name);
-      fut.complete(new HazelcastAsyncMultiMap<>(vertx, multiMap));
+      HazelcastAsyncMultiMap<K, V> asyncMultiMap = new HazelcastAsyncMultiMap<>(vertx, multiMap);
+      synchronized (this) {
+        multimaps.add(asyncMultiMap);
+      }
+      fut.complete(asyncMultiMap);
     }, resultHandler);
   }
 
@@ -256,6 +271,8 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
             if (!left) {
               log.warn("No membership listener");
             }
+            hazelcast.getLifecycleService().removeLifecycleListener(lifecycleListenerId);
+
             // Do not shutdown the cluster if we are not the owner.
             while (!customHazelcastCluster && hazelcast.getLifecycleService().isRunning()) {
               try {
@@ -286,8 +303,10 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
       return;
     }
     try {
+      multimaps.forEach(HazelcastAsyncMultiMap::clearCache);
       if (nodeListener != null) {
         Member member = membershipEvent.getMember();
+        members.add(member);
         nodeListener.nodeAdded(member.getUuid());
       }
     } catch (Throwable t) {
@@ -301,12 +320,34 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
       return;
     }
     try {
+      multimaps.forEach(HazelcastAsyncMultiMap::clearCache);
       if (nodeListener != null) {
         Member member = membershipEvent.getMember();
+        members.remove(member);
         nodeListener.nodeLeft(member.getUuid());
       }
     } catch (Throwable t) {
       log.error("Failed to handle memberRemoved", t);
+    }
+  }
+
+  @Override
+  public synchronized void stateChanged(LifecycleEvent lifecycleEvent) {
+    multimaps.forEach(HazelcastAsyncMultiMap::clearCache);
+    // Safeguard to make sure members list is OK after a partition merge
+    if(lifecycleEvent.getState() == LifecycleEvent.LifecycleState.MERGED) {
+      final Set<Member> currentMembers = hazelcast.getCluster().getMembers();
+      Set<Member> newMembers = new HashSet<>(currentMembers);
+      newMembers.removeAll(members);
+      Set<Member> removedMembers = new HashSet<>(members);
+      removedMembers.removeAll(currentMembers);
+      for(Member m : newMembers) {
+        nodeListener.nodeAdded(m.getUuid());
+      }
+      for(Member m : removedMembers) {
+        nodeListener.nodeLeft(m.getUuid());
+      }
+      members.retainAll(currentMembers);
     }
   }
 
