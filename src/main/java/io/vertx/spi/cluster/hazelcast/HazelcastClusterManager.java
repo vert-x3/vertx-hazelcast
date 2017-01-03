@@ -33,6 +33,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
+import io.vertx.core.impl.ContextImpl;
 import io.vertx.core.impl.ExtendedClusterManager;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -92,8 +93,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     boolean b = false;
     try {
       b = Boolean.valueOf(System.getProperty(OPTION_USE_HZ_ASYNC_API, "false"));
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
     }
     USE_HZ_ASYNC_API = b;
   }
@@ -120,6 +120,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   /**
    * Constructor - config supplied
+   *
    * @param conf
    */
   public HazelcastClusterManager(Config conf) {
@@ -153,7 +154,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
           conf = loadConfig();
           if (conf == null) {
             log.warn("Cannot find cluster configuration on 'vertx.hazelcast.config' system property, on the classpath, " +
-                "or specified programmatically. Using default hazelcast configuration");
+              "or specified programmatically. Using default hazelcast configuration");
           }
         }
         hazelcast = Hazelcast.newHazelcastInstance(conf);
@@ -164,16 +165,16 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     }, resultHandler);
   }
 
-	/**
-	 * Every eventbus handler has an ID. SubsMap (subscriber map) is a MultiMap which
-	 * maps handler-IDs with server-IDs and thus allows the eventbus to determine where
-	 * to send messages.
-	 *
-	 * @param name A unique name by which the the MultiMap can be identified within the cluster.
-	 *     See the cluster config file (e.g. cluster.xml in case of HazelcastClusterManager) for
-	 *     additional MultiMap config parameters.
-	 * @param resultHandler handler receiving the multimap
-	 */
+  /**
+   * Every eventbus handler has an ID. SubsMap (subscriber map) is a MultiMap which
+   * maps handler-IDs with server-IDs and thus allows the eventbus to determine where
+   * to send messages.
+   *
+   * @param name          A unique name by which the the MultiMap can be identified within the cluster.
+   *                      See the cluster config file (e.g. cluster.xml in case of HazelcastClusterManager) for
+   *                      additional MultiMap config parameters.
+   * @param resultHandler handler receiving the multimap
+   */
   @Override
   public <K, V> void getAsyncMultiMap(String name, Handler<AsyncResult<AsyncMultiMap<K, V>>> resultHandler) {
     vertx.executeBlocking(fut -> {
@@ -191,7 +192,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   public List<String> getNodes() {
     Set<Member> members = hazelcast.getCluster().getMembers();
     List<String> lMembers = new ArrayList<>();
-    for (Member member: members) {
+    for (Member member : members) {
       lMembers.add(member.getUuid());
     }
     return lMembers;
@@ -218,7 +219,9 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   @Override
   public void getLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+    ContextImpl context = (ContextImpl) vertx.getOrCreateContext();
+    // Ordered on the internal blocking executor
+    context.executeBlocking(() -> {
       ISemaphore iSemaphore = hazelcast.getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
       long remaining = timeout;
@@ -232,7 +235,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
         remaining = remaining - MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
       } while (!locked && remaining > 0);
       if (locked) {
-        fut.complete(new HazelcastLock(iSemaphore));
+        return new HazelcastLock(iSemaphore);
       } else {
         throw new VertxException("Timed out waiting to get lock " + name);
       }
@@ -242,12 +245,12 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   @Override
   public void getCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
     vertx.executeBlocking(fut ->
-            fut.complete(
-                USE_HZ_ASYNC_API ?
-                    new HazelcastInternalAsyncCounter(vertx, (AsyncAtomicLong) hazelcast.getAtomicLong(name)) :
-                    new HazelcastCounter(hazelcast.getAtomicLong(name))
-            )
-        , resultHandler);
+        fut.complete(
+          USE_HZ_ASYNC_API ?
+            new HazelcastInternalAsyncCounter(vertx, (AsyncAtomicLong) hazelcast.getAtomicLong(name)) :
+            new HazelcastCounter(hazelcast.getAtomicLong(name))
+        )
+      , resultHandler);
   }
 
   public void leave(Handler<AsyncResult<Void>> resultHandler) {
@@ -346,7 +349,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
           is = new FileInputStream(cfgFile);
         } catch (FileNotFoundException ex) {
           log.warn("Failed to open file '" + configProp + "' defined in 'vertx.hazelcast.config'. Continuing " +
-              "classpath search for " + CONFIG_FILE);
+            "classpath search for " + CONFIG_FILE);
         }
       }
     }
@@ -370,6 +373,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   /**
    * Get the Hazelcast config
+   *
    * @return a config object
    */
   public Config getConfig() {
@@ -378,6 +382,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   /**
    * Set the hazelcast config
+   *
    * @param config
    */
   public void setConfig(Config config) {
@@ -469,7 +474,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   private class HazelcastLock implements Lock {
 
-    private ISemaphore semaphore;
+    private final ISemaphore semaphore;
 
     private HazelcastLock(ISemaphore semaphore) {
       this.semaphore = semaphore;
@@ -477,18 +482,10 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
     @Override
     public void release() {
-      // Releasing a semaphore is blocking, so we execute it in a worker thread.
-      // To avoid changing the API we hide the fact that the semaphore is not necessarily "released" after this
-      // call.
-      vertx.executeBlocking(
-          (fut) -> {
-            semaphore.release();
-            fut.complete();
-          },
-          (v) -> {
-            // Do nothing.
-          }
-      );
+      vertx.executeBlocking(future -> {
+        semaphore.release();
+        future.complete();
+      }, false, null);
     }
   }
 
