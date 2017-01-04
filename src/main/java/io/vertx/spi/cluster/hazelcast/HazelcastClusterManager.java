@@ -87,16 +87,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
    */
   private static final String OPTION_USE_HZ_ASYNC_API = "vertx.hazelcast.async-api";
 
-  private static final boolean USE_HZ_ASYNC_API;
-
-  static {
-    boolean b = false;
-    try {
-      b = Boolean.valueOf(System.getProperty(OPTION_USE_HZ_ASYNC_API, "false"));
-    } catch (Exception e) {
-    }
-    USE_HZ_ASYNC_API = b;
-  }
+  private static final boolean USE_HZ_ASYNC_API = Boolean.getBoolean(OPTION_USE_HZ_ASYNC_API);
 
   private Vertx vertx;
 
@@ -393,9 +384,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     Config cfg = null;
     try (InputStream is = getConfigStream();
          InputStream bis = new BufferedInputStream(is)) {
-      if (is != null) {
-        cfg = new XmlConfigBuilder(bis).build();
-      }
+      cfg = new XmlConfigBuilder(bis).build();
     } catch (IOException ex) {
       log.error("Failed to read config", ex);
     }
