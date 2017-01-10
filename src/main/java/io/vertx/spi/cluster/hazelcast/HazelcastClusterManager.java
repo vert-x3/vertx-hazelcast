@@ -333,6 +333,9 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
 
   @Override
   public synchronized void stateChanged(LifecycleEvent lifecycleEvent) {
+    if (!active) {
+      return;
+    }
     multimaps.forEach(HazelcastAsyncMultiMap::clearCache);
     // Safeguard to make sure members list is OK after a partition merge
     if(lifecycleEvent.getState() == LifecycleEvent.LifecycleState.MERGED) {
