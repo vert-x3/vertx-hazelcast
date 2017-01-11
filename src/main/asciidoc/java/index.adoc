@@ -147,8 +147,13 @@ Notice that the custom Hazelcast instance need to be configured with:
 
 [source, xml]
 ----
-<map name="__vertx.subs">
+<properties>
+  <property name="hazelcast.shutdownhook.enabled">false</property>
+</properties>
+<multimap name="__vertx.subs">
   <backup-count>1</backup-count>
+</multimap>
+<map name="__vertx.haInfo">
   <time-to-live-seconds>0</time-to-live-seconds>
   <max-idle-seconds>0</max-idle-seconds>
   <eviction-policy>NONE</eviction-policy>
@@ -164,6 +169,9 @@ Notice that the custom Hazelcast instance need to be configured with:
 **IMPORTANT** Do not use Hazelcast clients or smart clients when using high-availability (HA, or fail-over) in your
 cluster as they do not notify when they leave the cluster and you may loose data, or leave the cluster in an
 inconsistent state. See https://github.com/vert-x3/vertx-hazelcast/issues/24 for more details.
+
+**IMPORTANT** Make sure Hazelcast is started before and shut down after Vert.x.
+Also, the Hazelcast shutdown hook should be disabled (see xml example, or via system property).
 
 === Changing timeout for failed nodes
 
