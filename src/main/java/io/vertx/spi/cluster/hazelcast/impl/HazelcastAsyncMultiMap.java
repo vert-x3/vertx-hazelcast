@@ -23,6 +23,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
@@ -41,7 +43,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   private static final Logger log = LoggerFactory.getLogger(HazelcastAsyncMultiMap.class);
 
-  private final Vertx vertx;
+  private final WorkerExecutor workerExecutor;
   private final com.hazelcast.core.MultiMap<K, V> map;
   private final AtomicInteger getInProgressCount = new AtomicInteger();
 
@@ -59,14 +61,14 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
   private ConcurrentMap<K, ChoosableSet<V>> cache = new ConcurrentHashMap<>();
 
   public HazelcastAsyncMultiMap(Vertx vertx, com.hazelcast.core.MultiMap<K, V> map) {
-    this.vertx = vertx;
+    workerExecutor = ((ContextInternal) vertx.getOrCreateContext()).createWorkerExecutor();
     this.map = map;
     map.addEntryListener(this, true);
   }
 
   @Override
   public void removeAllForValue(V val, Handler<AsyncResult<Void>> completionHandler) {
-    vertx.executeBlocking(fut -> {
+    workerExecutor.executeBlocking(fut -> {
       for (Map.Entry<K, V> entry : map.entrySet()) {
         V v = entry.getValue();
         if (val.equals(v)) {
@@ -79,7 +81,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   @Override
   public void add(K k, V v, Handler<AsyncResult<Void>> completionHandler) {
-    vertx.executeBlocking(fut -> {
+    workerExecutor.executeBlocking(fut -> {
       map.put(k, HazelcastServerID.convertServerID(v));
       fut.complete();
     }, completionHandler);
@@ -92,7 +94,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
       resultHandler.handle(Future.succeededFuture(entries));
     } else {
       getInProgressCount.incrementAndGet();
-      vertx.<ChoosableIterable<V>>executeBlocking(fut -> {
+      workerExecutor.<ChoosableIterable<V>>executeBlocking(fut -> {
         Collection<V> entries2 = map.get(k);
         ChoosableSet<V> sids;
         if (entries2 != null) {
@@ -120,7 +122,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   @Override
   public void remove(K k, V v, Handler<AsyncResult<Boolean>> completionHandler) {
-    vertx.executeBlocking(fut -> fut.complete(map.remove(k, HazelcastServerID.convertServerID(v))), completionHandler);
+    workerExecutor.executeBlocking(fut -> fut.complete(map.remove(k, HazelcastServerID.convertServerID(v))), completionHandler);
   }
 
   @Override
