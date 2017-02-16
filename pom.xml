@@ -150,28 +150,6 @@
         </executions>
       </plugin>
 
-      <plugin>
-        <groupId>biz.aQute.bnd</groupId>
-        <artifactId>bnd-maven-plugin</artifactId>
-        <version>3.2.0</version>
-
-        <executions>
-          <execution>
-            <id>default-bnd-process</id>
-            <goals>
-              <goal>bnd-process</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <bnd><![CDATA[
-          Import-Package: \
-	          *
-	        -exportcontents: !*impl, !examples, *
-          ]]></bnd>
-        </configuration>
-      </plugin>
-
     </plugins>
   </build>
 
