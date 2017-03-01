@@ -69,11 +69,11 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   @Override
   public void removeAllForValue(V val, Handler<AsyncResult<Void>> completionHandler) {
-    removeAll(val::equals, completionHandler);
+    removeAllMatching(val::equals, completionHandler);
   }
 
   @Override
-  public void removeAll(Predicate<V> p, Handler<AsyncResult<Void>> completionHandler) {
+  public void removeAllMatching(Predicate<V> p, Handler<AsyncResult<Void>> completionHandler) {
     workerExecutor.executeBlocking(fut -> {
       for (Map.Entry<K, V> entry : map.entrySet()) {
         V v = entry.getValue();

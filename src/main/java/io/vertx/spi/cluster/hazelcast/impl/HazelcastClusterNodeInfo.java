@@ -20,6 +20,7 @@ import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 import io.vertx.core.eventbus.impl.clustered.ClusterNodeInfo;
+import io.vertx.core.net.impl.ServerID;
 
 import java.io.IOException;
 
@@ -32,21 +33,20 @@ public class HazelcastClusterNodeInfo extends ClusterNodeInfo implements DataSer
   }
 
   public HazelcastClusterNodeInfo(ClusterNodeInfo clusterNodeInfo) {
-    super(clusterNodeInfo.nodeId, clusterNodeInfo.host, clusterNodeInfo.port);
+    super(clusterNodeInfo.nodeId, clusterNodeInfo.serverID);
   }
 
   @Override
   public void writeData(ObjectDataOutput dataOutput) throws IOException {
     dataOutput.writeUTF(nodeId);
-    dataOutput.writeUTF(host);
-    dataOutput.writeInt(port);
+    dataOutput.writeInt(serverID.port);
+    dataOutput.writeUTF(serverID.host);
   }
 
   @Override
   public void readData(ObjectDataInput dataInput) throws IOException {
     nodeId = dataInput.readUTF();
-    host = dataInput.readUTF();
-    port = dataInput.readInt();
+    serverID = new ServerID(dataInput.readInt(), dataInput.readUTF());
   }
 
   // We replace any ClusterNodeInfo instances with HazelcastClusterNodeInfo
