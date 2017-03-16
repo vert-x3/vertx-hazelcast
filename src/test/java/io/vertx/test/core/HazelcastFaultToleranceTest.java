@@ -16,7 +16,6 @@
 
 package io.vertx.test.core;
 
-import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
@@ -60,8 +59,8 @@ public class HazelcastFaultToleranceTest extends FaultToleranceTest {
   }
 
   @Override
-  protected void waitForClusterStability(VertxInternal vertx) throws Exception {
-    super.waitForClusterStability(vertx);
+  protected void afterNodesKilled() throws Exception {
+    super.afterNodesKilled();
     // Additionnal wait to make sure all nodes noticed the shutdowns
     Thread.sleep(15_000);
   }
