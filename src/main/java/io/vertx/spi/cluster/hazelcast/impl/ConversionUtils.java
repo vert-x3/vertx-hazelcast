@@ -1,15 +1,17 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
+import java.io.IOException;
+
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
+
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.shareddata.impl.ClusterSerializable;
 
-import java.io.IOException;
+public class ConversionUtils {
 
-class ConversionUtils {
-    static <T> T convertParam(T obj) {
+  public static <T> T convertParam(T obj) {
         if (obj instanceof ClusterSerializable) {
             ClusterSerializable cobj = (ClusterSerializable)obj;
             return (T)(new DataSerializableHolder(cobj));
@@ -19,7 +21,7 @@ class ConversionUtils {
     }
 
     @SuppressWarnings("unchecked")
-    static  <T> T convertReturn(Object obj) {
+   public static  <T> T convertReturn(Object obj) {
         if (obj instanceof DataSerializableHolder) {
             DataSerializableHolder cobj = (DataSerializableHolder)obj;
             return (T)cobj.clusterSerializable();

@@ -16,15 +16,15 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
+import java.util.concurrent.TimeUnit;
+
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
