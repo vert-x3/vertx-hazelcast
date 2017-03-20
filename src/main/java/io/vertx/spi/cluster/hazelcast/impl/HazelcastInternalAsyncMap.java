@@ -23,11 +23,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
-import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
+import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.*;
 
 public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
 
