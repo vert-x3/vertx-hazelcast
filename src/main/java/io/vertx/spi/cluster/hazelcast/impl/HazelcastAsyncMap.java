@@ -16,17 +16,15 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import java.util.concurrent.TimeUnit;
-
 import com.hazelcast.core.IMap;
-
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
 
-import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
-import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
+import java.util.concurrent.TimeUnit;
+
+import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.*;
 
 public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
 
