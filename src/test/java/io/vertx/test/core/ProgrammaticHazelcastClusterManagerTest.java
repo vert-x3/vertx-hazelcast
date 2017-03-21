@@ -117,7 +117,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       vertx1.set(res.result());
     });
 
-    waitUntil(() -> vertx1.get() != null);
+    assertWaitUntil(() -> vertx1.get() != null);
 
     Vertx.clusteredVertx(options2, res -> {
       assertTrue(res.succeeded());
@@ -134,7 +134,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     assertTrue(instance1.getLifecycleService().isRunning());
     assertTrue(instance2.getLifecycleService().isRunning());
 
-    waitUntil(() -> vertx1.get() == null  && vertx2.get() == null);
+    assertWaitUntil(() -> vertx1.get() == null && vertx2.get() == null);
 
     instance1.shutdown();
     instance2.shutdown();
@@ -164,7 +164,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       });
     });
 
-    waitUntil(() -> vertx1.get() != null);
+    assertWaitUntil(() -> vertx1.get() != null);
 
     Vertx.clusteredVertx(options2, res -> {
       assertTrue(res.succeeded());
@@ -183,7 +183,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     vertx1.get().close(ar -> vertx1.set(null));
     vertx2.get().close(ar -> vertx2.set(null));
 
-    waitUntil(() -> vertx1.get() == null  && vertx2.get() == null);
+    assertWaitUntil(() -> vertx1.get() == null && vertx2.get() == null);
 
     // be sure stopping vertx did not cause or require our custom hazelcast to shutdown
 
@@ -235,7 +235,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       });
     });
 
-    waitUntil(() -> vertx1.get() != null);
+    assertWaitUntil(() -> vertx1.get() != null);
     int size = mgr.getNodes().size();
     assertTrue(mgr.getNodes().contains(nodeID));
 
@@ -251,11 +251,11 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     instance.shutdown();
 
-    waitUntil(() -> mgr.getNodes().size() == size - 1);
+    assertWaitUntil(() -> mgr.getNodes().size() == size - 1);
     vertx1.get().close();
     vertx1.get().close(ar -> vertx1.set(null));
 
-    waitUntil(() -> vertx1.get() == null);
+    assertWaitUntil(() -> vertx1.get() == null);
   }
 
   @Test
@@ -286,7 +286,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       });
     });
 
-    waitUntil(() -> vertx1.get() != null);
+    assertWaitUntil(() -> vertx1.get() != null);
 
     Vertx.clusteredVertx(options2, res -> {
       assertTrue(res.succeeded());
@@ -305,7 +305,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     vertx1.get().close(ar -> vertx1.set(null));
     vertx2.get().close(ar -> vertx2.set(null));
 
-    waitUntil(() -> vertx1.get() == null && vertx2.get() == null);
+    assertWaitUntil(() -> vertx1.get() == null && vertx2.get() == null);
 
     // be sure stopping vertx did not cause or require our custom hazelcast to shutdown
 
