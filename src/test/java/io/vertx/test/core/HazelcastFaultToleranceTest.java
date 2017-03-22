@@ -62,6 +62,6 @@ public class HazelcastFaultToleranceTest extends FaultToleranceTest {
   protected void afterNodesKilled() throws Exception {
     super.afterNodesKilled();
     // Additionnal wait to make sure all nodes noticed the shutdowns
-    Thread.sleep(15_000);
+    Thread.sleep(30_000);
   }
 }
