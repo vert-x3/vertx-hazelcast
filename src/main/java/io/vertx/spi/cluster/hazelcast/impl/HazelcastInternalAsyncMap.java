@@ -40,7 +40,7 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
   @Override
   public void get(K k, Handler<AsyncResult<V>> asyncResultHandler) {
     executeAsync(
-            (ICompletableFuture<V>)map.getAsync(convertParam(k)),
+            map.getAsync(convertParam(k)),
             asyncResultHandler
     );
   }
@@ -50,7 +50,7 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(v);
     executeAsyncVoid(
-            (ICompletableFuture<Void>)map.putAsync(kk, vv),
+            map.setAsync(kk, vv),
             completionHandler
     );
   }

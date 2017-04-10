@@ -283,7 +283,7 @@ See the http://docs.hazelcast.org/docs/3.6.1/manual/html-single/index.html#loggi
 
 == Using a different Hazelcast version
 
-You may want to use a different version of Hazelcast. The default version is `3.6.3`. To do so, you
+You may want to use a different version of Hazelcast. The default version is `3.8.1`. To do so, you
 need to:
 
 * put the version you want in the application classpath
