@@ -363,7 +363,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
   }
 
-  private InputStream getConfigStream() {
+  private static InputStream getConfigStream() {
     InputStream is = getConfigStreamFromSystemProperty();
     if (is == null) {
       is = getConfigStreamFromClasspath(CONFIG_FILE, DEFAULT_CONFIG_FILE);
@@ -371,7 +371,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     return is;
   }
 
-  private InputStream getConfigStreamFromSystemProperty() {
+  private static InputStream getConfigStreamFromSystemProperty() {
     String configProp = System.getProperty("vertx.hazelcast.config");
     InputStream is = null;
     if (configProp != null) {
@@ -391,16 +391,16 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     return is;
   }
 
-  private InputStream getConfigStreamFromClasspath(String configFile, String defaultConfig) {
+  private static InputStream getConfigStreamFromClasspath(String configFile, String defaultConfig) {
     InputStream is = null;
     ClassLoader ctxClsLoader = Thread.currentThread().getContextClassLoader();
     if (ctxClsLoader != null) {
       is = ctxClsLoader.getResourceAsStream(configFile);
     }
     if (is == null) {
-      is = getClass().getClassLoader().getResourceAsStream(configFile);
+      is = HazelcastClusterManager.class.getClassLoader().getResourceAsStream(configFile);
       if (is == null) {
-        is = getClass().getClassLoader().getResourceAsStream(defaultConfig);
+        is = HazelcastClusterManager.class.getClassLoader().getResourceAsStream(defaultConfig);
       }
     }
     return is;
@@ -424,7 +424,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     this.conf = config;
   }
 
-  public Config loadConfig() {
+  public static Config loadConfig() {
     Config cfg = null;
     try (InputStream is = getConfigStream();
          InputStream bis = new BufferedInputStream(is)) {
