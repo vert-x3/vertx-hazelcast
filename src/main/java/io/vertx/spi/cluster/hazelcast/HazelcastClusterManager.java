@@ -407,7 +407,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   /**
-   * Get the Hazelcast config
+   * Get the Hazelcast config.
    *
    * @return a config object
    */
@@ -416,14 +416,32 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
   }
 
   /**
-   * Set the hazelcast config
+   * Set the Hazelcast config.
    *
-   * @param config
+   * @param config a config object
    */
   public void setConfig(Config config) {
     this.conf = config;
   }
 
+  /**
+   * Load Hazelcast config XML and transform it into a {@link Config} object.
+   * The content is read from:
+   * <ol>
+   * <li>the location denoted by the {@code vertx.hazelcast.config} sysprop, if present, or</li>
+   * <li>the {@code cluster.xml} file on the classpath, if present, or</li>
+   * <li>the default config file</li>
+   * </ol>
+   * <p>
+   * The cluster manager uses this method to load the config when the node joins the cluster, if no config was provided upon creation.
+   * </p>
+   * <p>
+   * You may use this method to get a base config and customize it before the node joins the cluster.
+   * In this case, don't forget to invoke {@link #setConfig(Config)} after you applied your changes.
+   * </p>
+   *
+   * @return a config object
+   */
   public Config loadConfig() {
     Config cfg = null;
     try (InputStream is = getConfigStream();
