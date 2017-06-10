@@ -143,6 +143,9 @@
               <descriptors>
                 <descriptor>${basedir}/src/main/assembly/docs.xml</descriptor>
               </descriptors>
+              <archive>
+                 <manifestFile>${project.build.directory}/classes/META-INF/MANIFEST.MF</manifestFile>
+              </archive>
             </configuration>
           </execution>
         </executions>
@@ -169,7 +172,15 @@
           ]]></bnd>
         </configuration>
       </plugin>
-
+	  <plugin>
+	    <groupId>org.apache.maven.plugins</groupId>
+	    <artifactId>maven-jar-plugin</artifactId>
+	    <configuration>
+	        <archive>
+	            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+	        </archive>
+	    </configuration>
+	  </plugin>
     </plugins>
   </build>
 
