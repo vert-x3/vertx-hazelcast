@@ -19,10 +19,7 @@ package io.vertx.spi.cluster.hazelcast.impl;
 import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -30,9 +27,16 @@ import java.util.Set;
  */
 class ChoosableSet<T> implements ChoosableIterable<T> {
 
+  private static final ChoosableSet<?> EMPTY_SET = new ChoosableSet<>(0);
+
   private volatile boolean initialised;
   private final Set<T> ids;
   private volatile Iterator<T> iter;
+
+  @SuppressWarnings("unchecked")
+  public static <T> ChoosableSet<T> empty() {
+    return (ChoosableSet<T>) EMPTY_SET;
+  }
 
   public ChoosableSet(int initialSize) {
     ids = new ConcurrentHashSet<>(initialSize);
@@ -76,16 +80,15 @@ class ChoosableSet<T> implements ChoosableIterable<T> {
 
   @Override
   public synchronized T choose() {
-    if (!ids.isEmpty()) {
-      if (iter == null || !iter.hasNext()) {
-        iter = ids.iterator();
-      }
-      try {
-        return iter.next();
-      } catch (NoSuchElementException ignored) {
-        return null;
-      }
-    } else {
+    if (ids.isEmpty()) {
+      return null;
+    }
+    if (iter == null || !iter.hasNext()) {
+      iter = ids.iterator();
+    }
+    try {
+      return iter.next();
+    } catch (NoSuchElementException ignored) {
       return null;
     }
   }

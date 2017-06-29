@@ -97,7 +97,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
         }
         final Collection<V> actualEntries = map.get(k);
         if (actualEntries == null || actualEntries.isEmpty()) {
-          future.complete(new ChoosableSet<>(0));
+          future.complete(ChoosableSet.empty());
           return;
         }
         final ChoosableSet<V> entries = cache.compute(k, (key, value) -> {
