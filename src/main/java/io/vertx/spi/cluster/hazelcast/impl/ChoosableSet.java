@@ -19,6 +19,7 @@ package io.vertx.spi.cluster.hazelcast.impl;
 import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -37,30 +38,33 @@ class ChoosableSet<T> implements ChoosableIterable<T> {
     ids = new ConcurrentHashSet<>(initialSize);
   }
 
-  public int size() {
-    return ids.size();
+  public ChoosableSet(Collection<T> c) {
+    ids = new ConcurrentHashSet<>(c.size());
+    ids.addAll(c);
   }
 
   public boolean isInitialised() {
     return initialised;
   }
 
-  public void setInitialised() {
+  public ChoosableSet<T> setInitialised() {
     this.initialised = true;
+    return this;
   }
 
-  public void add(T elem) {
-    ids.add(elem);
+  public boolean add(T elem) {
+    return ids.add(elem);
   }
 
-  public void remove(T elem) {
-    ids.remove(elem);
+  public boolean remove(T elem) {
+    return ids.remove(elem);
   }
 
-  public void merge(ChoosableSet<T> toMerge) {
-    ids.addAll(toMerge.ids);
+  public boolean addAll(Collection<T> c) {
+    return ids.addAll(c);
   }
 
+  @Override
   public boolean isEmpty() {
     return ids.isEmpty();
   }
@@ -70,6 +74,7 @@ class ChoosableSet<T> implements ChoosableIterable<T> {
     return ids.iterator();
   }
 
+  @Override
   public synchronized T choose() {
     if (!ids.isEmpty()) {
       if (iter == null || !iter.hasNext()) {
@@ -77,7 +82,7 @@ class ChoosableSet<T> implements ChoosableIterable<T> {
       }
       try {
         return iter.next();
-      } catch (NoSuchElementException e) {
+      } catch (NoSuchElementException ignored) {
         return null;
       }
     } else {

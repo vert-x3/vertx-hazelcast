@@ -19,14 +19,12 @@ package io.vertx.spi.cluster.hazelcast.impl;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.MapEvent;
+import com.hazelcast.core.MultiMap;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 
@@ -34,7 +32,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 /**
@@ -42,13 +39,9 @@ import java.util.function.Predicate;
  */
 public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener<K, V> {
 
-  private static final Logger log = LoggerFactory.getLogger(HazelcastAsyncMultiMap.class);
-
   private final VertxInternal vertx;
-  private final com.hazelcast.core.MultiMap<K, V> map;
-  private final AtomicInteger getInProgressCount = new AtomicInteger();
+  private final MultiMap<K, V> map;
   private final TaskQueue taskQueue = new TaskQueue();
-
 
   /*
    The Hazelcast near cache is very slow so we use our own one.
@@ -62,7 +55,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
     */
   private ConcurrentMap<K, ChoosableSet<V>> cache = new ConcurrentHashMap<>();
 
-  public HazelcastAsyncMultiMap(Vertx vertx, com.hazelcast.core.MultiMap<K, V> map) {
+  public HazelcastAsyncMultiMap(Vertx vertx, MultiMap<K, V> map) {
     this.vertx = (VertxInternal) vertx;
     this.map = map;
     map.addEntryListener(this, true);
@@ -75,63 +68,56 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   @Override
   public void removeAllMatching(Predicate<V> p, Handler<AsyncResult<Void>> completionHandler) {
-    vertx.getOrCreateContext().executeBlocking(fut -> {
+    vertx.getOrCreateContext().executeBlocking(future -> {
       for (Map.Entry<K, V> entry : map.entrySet()) {
-        V v = entry.getValue();
+        final V v = entry.getValue();
         if (p.test(v)) {
           map.remove(entry.getKey(), v);
         }
       }
-      fut.complete();
+      future.complete();
     }, taskQueue, completionHandler);
   }
 
   @Override
   public void add(K k, V v, Handler<AsyncResult<Void>> completionHandler) {
-    vertx.getOrCreateContext().executeBlocking(fut -> {
+    vertx.getOrCreateContext().executeBlocking(future -> {
       map.put(k, HazelcastClusterNodeInfo.convertClusterNodeInfo(v));
-      fut.complete();
+      future.complete();
     }, taskQueue, completionHandler);
   }
 
   @Override
   public void get(K k, Handler<AsyncResult<ChoosableIterable<V>>> resultHandler) {
-    ChoosableSet<V> entries = cache.get(k);
-    if (entries != null && entries.isInitialised() && getInProgressCount.get() == 0) {
-      resultHandler.handle(Future.succeededFuture(entries));
-    } else {
-      getInProgressCount.incrementAndGet();
-      vertx.getOrCreateContext().<ChoosableIterable<V>>executeBlocking(fut -> {
-        Collection<V> entries2 = map.get(k);
-        ChoosableSet<V> sids;
-        if (entries2 != null) {
-          sids = new ChoosableSet<>(entries2.size());
-          for (V hid : entries2) {
-            sids.add(hid);
+    vertx.getOrCreateContext().executeBlocking(future -> {
+        final ChoosableSet<V> cachedEntries = cache.get(k);
+        if (cachedEntries != null && cachedEntries.isInitialised()) {
+          future.complete(cachedEntries);
+          return;
+        }
+        final Collection<V> actualEntries = map.get(k);
+        if (actualEntries == null || actualEntries.isEmpty()) {
+          future.complete(new ChoosableSet<>(0));
+          return;
+        }
+        final ChoosableSet<V> entries = cache.compute(k, (key, value) -> {
+          if (value == null) {
+            return new ChoosableSet<>(actualEntries);
           }
-        } else {
-          sids = new ChoosableSet<>(0);
-        }
-        ChoosableSet<V> prev = (sids.isEmpty()) ? null : cache.putIfAbsent(k, sids);
-        if (prev != null) {
-          // Merge them
-          prev.merge(sids);
-          sids = prev;
-        }
-        sids.setInitialised();
-        fut.complete(sids);
-      }, taskQueue, res -> {
-        getInProgressCount.decrementAndGet();
-        resultHandler.handle(res);
-      });
-    }
+          value.addAll(actualEntries);
+          return value;
+        });
+        future.complete(entries.setInitialised());
+      },
+      taskQueue, resultHandler);
   }
 
   @Override
   public void remove(K k, V v, Handler<AsyncResult<Boolean>> completionHandler) {
-    vertx.getOrCreateContext().executeBlocking(fut -> {
-      fut.complete(map.remove(k, HazelcastClusterNodeInfo.convertClusterNodeInfo(v)));
-    }, taskQueue, completionHandler);
+    vertx.getOrCreateContext().executeBlocking(future ->
+        future.complete(map.remove(k, HazelcastClusterNodeInfo.convertClusterNodeInfo(v))),
+      taskQueue, completionHandler
+    );
   }
 
   @Override
@@ -140,15 +126,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
   }
 
   private void addEntry(K k, V v) {
-    ChoosableSet<V> entries = cache.get(k);
-    if (entries == null) {
-      entries = new ChoosableSet<>(1);
-      ChoosableSet<V> prev = cache.putIfAbsent(k, entries);
-      if (prev != null) {
-        entries = prev;
-      }
-    }
-    entries.add(v);
+    cache.computeIfAbsent(k, key -> new ChoosableSet<>(1)).add(v);
   }
 
   @Override
@@ -157,23 +135,25 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
   }
 
   private void removeEntry(K k, V v) {
-    ChoosableSet<V> entries = cache.get(k);
-    if (entries != null) {
+    if (v == null) {
       // We forbid `null` values, but it can comes from another application using Hazelcast
       // (but not in the context of vert.x)
-      if (v != null) {
-        entries.remove(v);
-        if (entries.isEmpty()) {
-          cache.remove(k);
-        }
-      }
+      return;
     }
+    cache.compute(k, (key, entries) -> {
+      if (entries == null) {
+        return null;
+      }
+      if (entries.remove(v) && entries.isEmpty()) {
+        return null;
+      }
+      return entries;
+    });
   }
 
   @Override
   public void entryUpdated(EntryEvent<K, V> entry) {
-    K k = entry.getKey();
-    ChoosableSet<V> entries = cache.get(k);
+    final ChoosableSet<V> entries = cache.get(entry.getKey());
     if (entries != null) {
       entries.add(entry.getValue());
     }
