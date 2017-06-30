@@ -122,29 +122,22 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   @Override
   public void entryAdded(EntryEvent<K, V> entry) {
-    addEntry(entry.getKey(), entry.getValue());
-  }
-
-  private void addEntry(K k, V v) {
-    cache.computeIfAbsent(k, key -> new ChoosableSet<>(1)).add(v);
+    cache.computeIfAbsent(entry.getKey(), key -> new ChoosableSet<>(1)).add(entry.getValue());
   }
 
   @Override
   public void entryRemoved(EntryEvent<K, V> entry) {
-    removeEntry(entry.getKey(), entry.getOldValue());
-  }
-
-  private void removeEntry(K k, V v) {
-    if (v == null) {
+    final V oldValue = entry.getOldValue();
+    if (oldValue == null) {
       // We forbid `null` values, but it can comes from another application using Hazelcast
       // (but not in the context of vert.x)
       return;
     }
-    cache.compute(k, (key, entries) -> {
+    cache.compute(entry.getKey(), (key, entries) -> {
       if (entries == null) {
         return null;
       }
-      if (entries.remove(v) && entries.isEmpty()) {
+      if (entries.remove(oldValue) && entries.isEmpty()) {
         return null;
       }
       return entries;
