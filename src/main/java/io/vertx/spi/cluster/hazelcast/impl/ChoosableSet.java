@@ -19,7 +19,10 @@ package io.vertx.spi.cluster.hazelcast.impl;
 import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  *

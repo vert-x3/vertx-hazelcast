@@ -21,6 +21,7 @@ import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.MapEvent;
 import com.hazelcast.core.MultiMap;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.TaskQueue;
@@ -30,8 +31,11 @@ import io.vertx.core.spi.cluster.ChoosableIterable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 /**
@@ -53,7 +57,9 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
    pre-existing entries so we don't lose any. Hazelcast doesn't seem to have any consistent
    way to get an initial state plus a stream of updates.
     */
-  private ConcurrentMap<K, ChoosableSet<V>> cache = new ConcurrentHashMap<>();
+  private final ConcurrentMap<K, ChoosableSet<V>> cache = new ConcurrentHashMap<>();
+  private final CacheState<K> cacheState = new CacheState<>();
+
 
   public HazelcastAsyncMultiMap(Vertx vertx, MultiMap<K, V> map) {
     this.vertx = (VertxInternal) vertx;
@@ -69,7 +75,8 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
   @Override
   public void removeAllMatching(Predicate<V> p, Handler<AsyncResult<Void>> completionHandler) {
     vertx.getOrCreateContext().executeBlocking(future -> {
-      for (Map.Entry<K, V> entry : map.entrySet()) {
+      final Set<Map.Entry<K, V>> entries = map.entrySet();
+      for (Map.Entry<K, V> entry : entries) {
         final V v = entry.getValue();
         if (p.test(v)) {
           map.remove(entry.getKey(), v);
@@ -89,10 +96,20 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   @Override
   public void get(K k, Handler<AsyncResult<ChoosableIterable<V>>> resultHandler) {
+    final ChoosableSet<V> cachedEntries = getInitialized(k);
+    if (cachedEntries != null && cacheState.isReady(k)) {
+      resultHandler.handle(Future.succeededFuture(cachedEntries));
+      return;
+    }
+    cacheState.startInitialization(k);
+    final Handler<AsyncResult<ChoosableIterable<V>>> initializationResultHandler = result -> {
+      cacheState.stopInitialization(k);
+      resultHandler.handle(result);
+    };
     vertx.getOrCreateContext().executeBlocking(future -> {
-        final ChoosableSet<V> cachedEntries = cache.get(k);
-        if (cachedEntries != null && cachedEntries.isInitialised()) {
-          future.complete(cachedEntries);
+        final ChoosableSet<V> initializedEntries = getInitialized(k);
+        if (initializedEntries != null) {
+          future.complete(initializedEntries);
           return;
         }
         final Collection<V> actualEntries = map.get(k);
@@ -100,16 +117,16 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
           future.complete(ChoosableSet.empty());
           return;
         }
-        final ChoosableSet<V> entries = cache.compute(k, (key, value) -> {
+        final ChoosableSet<V> updatedEntries = cache.compute(k, (key, value) -> {
           if (value == null) {
             return new ChoosableSet<>(actualEntries);
           }
           value.addAll(actualEntries);
           return value;
         });
-        future.complete(entries.setInitialised());
+        future.complete(updatedEntries.setInitialised());
       },
-      taskQueue, resultHandler);
+      taskQueue, initializationResultHandler);
   }
 
   @Override
@@ -169,5 +186,37 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   public void clearCache() {
     cache.clear();
+  }
+
+  private ChoosableSet<V> getInitialized(K k) {
+    final ChoosableSet<V> entries = cache.get(k);
+    return entries != null && entries.isInitialised() ? entries : null;
+  }
+
+  private static final class CacheState<T> {
+    private final ConcurrentMap<T, AtomicInteger> inProgressNumber = new ConcurrentHashMap<>();
+
+    public boolean isReady(T k) {
+      return Optional.ofNullable(inProgressNumber.putIfAbsent(k, new AtomicInteger()))
+        .map(number -> number.get() == 0)
+        .orElse(false);
+    }
+
+    public void startInitialization(T k) {
+      inProgressNumber.compute(k, (key, value) -> {
+        if (value == null) {
+          return new AtomicInteger(1);
+        }
+        value.incrementAndGet();
+        return value;
+      });
+    }
+
+    public void stopInitialization(T k) {
+      inProgressNumber.computeIfPresent(k, (key, value) -> {
+        value.decrementAndGet();
+        return value;
+      });
+    }
   }
 }
