@@ -18,7 +18,6 @@ package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
-import com.hazelcast.core.AsyncAtomicLong;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
@@ -253,7 +252,7 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
     vertx.executeBlocking(fut ->
         fut.complete(
           USE_HZ_ASYNC_API ?
-            new HazelcastInternalAsyncCounter(vertx, (AsyncAtomicLong) hazelcast.getAtomicLong(name)) :
+            new HazelcastInternalAsyncCounter(vertx, hazelcast.getAtomicLong(name)) :
             new HazelcastCounter(hazelcast.getAtomicLong(name))
         )
       , resultHandler);
