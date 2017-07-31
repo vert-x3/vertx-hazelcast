@@ -97,9 +97,16 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
     @SuppressWarnings("unchecked")
     Queue<GetRequest<K, V>> getRequests = (Queue<GetRequest<K, V>>) context.contextData().computeIfAbsent(this, ctx -> new ArrayDeque<>());
     synchronized (getRequests) {
-      getRequests.add(new GetRequest<>(k, resultHandler));
-      if (getRequests.size() == 1) {
-        dequeueGet(context, getRequests);
+      ChoosableSet<V> entries = cache.get(k);
+      if (entries != null && entries.isInitialised() && getRequests.size() == 0) {
+        context.runOnContext(v -> {
+          resultHandler.handle(Future.succeededFuture(entries));
+        });
+      } else {
+        getRequests.add(new GetRequest<>(k, resultHandler));
+        if (getRequests.size() == 1) {
+          dequeueGet(context, getRequests);
+        }
       }
     }
   }
