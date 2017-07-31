@@ -29,10 +29,10 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
@@ -95,26 +95,26 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
   public void get(K k, Handler<AsyncResult<ChoosableIterable<V>>> resultHandler) {
     ContextImpl context = vertx.getOrCreateContext();
     @SuppressWarnings("unchecked")
-    Deque<GetRequest<K, V>> getRequests = (Deque<GetRequest<K, V>>) context.contextData().computeIfAbsent(this, ctx -> new LinkedList<>());
+    Queue<GetRequest<K, V>> getRequests = (Queue<GetRequest<K, V>>) context.contextData().computeIfAbsent(this, ctx -> new ArrayDeque<>());
     synchronized (getRequests) {
-      getRequests.addLast(new GetRequest<>(k, resultHandler));
+      getRequests.add(new GetRequest<>(k, resultHandler));
       if (getRequests.size() == 1) {
         dequeueGet(context, getRequests);
       }
     }
   }
 
-  private void dequeueGet(ContextImpl context, Deque<GetRequest<K, V>> getRequests) {
+  private void dequeueGet(ContextImpl context, Queue<GetRequest<K, V>> getRequests) {
     GetRequest<K, V> getRequest;
     for (; ; ) {
-      getRequest = getRequests.peekFirst();
+      getRequest = getRequests.peek();
       ChoosableSet<V> entries = cache.get(getRequest.key);
       if (entries != null && entries.isInitialised()) {
         Handler<AsyncResult<ChoosableIterable<V>>> handler = getRequest.handler;
         context.runOnContext(v -> {
           handler.handle(Future.succeededFuture(entries));
         });
-        getRequests.removeFirst();
+        getRequests.remove();
         if (getRequests.size() < 1) {
           return;
         }
@@ -148,7 +148,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
         context.runOnContext(v -> {
           handler.handle(res);
         });
-        getRequests.removeFirst();
+        getRequests.remove();
         if (getRequests.size() > 0) {
           dequeueGet(context, getRequests);
         }
