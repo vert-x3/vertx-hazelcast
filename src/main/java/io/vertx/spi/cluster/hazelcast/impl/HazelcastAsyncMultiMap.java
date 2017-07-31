@@ -98,7 +98,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
     Queue<GetRequest<K, V>> getRequests = (Queue<GetRequest<K, V>>) context.contextData().computeIfAbsent(this, ctx -> new ArrayDeque<>());
     synchronized (getRequests) {
       ChoosableSet<V> entries = cache.get(k);
-      if (entries != null && entries.isInitialised() && getRequests.size() == 0) {
+      if (entries != null && entries.isInitialised() && getRequests.isEmpty()) {
         context.runOnContext(v -> {
           resultHandler.handle(Future.succeededFuture(entries));
         });
@@ -122,7 +122,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
           handler.handle(Future.succeededFuture(entries));
         });
         getRequests.remove();
-        if (getRequests.size() < 1) {
+        if (getRequests.isEmpty()) {
           return;
         }
       } else {
@@ -156,7 +156,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
           handler.handle(res);
         });
         getRequests.remove();
-        if (getRequests.size() > 0) {
+        if (!getRequests.isEmpty()) {
           dequeueGet(context, getRequests);
         }
       }
