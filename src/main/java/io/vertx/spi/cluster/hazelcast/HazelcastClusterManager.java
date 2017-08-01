@@ -21,7 +21,6 @@ import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
-import com.hazelcast.core.ILock;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.ISemaphore;
 import com.hazelcast.core.LifecycleEvent;
@@ -35,13 +34,13 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.impl.ContextImpl;
-import io.vertx.core.impl.ExtendedClusterManager;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
+import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
@@ -72,7 +71,7 @@ import static java.util.concurrent.TimeUnit.*;
  *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusterManager implements ExtendedClusterManager, MembershipListener, LifecycleListener {
+public class HazelcastClusterManager implements ClusterManager, MembershipListener, LifecycleListener {
 
   private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
@@ -450,21 +449,6 @@ public class HazelcastClusterManager implements ExtendedClusterManager, Membersh
       log.error("Failed to read config", ex);
     }
     return cfg;
-  }
-
-  public void beforeLeave() {
-    vertx.executeBlocking(fut -> {
-      if (isActive()) {
-        if (!customHazelcastCluster && hazelcast.getLifecycleService().isRunning()) {
-          ILock lock = hazelcast.getLock("vertx.shutdownlock");
-          try {
-            lock.tryLock(30, TimeUnit.SECONDS);
-          } catch (Exception ignore) {
-          }
-          // The lock should be automatically released when the node is shutdown
-        }
-      }
-    }, null);
   }
 
   public HazelcastInstance getHazelcastInstance() {
