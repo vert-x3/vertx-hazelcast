@@ -23,18 +23,18 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.ContextImpl;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 /**
@@ -42,11 +42,8 @@ import java.util.function.Predicate;
  */
 public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryListener<K, V> {
 
-  private static final Logger log = LoggerFactory.getLogger(HazelcastAsyncMultiMap.class);
-
   private final VertxInternal vertx;
   private final com.hazelcast.core.MultiMap<K, V> map;
-  private final AtomicInteger getInProgressCount = new AtomicInteger();
   private final TaskQueue taskQueue = new TaskQueue();
 
 
@@ -96,35 +93,74 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   @Override
   public void get(K k, Handler<AsyncResult<ChoosableIterable<V>>> resultHandler) {
-    ChoosableSet<V> entries = cache.get(k);
-    if (entries != null && entries.isInitialised() && getInProgressCount.get() == 0) {
-      resultHandler.handle(Future.succeededFuture(entries));
-    } else {
-      getInProgressCount.incrementAndGet();
-      vertx.getOrCreateContext().<ChoosableIterable<V>>executeBlocking(fut -> {
-        Collection<V> entries2 = map.get(k);
-        ChoosableSet<V> sids;
-        if (entries2 != null) {
-          sids = new ChoosableSet<>(entries2.size());
-          for (V hid : entries2) {
-            sids.add(hid);
-          }
-        } else {
-          sids = new ChoosableSet<>(0);
+    ContextImpl context = vertx.getOrCreateContext();
+    @SuppressWarnings("unchecked")
+    Queue<GetRequest<K, V>> getRequests = (Queue<GetRequest<K, V>>) context.contextData().computeIfAbsent(this, ctx -> new ArrayDeque<>());
+    synchronized (getRequests) {
+      ChoosableSet<V> entries = cache.get(k);
+      if (entries != null && entries.isInitialised() && getRequests.isEmpty()) {
+        context.runOnContext(v -> {
+          resultHandler.handle(Future.succeededFuture(entries));
+        });
+      } else {
+        getRequests.add(new GetRequest<>(k, resultHandler));
+        if (getRequests.size() == 1) {
+          dequeueGet(context, getRequests);
         }
-        ChoosableSet<V> prev = (sids.isEmpty()) ? null : cache.putIfAbsent(k, sids);
-        if (prev != null) {
-          // Merge them
-          prev.merge(sids);
-          sids = prev;
-        }
-        sids.setInitialised();
-        fut.complete(sids);
-      }, taskQueue, res -> {
-        getInProgressCount.decrementAndGet();
-        resultHandler.handle(res);
-      });
+      }
     }
+  }
+
+  private void dequeueGet(ContextImpl context, Queue<GetRequest<K, V>> getRequests) {
+    GetRequest<K, V> getRequest;
+    for (; ; ) {
+      getRequest = getRequests.peek();
+      ChoosableSet<V> entries = cache.get(getRequest.key);
+      if (entries != null && entries.isInitialised()) {
+        Handler<AsyncResult<ChoosableIterable<V>>> handler = getRequest.handler;
+        context.runOnContext(v -> {
+          handler.handle(Future.succeededFuture(entries));
+        });
+        getRequests.remove();
+        if (getRequests.isEmpty()) {
+          return;
+        }
+      } else {
+        break;
+      }
+    }
+    K key = getRequest.key;
+    Handler<AsyncResult<ChoosableIterable<V>>> handler = getRequest.handler;
+    context.<ChoosableIterable<V>>executeBlocking(fut -> {
+      Collection<V> entries = map.get(key);
+      ChoosableSet<V> sids;
+      if (entries != null) {
+        sids = new ChoosableSet<>(entries.size());
+        for (V hid : entries) {
+          sids.add(hid);
+        }
+      } else {
+        sids = new ChoosableSet<>(0);
+      }
+      ChoosableSet<V> prev = (sids.isEmpty()) ? null : cache.putIfAbsent(key, sids);
+      if (prev != null) {
+        // Merge them
+        prev.merge(sids);
+        sids = prev;
+      }
+      sids.setInitialised();
+      fut.complete(sids);
+    }, taskQueue, res -> {
+      synchronized (getRequests) {
+        context.runOnContext(v -> {
+          handler.handle(res);
+        });
+        getRequests.remove();
+        if (!getRequests.isEmpty()) {
+          dequeueGet(context, getRequests);
+        }
+      }
+    });
   }
 
   @Override
@@ -196,5 +232,15 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   public void clearCache() {
     cache.clear();
+  }
+
+  private static class GetRequest<K, V> {
+    final K key;
+    final Handler<AsyncResult<ChoosableIterable<V>>> handler;
+
+    GetRequest(K key, Handler<AsyncResult<ChoosableIterable<V>>> handler) {
+      this.key = key;
+      this.handler = handler;
+    }
   }
 }
