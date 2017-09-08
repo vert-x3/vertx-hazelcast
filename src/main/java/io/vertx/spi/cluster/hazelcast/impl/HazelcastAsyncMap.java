@@ -21,10 +21,17 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
+import io.vertx.core.streams.ReadStream;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.*;
+import static java.util.stream.Collectors.*;
 
 public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
 
@@ -37,9 +44,9 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public void get(K k, Handler<AsyncResult<V>> asyncResultHandler) {
+  public void get(K k, Handler<AsyncResult<V>> resultHandler) {
     K kk = convertParam(k);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))), asyncResultHandler);
+    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))), resultHandler);
   }
 
   @Override
@@ -119,4 +126,35 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     vertx.executeBlocking(fut -> fut.complete(map.size()), resultHandler);
   }
 
+  @Override
+  public void keys(Handler<AsyncResult<Set<K>>> resultHandler) {
+    vertx.executeBlocking(fut -> fut.complete(map.keySet()), resultHandler);
+  }
+
+  @Override
+  public void values(Handler<AsyncResult<List<V>>> resultHandler) {
+    vertx.executeBlocking(fut -> fut.complete(new ArrayList<>(map.values())), resultHandler);
+  }
+
+  @Override
+  public void entries(Handler<AsyncResult<Map<K, V>>> resultHandler) {
+    vertx.executeBlocking(fut -> {
+      fut.complete(map.entrySet().stream().collect(toMap(Entry::getKey, Entry::getValue)));
+    }, resultHandler);
+  }
+
+  @Override
+  public ReadStream<K> keyStream() {
+    return new IterableStream<>(vertx.getOrCreateContext(), map.keySet());
+  }
+
+  @Override
+  public ReadStream<V> valueStream() {
+    return new IterableStream<>(vertx.getOrCreateContext(), map.values());
+  }
+
+  @Override
+  public ReadStream<Entry<K, V>> entryStream() {
+    return new IterableStream<>(vertx.getOrCreateContext(), map.entrySet());
+  }
 }
