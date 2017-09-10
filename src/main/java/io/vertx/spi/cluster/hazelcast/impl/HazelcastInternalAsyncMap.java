@@ -24,14 +24,16 @@ import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.streams.ReadStream;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.*;
-import static java.util.stream.Collectors.*;
 
 public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
 
@@ -131,36 +133,61 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
     vertx.executeBlocking(fut -> fut.complete(map.size()), resultHandler);
   }
 
+
   @Override
   public void keys(Handler<AsyncResult<Set<K>>> resultHandler) {
-    vertx.executeBlocking(fut -> fut.complete(map.keySet()), resultHandler);
+    vertx.executeBlocking(fut -> {
+      Set<K> set = new HashSet<>();
+      for (K kk : map.keySet()) {
+        K k = ConversionUtils.convertReturn(kk);
+        set.add(k);
+      }
+      fut.complete(set);
+    }, resultHandler);
   }
 
   @Override
   public void values(Handler<AsyncResult<List<V>>> resultHandler) {
-    vertx.executeBlocking(fut -> fut.complete(new ArrayList<>(map.values())), resultHandler);
+    vertx.executeBlocking(fut -> {
+      List<V> list = new ArrayList<>();
+      for (V vv : map.values()) {
+        V v = ConversionUtils.convertReturn(vv);
+        list.add(v);
+      }
+      fut.complete(list);
+    }, resultHandler);
   }
 
   @Override
   public void entries(Handler<AsyncResult<Map<K, V>>> resultHandler) {
     vertx.executeBlocking(fut -> {
-      fut.complete(map.entrySet().stream().collect(toMap(Map.Entry::getKey, Map.Entry::getValue)));
+      Map<K, V> result = new HashMap<>();
+      for (Map.Entry<K, V> entry : map.entrySet()) {
+        K k = ConversionUtils.convertReturn(entry.getKey());
+        V v = ConversionUtils.convertReturn(entry.getValue());
+        result.put(k, v);
+      }
+      fut.complete(result);
     }, resultHandler);
   }
 
   @Override
   public ReadStream<K> keyStream() {
-    return new IterableStream<>(vertx.getOrCreateContext(), map.keySet());
+    return new IterableStream<>(vertx.getOrCreateContext(), map.keySet(), ConversionUtils::<K>convertReturn);
   }
 
   @Override
   public ReadStream<V> valueStream() {
-    return new IterableStream<>(vertx.getOrCreateContext(), map.values());
+    return new IterableStream<>(vertx.getOrCreateContext(), map.values(), ConversionUtils::<V>convertReturn);
   }
 
   @Override
   public ReadStream<Map.Entry<K, V>> entryStream() {
-    return new IterableStream<>(vertx.getOrCreateContext(), map.entrySet());
+    return new IterableStream<>(vertx.getOrCreateContext(), map.entrySet(), entry -> {
+      K k = convertReturn(entry.getKey());
+      V v = convertReturn(entry.getValue());
+      return new AbstractMap.SimpleImmutableEntry<>(k, v);
+    });
   }
 
   private <T> void executeAsync(ICompletableFuture<T> future,

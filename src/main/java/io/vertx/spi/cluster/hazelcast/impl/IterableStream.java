@@ -23,6 +23,7 @@ import io.vertx.core.streams.ReadStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Thomas Segismont
@@ -33,6 +34,7 @@ public class IterableStream<T> implements ReadStream<T> {
 
   private final Context context;
   private final Iterable<T> iterable;
+  private final Function<T, T> converter;
 
   private Iterator<T> iterator;
   private Handler<T> dataHandler;
@@ -41,9 +43,10 @@ public class IterableStream<T> implements ReadStream<T> {
   private boolean paused;
   private boolean readInProgress;
 
-  public IterableStream(Context context, Iterable<T> iterable) {
+  public IterableStream(Context context, Iterable<T> iterable, Function<T, T> converter) {
     this.context = context;
     this.iterable = iterable;
+    this.converter = converter;
   }
 
   @Override
@@ -113,7 +116,9 @@ public class IterableStream<T> implements ReadStream<T> {
             Handler<T> dataHandler = this.dataHandler;
             if (dataHandler != null) {
               context.runOnContext(v -> {
-                values.forEach(dataHandler::handle);
+                for (T value : values) {
+                  dataHandler.handle(converter.apply(value));
+                }
                 synchronized (this) {
                   readInProgress = false;
                 }
