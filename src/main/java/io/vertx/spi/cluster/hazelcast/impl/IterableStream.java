@@ -20,10 +20,11 @@ import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Thomas Segismont
@@ -33,19 +34,21 @@ public class IterableStream<T> implements ReadStream<T> {
   private static final int BATCH_SIZE = 10;
 
   private final Context context;
-  private final Iterable<T> iterable;
+  private final Supplier<Iterable<T>> iterableSupplier;
   private final Function<T, T> converter;
 
+  private Iterable<T> iterable;
   private Iterator<T> iterator;
+  private Deque<T> queue;
   private Handler<T> dataHandler;
   private Handler<Throwable> exceptionHandler;
   private Handler<Void> endHandler;
   private boolean paused;
   private boolean readInProgress;
 
-  public IterableStream(Context context, Iterable<T> iterable, Function<T, T> converter) {
+  public IterableStream(Context context, Supplier<Iterable<T>> iterableSupplier, Function<T, T> converter) {
     this.context = context;
-    this.iterable = iterable;
+    this.iterableSupplier = iterableSupplier;
     this.converter = converter;
   }
 
@@ -58,9 +61,18 @@ public class IterableStream<T> implements ReadStream<T> {
   @Override
   public synchronized IterableStream<T> handler(Handler<T> handler) {
     this.dataHandler = handler;
-    if (dataHandler != null && !paused) {
-      doRead();
-    }
+    context.<Iterable<T>>executeBlocking(fut -> fut.complete(iterableSupplier.get()), ar -> {
+      synchronized (this) {
+        if (ar.succeeded()) {
+          iterable = ar.result();
+          if (dataHandler != null && !paused) {
+            doRead();
+          }
+        } else if (exceptionHandler != null) {
+          exceptionHandler.handle(ar.cause());
+        }
+      }
+    });
     return this;
   }
 
@@ -89,52 +101,38 @@ public class IterableStream<T> implements ReadStream<T> {
     if (iterator == null) {
       iterator = iterable.iterator();
     }
-    context.<List<T>>executeBlocking(fut -> {
-      List<T> values = new ArrayList<>(BATCH_SIZE);
-      for (int i = 0; i < BATCH_SIZE && iterator.hasNext(); i++) {
-        values.add(iterator.next());
-      }
-      fut.complete(values);
-    }, false, ar -> {
-      if (ar.failed()) {
-        Handler<Throwable> exceptionHandler = this.exceptionHandler;
-        if (exceptionHandler != null) {
-          exceptionHandler.handle(ar.cause());
-        }
-      } else {
+    if (queue == null) {
+      queue = new ArrayDeque<>(BATCH_SIZE);
+    }
+    if (!queue.isEmpty()) {
+      context.runOnContext(v -> emitQueued());
+      return;
+    }
+    for (int i = 0; i < BATCH_SIZE && iterator.hasNext(); i++) {
+      queue.add(iterator.next());
+    }
+    if (queue.isEmpty()) {
+      context.runOnContext(v -> {
         synchronized (this) {
-          List<T> values = ar.result();
-          if (values.isEmpty()) {
-            readInProgress = false;
-            Handler<Void> endHandler = this.endHandler;
-            if (endHandler != null) {
-              context.runOnContext(v -> {
-                endHandler.handle(null);
-              });
-            }
-          } else {
-            Handler<T> dataHandler = this.dataHandler;
-            if (dataHandler != null) {
-              context.runOnContext(v -> {
-                for (T value : values) {
-                  dataHandler.handle(converter.apply(value));
-                }
-                synchronized (this) {
-                  readInProgress = false;
-                }
-                context.runOnContext(v2 -> {
-                  synchronized (this) {
-                    if (this.dataHandler != null && !paused) {
-                      doRead();
-                    }
-                  }
-                });
-              });
-            }
+          readInProgress = false;
+          if (endHandler != null) {
+            endHandler.handle(null);
           }
         }
-      }
-    });
+      });
+      return;
+    }
+    context.runOnContext(v -> emitQueued());
+  }
+
+  private synchronized void emitQueued() {
+    while (!queue.isEmpty() && dataHandler != null && !paused) {
+      dataHandler.handle(converter.apply(queue.remove()));
+    }
+    readInProgress = false;
+    if (dataHandler != null && !paused) {
+      doRead();
+    }
   }
 
   @Override

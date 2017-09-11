@@ -173,17 +173,17 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
 
   @Override
   public ReadStream<K> keyStream() {
-    return new IterableStream<>(vertx.getOrCreateContext(), map.keySet(), ConversionUtils::<K>convertReturn);
+    return new IterableStream<>(vertx.getOrCreateContext(), map::keySet, ConversionUtils::<K>convertReturn);
   }
 
   @Override
   public ReadStream<V> valueStream() {
-    return new IterableStream<>(vertx.getOrCreateContext(), map.values(), ConversionUtils::<V>convertReturn);
+    return new IterableStream<>(vertx.getOrCreateContext(), map::values, ConversionUtils::<V>convertReturn);
   }
 
   @Override
   public ReadStream<Map.Entry<K, V>> entryStream() {
-    return new IterableStream<>(vertx.getOrCreateContext(), map.entrySet(), entry -> {
+    return new IterableStream<>(vertx.getOrCreateContext(), map::entrySet, entry -> {
       K k = convertReturn(entry.getKey());
       V v = convertReturn(entry.getValue());
       return new AbstractMap.SimpleImmutableEntry<>(k, v);
