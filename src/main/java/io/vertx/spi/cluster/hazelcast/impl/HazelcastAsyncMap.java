@@ -21,7 +21,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
-import io.vertx.core.streams.ReadStream;
+import io.vertx.core.shareddata.AsyncMapStream;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
@@ -166,17 +166,17 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public ReadStream<K> keyStream() {
+  public AsyncMapStream<K> keyStream() {
     return new IterableStream<>(vertx.getOrCreateContext(), map::keySet, ConversionUtils::<K>convertReturn);
   }
 
   @Override
-  public ReadStream<V> valueStream() {
+  public AsyncMapStream<V> valueStream() {
     return new IterableStream<>(vertx.getOrCreateContext(), map::values, ConversionUtils::<V>convertReturn);
   }
 
   @Override
-  public ReadStream<Entry<K, V>> entryStream() {
+  public AsyncMapStream<Entry<K, V>> entryStream() {
     return new IterableStream<>(vertx.getOrCreateContext(), map::entrySet, entry -> {
       K k = convertReturn(entry.getKey());
       V v = convertReturn(entry.getValue());
