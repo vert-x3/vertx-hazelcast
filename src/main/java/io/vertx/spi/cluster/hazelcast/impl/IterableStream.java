@@ -79,8 +79,11 @@ public class IterableStream<T> implements AsyncMapStream<T> {
           if (dataHandler != null && !paused && !closed) {
             doRead();
           }
-        } else if (exceptionHandler != null) {
-          exceptionHandler.handle(ar.cause());
+        } else {
+          closed = true;
+          if (exceptionHandler != null) {
+            exceptionHandler.handle(ar.cause());
+          }
         }
       }
     });
@@ -128,6 +131,7 @@ public class IterableStream<T> implements AsyncMapStream<T> {
       context.runOnContext(v -> {
         synchronized (this) {
           readInProgress = false;
+          closed = true;
           if (endHandler != null) {
             endHandler.handle(null);
           }
