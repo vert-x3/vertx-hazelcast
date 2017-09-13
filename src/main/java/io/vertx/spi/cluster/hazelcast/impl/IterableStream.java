@@ -16,11 +16,9 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.shareddata.AsyncMapStream;
+import io.vertx.core.streams.ReadStream;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -31,7 +29,7 @@ import java.util.function.Supplier;
 /**
  * @author Thomas Segismont
  */
-public class IterableStream<T> implements AsyncMapStream<T> {
+public class IterableStream<T> implements ReadStream<T> {
 
   private static final int BATCH_SIZE = 10;
 
@@ -71,22 +69,26 @@ public class IterableStream<T> implements AsyncMapStream<T> {
   @Override
   public synchronized IterableStream<T> handler(Handler<T> handler) {
     checkClosed();
-    this.dataHandler = handler;
-    context.<Iterable<T>>executeBlocking(fut -> fut.complete(iterableSupplier.get()), ar -> {
-      synchronized (this) {
-        if (ar.succeeded()) {
-          iterable = ar.result();
-          if (dataHandler != null && !paused && !closed) {
-            doRead();
-          }
-        } else {
-          closed = true;
-          if (exceptionHandler != null) {
-            exceptionHandler.handle(ar.cause());
+    if (handler == null) {
+      closed = true;
+    } else {
+      dataHandler = handler;
+      context.<Iterable<T>>executeBlocking(fut -> fut.complete(iterableSupplier.get()), ar -> {
+        synchronized (this) {
+          if (ar.succeeded()) {
+            iterable = ar.result();
+            if (!paused && !closed) {
+              doRead();
+            }
+          } else {
+            closed = true;
+            if (exceptionHandler != null) {
+              exceptionHandler.handle(ar.cause());
+            }
           }
         }
-      }
-    });
+      });
+    }
     return this;
   }
 
@@ -130,7 +132,6 @@ public class IterableStream<T> implements AsyncMapStream<T> {
     if (queue.isEmpty()) {
       context.runOnContext(v -> {
         synchronized (this) {
-          readInProgress = false;
           closed = true;
           if (endHandler != null) {
             endHandler.handle(null);
@@ -143,11 +144,11 @@ public class IterableStream<T> implements AsyncMapStream<T> {
   }
 
   private synchronized void emitQueued() {
-    while (!queue.isEmpty() && dataHandler != null && !paused && !closed) {
+    while (!queue.isEmpty() && !paused && !closed) {
       dataHandler.handle(converter.apply(queue.remove()));
     }
     readInProgress = false;
-    if (dataHandler != null && !paused && !closed) {
+    if (!paused && !closed) {
       doRead();
     }
   }
@@ -156,17 +157,5 @@ public class IterableStream<T> implements AsyncMapStream<T> {
   public synchronized IterableStream<T> endHandler(Handler<Void> handler) {
     endHandler = handler;
     return this;
-  }
-
-  @Override
-  public void close(Handler<AsyncResult<Void>> completionHandler) {
-    context.runOnContext(v -> {
-      synchronized (this) {
-        closed = true;
-        if (completionHandler != null) {
-          completionHandler.handle(Future.succeededFuture());
-        }
-      }
-    });
   }
 }
