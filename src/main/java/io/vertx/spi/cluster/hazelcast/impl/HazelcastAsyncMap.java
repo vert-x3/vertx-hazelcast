@@ -22,6 +22,13 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.*;
@@ -37,9 +44,9 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public void get(K k, Handler<AsyncResult<V>> asyncResultHandler) {
+  public void get(K k, Handler<AsyncResult<V>> resultHandler) {
     K kk = convertParam(k);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))), asyncResultHandler);
+    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))), resultHandler);
   }
 
   @Override
@@ -119,4 +126,40 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     vertx.executeBlocking(fut -> fut.complete(map.size()), resultHandler);
   }
 
+  @Override
+  public void keys(Handler<AsyncResult<Set<K>>> resultHandler) {
+    vertx.executeBlocking(fut -> {
+      Set<K> set = new HashSet<>();
+      for (K kk : map.keySet()) {
+        K k = ConversionUtils.convertReturn(kk);
+        set.add(k);
+      }
+      fut.complete(set);
+    }, resultHandler);
+  }
+
+  @Override
+  public void values(Handler<AsyncResult<List<V>>> resultHandler) {
+    vertx.executeBlocking(fut -> {
+      List<V> list = new ArrayList<>();
+      for (V vv : map.values()) {
+        V v = ConversionUtils.convertReturn(vv);
+        list.add(v);
+      }
+      fut.complete(list);
+    }, resultHandler);
+  }
+
+  @Override
+  public void entries(Handler<AsyncResult<Map<K, V>>> resultHandler) {
+    vertx.executeBlocking(fut -> {
+      Map<K, V> result = new HashMap<>();
+      for (Entry<K, V> entry : map.entrySet()) {
+        K k = ConversionUtils.convertReturn(entry.getKey());
+        V v = ConversionUtils.convertReturn(entry.getValue());
+        result.put(k, v);
+      }
+      fut.complete(result);
+    }, resultHandler);
+  }
 }
