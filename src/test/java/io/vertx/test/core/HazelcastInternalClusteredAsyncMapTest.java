@@ -18,6 +18,8 @@ package io.vertx.test.core;
 
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -25,8 +27,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastInternalClusterWideMapTest
-        extends ClusterWideMapTestDifferentNodes {
+public class HazelcastInternalClusteredAsyncMapTest extends ClusteredAsyncMapTest {
 
   static {
     System.setProperty("hazelcast.wait.seconds.before.join", "0");
@@ -47,4 +48,10 @@ public class HazelcastInternalClusterWideMapTest
     return new HazelcastClusterManager();
   }
 
+  @Override
+  @Test
+  @Ignore("Hazelcast removes the binding even if a new entry is added without ttl")
+  public void testMapPutTtlThenPut() {
+    super.testMapPutTtlThenPut();
+  }
 }

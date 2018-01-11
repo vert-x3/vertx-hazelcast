@@ -25,7 +25,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusterWideMapTest extends ClusterWideMapTestDifferentNodes {
+public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
 
   static {
     System.setProperty("hazelcast.wait.seconds.before.join", "0");
