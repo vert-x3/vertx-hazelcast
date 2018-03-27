@@ -4,8 +4,8 @@
 
   <parent>
     <groupId>io.vertx</groupId>
-    <artifactId>vertx-parent</artifactId>
-    <version>12</version>
+    <artifactId>vertx-ext-parent</artifactId>
+    <version>34</version>
   </parent>
 
   <artifactId>vertx-hazelcast</artifactId>
@@ -88,80 +88,42 @@
   </dependencies>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.bsc.maven</groupId>
+          <artifactId>maven-processor-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>generate-sources</id>
+              <configuration>
+                <optionMap>
+                  <hazelcast.version>${hazelcast.version}</hazelcast.version>
+                </optionMap>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+            <systemPropertyVariables>
+              <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
+              <buildDirectory>${project.build.directory}</buildDirectory>
+              <vertxVersion>${project.version}</vertxVersion>
+              <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+            </systemPropertyVariables>
+            <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
+            <argLine>-Xmx1200M</argLine>
+            <forkCount>1</forkCount>
+            <reuseForks>true</reuseForks>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>default-compile</id>
-            <configuration>
-              <annotationProcessors>
-                <annotationProcessor>io.vertx.docgen.JavaDocGenProcessor</annotationProcessor>
-              </annotationProcessors>
-              <compilerArgs>
-                <arg>-Adocgen.output=${asciidoc.dir}/$lang</arg>
-                <arg>-Amaven.groupId=${project.groupId}</arg>
-                <arg>-Amaven.artifactId=${project.artifactId}</arg>
-                <arg>-Amaven.version=${project.version}</arg>
-                <arg>-Ahazelcast.version=${hazelcast.version}</arg>
-              </compilerArgs>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.asciidoctor</groupId>
-        <artifactId>asciidoctor-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>process-asciidoc</goal>
-            </goals>
-            <phase>prepare-package</phase>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>${maven.surefire.plugin.version}</version>
-        <configuration>
-          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-          <systemPropertyVariables>
-            <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
-            <buildDirectory>${project.build.directory}</buildDirectory>
-            <vertxVersion>${project.version}</vertxVersion>
-            <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-          </systemPropertyVariables>
-          <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
-          <argLine>-Xmx1200M</argLine>
-          <forkCount>1</forkCount>
-          <reuseForks>true</reuseForks>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>package-docs</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <attach>true</attach>
-              <descriptors>
-                <descriptor>${basedir}/src/main/assembly/docs.xml</descriptor>
-              </descriptors>
-              <archive>
-                 <manifestFile>${project.build.directory}/classes/META-INF/MANIFEST.MF</manifestFile>
-              </archive>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
 
       <plugin>
         <groupId>biz.aQute.bnd</groupId>
@@ -200,27 +162,28 @@
     <profile>
       <id>coverage</id>
       <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${maven.surefire.plugin.version}</version>
-            <configuration>
-              <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-              <systemPropertyVariables>
-                <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
-                <buildDirectory>${project.build.directory}</buildDirectory>
-                <vertxVersion>${project.version}</vertxVersion>
-                <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-              </systemPropertyVariables>
-              <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
-              <!-- append computed argLine computed by jacoco -->
-              <argLine>-Xmx1200M @{surefireArgLine}</argLine>
-              <forkCount>1</forkCount>
-              <reuseForks>true</reuseForks>
-            </configuration>
-          </plugin>
-        </plugins>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                <systemPropertyVariables>
+                  <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
+                  <buildDirectory>${project.build.directory}</buildDirectory>
+                  <vertxVersion>${project.version}</vertxVersion>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                </systemPropertyVariables>
+                <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
+                <!-- append computed argLine computed by jacoco -->
+                <argLine>-Xmx1200M @{surefireArgLine}</argLine>
+                <forkCount>1</forkCount>
+                <reuseForks>true</reuseForks>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
       </build>
     </profile>
   </profiles>
