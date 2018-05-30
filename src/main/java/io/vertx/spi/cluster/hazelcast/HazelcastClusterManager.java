@@ -33,7 +33,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
-import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
@@ -223,9 +222,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
-    ContextInternal context = (ContextInternal) vertx.getOrCreateContext();
-    // Ordered on the internal blocking executor
-    context.executeBlockingInternal(fut -> {
+    vertx.executeBlocking(fut -> {
       ISemaphore iSemaphore = hazelcast.getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
       long remaining = timeout;
@@ -243,7 +240,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       } else {
         throw new VertxException("Timed out waiting to get lock " + name);
       }
-    }, resultHandler);
+    }, false, resultHandler);
   }
 
   @Override
