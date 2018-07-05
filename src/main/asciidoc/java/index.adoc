@@ -10,7 +10,7 @@ cluster managers are pluggable.  This implementation is packaged inside:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-hazelcast</artifactId>
-  <version>3.5.2</version>
+  <version>3.5.3.CR1</version>
 </dependency>
 ----
 
@@ -26,11 +26,11 @@ Cluster managers *do not* handle the event bus inter-node transport, this is don
 
 == Using this cluster manager
 
-If you are using Vert.x from the command line, the jar corresponding to this cluster manager (it will be named `vertx-hazelcast-3.5.2.jar`
+If you are using Vert.x from the command line, the jar corresponding to this cluster manager (it will be named `vertx-hazelcast-3.5.3.CR1.jar`
 should be in the `lib` directory of the Vert.x installation.
 
 If you want clustering with this cluster manager in your Vert.x Maven or Gradle project then just add a dependency to
-the artifact: `io.vertx:vertx-hazelcast:3.5.2` in your project.
+the artifact: `io.vertx:vertx-hazelcast:3.5.3.CR1` in your project.
 
 If the jar is on your classpath as above then Vert.x will automatically detect this and use it as the cluster manager.
 Please make sure you don't have any other cluster managers on your classpath or Vert.x might
@@ -301,7 +301,7 @@ In this later case, you would need in Maven:
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-hazelcast</artifactId>
-  <version>3.5.2</version>
+  <version>3.5.3.CR1</version>
 </dependency>
 ----
 
@@ -312,7 +312,7 @@ On Gradle, you can achieve the same overloading using:
 [source]
 ----
 dependencies {
- compile ("io.vertx:vertx-hazelcast:3.5.2"){
+ compile ("io.vertx:vertx-hazelcast:3.5.3.CR1"){
    exclude group: 'com.hazelcast', module: 'hazelcast'
  }
  compile "com.hazelcast:hazelcast:ENTER_YOUR_VERSION_HERE"
