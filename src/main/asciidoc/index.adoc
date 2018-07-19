@@ -286,3 +286,45 @@ dependencies {
  compile "com.hazelcast:hazelcast:ENTER_YOUR_VERSION_HERE"
 }
 ----
+
+== Kubernetes and Rolling updates
+
+During rolling updates, it is recommended to replace pods one by one.
+
+To do so, we must configure Kubernetes to:
+
+* never start more than one new pod at once
+* forbid more than one unavailable pod during the process
+
+[source,yaml]
+----
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 10
+      intervalSeconds: 20
+      timeoutSeconds: 600
+      maxUnavailable: 1 <1>
+      maxSurge: 1 <2>
+----
+<1> the maximum number of pods that can be unavailable during the update process
+<2> the maximum number of pods that can be created over the desired number of pods
+
+Also, pod readiness probe must take cluster health into account.
+Indeed, when a node joins or leaves the cluster, Hazelcast rebalances the data across members, and it is better to avoid concurrent state transfers.
+When the state transfer completes, the cluster health goes back to `HEALTHY`.
+
+The readiness probe can be implemented with link:../../vertx-health-check/$lang/[Vert.x Health Checks]:
+
+[source,$lang]
+----
+{@link examples.Examples#healthCheck(io.vertx.core.Vertx)}
+----
+
+After creation, it can be exposed over HTTP with a link:../../vertx-web/$lang/[Vert.x Web] router handler:
+
+[source,$lang]
+----
+{@link examples.Examples#healthCheckHandler(io.vertx.core.Vertx, io.vertx.ext.healthchecks.HealthChecks)}
+----
