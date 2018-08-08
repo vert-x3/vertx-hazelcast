@@ -346,7 +346,7 @@ The following properties have to be changed / added:
 </hazelcast>
 ----
 
-The MY-SERVICE-DNS-NAME value must be a *headless* Kubernetes service name that will be used by Hazelcast to identify all cluster members.
+The `MY-SERVICE-DNS-NAME` value must be a *headless* Kubernetes service name that will be used by Hazelcast to identify all cluster members.
 The format for this field is `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local`.
 A headless service can be created with:
 
@@ -409,9 +409,9 @@ spec:
 <1> the maximum number of pods that can be unavailable during the update process
 <2> the maximum number of pods that can be created over the desired number of pods
 
-Also, pod readiness probe must take cluster health into account.
+Also, the pod readiness probe must take the cluster state into account.
 Indeed, when a node joins or leaves the cluster, Hazelcast rebalances the data across members, and it is better to avoid concurrent state transfers.
-When the state transfer completes, the cluster health goes back to `HEALTHY`.
+When the state transfer completes, the cluster goes back to a safe state.
 
 The readiness probe can be implemented with link:../../vertx-health-check/$lang/[Vert.x Health Checks]:
 
