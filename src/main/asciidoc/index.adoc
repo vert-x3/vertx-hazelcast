@@ -44,6 +44,7 @@ when you are creating your Vert.x instance, for example:
 {@link examples.Examples#example1()}
 ----
 
+[#configcluster]
 == Configuring this cluster manager
 
 Usually the cluster manager is configured by a file
@@ -285,4 +286,143 @@ dependencies {
  }
  compile "com.hazelcast:hazelcast:ENTER_YOUR_VERSION_HERE"
 }
+----
+
+== Configuring for Kubernetes
+
+On Kubernetes, Hazelcast should be configured to use the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes] plugin.
+
+First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes-version}`
+dependencies to your project. With Maven it looks like:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx-hazelcast</artifactId>
+  <version>${vertx.version}</version>
+</dependency>
+<dependency>
+  <groupId>com.hazelcast</groupId>
+  <artifactId>hazelcast-kubernetes</artifactId>
+  <version>${hazelcast-kubernetes-version}</version>
+</dependency>
+<dependency>
+----
+
+The second step is to configure the discovery plugin inside of your Hazelcast configuration, by either providing a custom
+`cluster.xml` file or programmatically, as described in <<configcluster>>.
+
+The following properties have to be changed / added:
+
+[source,xml]
+----
+<hazelcast>
+  <properties>
+    <!-- only necessary prior Hazelcast 3.8 -->
+    <property name="hazelcast.discovery.enabled">true</property>
+  </properties>
+
+  <network>
+    <join>
+      <!-- deactivate normal discovery -->
+      <multicast enabled="false"/>
+      <tcp-ip enabled="false" />
+
+      <!-- activate the Kubernetes plugin -->
+      <discovery-strategies>
+        <discovery-strategy enabled="true"
+            class="com.hazelcast.kubernetes.HazelcastKubernetesDiscoveryStrategy">
+
+          <properties>
+            <!-- configure discovery service API lookup -->
+            <property name="service-dns">MY-SERVICE-DNS-NAME</property>
+            <property name="service-dns-timeout">10</property>
+          </properties>
+        </discovery-strategy>
+      </discovery-strategies>
+    </join>
+  </network>
+</hazelcast>
+----
+
+The `MY-SERVICE-DNS-NAME` value must be a *headless* Kubernetes service name that will be used by Hazelcast to identify all cluster members.
+The format for this field is `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local`.
+A headless service can be created with:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: MY-NAMESPACE
+  name: MY-SERVICE-NAME
+spec:
+  selector:
+    component: MY-SERVICE-NAME
+  clusterIP: None
+  ports:
+  - name: hz-port-name
+    port: 5701
+    protocol: TCP
+----
+
+
+Then, attach the `component` label to all deployments that should be part of the cluster:
+[source,yaml]
+----
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: MY-NAMESPACE
+spec:
+  template:
+    metadata:
+      labels:
+        component: MY-SERVICE-NAME
+----
+
+
+Further configuration details are available on the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes Plugin page].
+
+=== Rolling updates
+
+During rolling updates, it is recommended to replace pods one by one.
+
+To do so, we must configure Kubernetes to:
+
+* never start more than one new pod at once
+* forbid more than one unavailable pod during the process
+
+[source,yaml]
+----
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 10
+      intervalSeconds: 20
+      timeoutSeconds: 600
+      maxUnavailable: 1 <1>
+      maxSurge: 1 <2>
+----
+<1> the maximum number of pods that can be unavailable during the update process
+<2> the maximum number of pods that can be created over the desired number of pods
+
+Also, the pod readiness probe must take the cluster state into account.
+Indeed, when a node joins or leaves the cluster, Hazelcast rebalances the data across members, and it is better to avoid concurrent state transfers.
+When the state transfer completes, the cluster goes back to a safe state.
+
+The readiness probe can be implemented with link:../../vertx-health-check/$lang/[Vert.x Health Checks]:
+
+[source,$lang]
+----
+{@link examples.Examples#healthCheck(io.vertx.core.Vertx)}
+----
+
+After creation, it can be exposed over HTTP with a link:../../vertx-web/$lang/[Vert.x Web] router handler:
+
+[source,$lang]
+----
+{@link examples.Examples#healthCheckHandler(io.vertx.core.Vertx, io.vertx.ext.healthchecks.HealthChecks)}
 ----
