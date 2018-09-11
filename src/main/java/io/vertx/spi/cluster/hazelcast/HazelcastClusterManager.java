@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.*;
 
@@ -506,15 +507,22 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private class HazelcastLock implements Lock {
 
     private final ISemaphore semaphore;
+    private final AtomicBoolean released;
 
     private HazelcastLock(ISemaphore semaphore) {
       this.semaphore = semaphore;
+      this.released = new AtomicBoolean(false);
     }
 
     @Override
     public void release() {
       vertx.executeBlocking(future -> {
-        semaphore.release();
+        synchronized (released) {
+          if (!released.get()) {
+            semaphore.release();
+            released.set(true);
+          }
+        }
         future.complete();
       }, false, null);
     }
