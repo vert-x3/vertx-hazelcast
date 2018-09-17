@@ -17,6 +17,7 @@
     <stack.version>3.6.0-SNAPSHOT</stack.version>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
     <hazelcast.version>3.8.2</hazelcast.version>
+    <hazelcast-kubernetes.version>1.2</hazelcast-kubernetes.version>
   </properties>
 
   <dependencyManagement>

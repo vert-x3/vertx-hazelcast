@@ -292,7 +292,7 @@ dependencies {
 
 On Kubernetes, Hazelcast should be configured to use the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes] plugin.
 
-First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes-version}`
+First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes.version}`
 dependencies to your project. With Maven it looks like:
 
 [source,xml]
@@ -305,39 +305,37 @@ dependencies to your project. With Maven it looks like:
 <dependency>
   <groupId>com.hazelcast</groupId>
   <artifactId>hazelcast-kubernetes</artifactId>
-  <version>${hazelcast-kubernetes-version}</version>
+  <version>${hazelcast-kubernetes.version}</version>
 </dependency>
 <dependency>
 ----
 
-The second step is to configure the discovery plugin inside of your Hazelcast configuration, by either providing a custom
-`cluster.xml` file or programmatically, as described in <<configcluster>>.
+NOTE: If you use a different version of the Hazelcast core library, make sure to use a compatible version of the Kubernetes discovery plugin.
 
-The following properties have to be changed / added:
+The second step is to configure the discovery plugin inside of your Hazelcast configuration, by either providing a custom `cluster.xml` file or programmatically, as described in <<configcluster>>.
+
+The plugin provides two https://github.com/hazelcast/hazelcast-kubernetes#understanding-discovery-modes[discovery modes]: _Kubernetes API_ and _DNS Lookup_.
+Please refer to the plugin project page for pros and cons of both modes.
+
+In this document, we will use _DNS Lookup_ discovery. The following properties have to be changed / added:
 
 [source,xml]
 ----
 <hazelcast>
   <properties>
-    <!-- only necessary prior Hazelcast 3.8 -->
-    <property name="hazelcast.discovery.enabled">true</property>
+    <property name="hazelcast.discovery.enabled">true</property> <!--1-->
   </properties>
 
   <network>
     <join>
-      <!-- deactivate normal discovery -->
-      <multicast enabled="false"/>
+      <multicast enabled="false"/> <!--2-->
       <tcp-ip enabled="false" />
 
-      <!-- activate the Kubernetes plugin -->
       <discovery-strategies>
-        <discovery-strategy enabled="true"
+        <discovery-strategy enabled="true" <!--3-->
             class="com.hazelcast.kubernetes.HazelcastKubernetesDiscoveryStrategy">
-
           <properties>
-            <!-- configure discovery service API lookup -->
-            <property name="service-dns">MY-SERVICE-DNS-NAME</property>
-            <property name="service-dns-timeout">10</property>
+            <property name="service-dns">MY-SERVICE-DNS-NAME</property> <!--4-->
           </properties>
         </discovery-strategy>
       </discovery-strategies>
@@ -345,9 +343,12 @@ The following properties have to be changed / added:
   </network>
 </hazelcast>
 ----
+<1> Activate Discovery SPI
+<2> Deactivate other discoveries
+<3> Activate the Kubernetes plugin
+<4> Service DNS, usually in the form of `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local` but depends on the Kubernetes distribution
 
 The `MY-SERVICE-DNS-NAME` value must be a *headless* Kubernetes service name that will be used by Hazelcast to identify all cluster members.
-The format for this field is `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local`.
 A headless service can be created with:
 
 [source,yaml]
@@ -359,16 +360,17 @@ metadata:
   name: MY-SERVICE-NAME
 spec:
   selector:
-    component: MY-SERVICE-NAME
+    component: MY-SERVICE-NAME # <1>
   clusterIP: None
   ports:
   - name: hz-port-name
     port: 5701
     protocol: TCP
 ----
+<1> Cluster members selected by label
 
+Eventually, attach the `component` label to all deployments that should be part of the cluster:
 
-Then, attach the `component` label to all deployments that should be part of the cluster:
 [source,yaml]
 ----
 apiVersion: extensions/v1beta1
@@ -381,7 +383,6 @@ spec:
       labels:
         component: MY-SERVICE-NAME
 ----
-
 
 Further configuration details are available on the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes Plugin page].
 
