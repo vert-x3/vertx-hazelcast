@@ -91,16 +91,15 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
    * Constructor - gets config from classpath
    */
   public HazelcastClusterManager() {
-    // We have our own shutdown hook and need to ensure ours runs before Hazelcast is shutdown
-    System.setProperty("hazelcast.shutdownhook.enabled", "false");
   }
 
   /**
    * Constructor - config supplied
    *
-   * @param conf
+   * @param conf Hazelcast config, not null
    */
   public HazelcastClusterManager(Config conf) {
+    Objects.requireNonNull(conf, "The Hazelcast config cannot be null.");
     this.conf = conf;
   }
 
@@ -127,7 +126,12 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
               log.warn("Cannot find cluster configuration on 'vertx.hazelcast.config' system property, on the classpath, " +
                 "or specified programmatically. Using default hazelcast configuration");
             }
+            conf = new Config();
           }
+
+          // We have our own shutdown hook and need to ensure ours runs before Hazelcast is shutdown
+          conf.setProperty("hazelcast.shutdownhook.enabled", "false");
+
           hazelcast = Hazelcast.newHazelcastInstance(conf);
         }
 
