@@ -1,33 +1,29 @@
 /*
- * Copyright (c) 2011-2014 The original author or authors
- * ------------------------------------------------------
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Apache License v2.0 which accompanies this distribution.
+ * Copyright 2018 Red Hat, Inc.
  *
- *     The Eclipse Public License is available at
- *     http://www.eclipse.org/legal/epl-v10.html
+ * Red Hat licenses this file to you under the Apache License, version 2.0
+ * (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at:
  *
- *     The Apache License v2.0 is available at
- *     http://www.opensource.org/licenses/apache2.0.php
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * You may elect to redistribute this code under either of these licenses.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
  */
 
-package io.vertx.test.core;
+package io.vertx.core;
 
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.GroupConfig;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.MemberAttributeEvent;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
+import com.hazelcast.core.*;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.test.core.AsyncTestBase;
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -41,9 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   static {
-    System.setProperty("hazelcast.wait.seconds.before.join", "0");
-    System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
-
     // this is only checked once every 10 seconds by Hazelcast on client disconnect
     System.setProperty("hazelcast.client.max.no.heartbeat.seconds", "9");
   }
@@ -201,7 +194,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     GroupConfig groupConfig = new GroupConfig()
       .setName(System.getProperty("vertx.hazelcast.test.group.name"))
       .setPassword(System.getProperty("vertx.hazelcast.test.group.password"));
-    HazelcastInstance instance = Hazelcast.newHazelcastInstance(new Config().setGroupConfig(groupConfig));
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(new Config()
+      .setProperty("hazelcast.wait.seconds.before.join", "0")
+      .setProperty("hazelcast.local.localAddress", "127.0.0.1")
+      .setGroupConfig(groupConfig));
     String nodeID = instance.getCluster().getLocalMember().getUuid();
     instance.getCluster().addMembershipListener(new MembershipListener() {
       @Override
@@ -320,5 +316,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     dataNode1.shutdown();
     dataNode2.shutdown();
+  }
+
+  @AfterClass
+  public static void afterTests() {
+    System.clearProperty("hazelcast.client.max.no.heartbeat.seconds");
   }
 }

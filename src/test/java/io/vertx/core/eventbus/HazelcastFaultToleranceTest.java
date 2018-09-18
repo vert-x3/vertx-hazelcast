@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Red Hat, Inc.
+ * Copyright 2018 Red Hat, Inc.
  *
  * Red Hat licenses this file to you under the Apache License, version 2.0
  * (the "License"); you may not use this file except in compliance with the
@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package io.vertx.test.core;
+package io.vertx.core.eventbus;
 
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -28,11 +28,6 @@ import java.util.Random;
  * @author Thomas Segismont
  */
 public class HazelcastFaultToleranceTest extends FaultToleranceTest {
-
-  static {
-    System.setProperty("hazelcast.wait.seconds.before.join", "0");
-    System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
-  }
 
   private String groupName;
   private String password;
@@ -54,8 +49,7 @@ public class HazelcastFaultToleranceTest extends FaultToleranceTest {
 
   @Override
   protected List<String> getExternalNodeSystemProperties() {
-    return Arrays.asList("-Djava.net.preferIPv4Stack=true", "-Dhazelcast.wait.seconds.before.join=0", "-Dhazelcast.local.localAddress=127.0.0.1",
-      "-Dvertx.hazelcast.test.group.name=" + groupName, "-Dvertx.hazelcast.test.group.password=" + password);
+    return Arrays.asList("-Djava.net.preferIPv4Stack=true", "-Dvertx.hazelcast.test.group.name=" + groupName, "-Dvertx.hazelcast.test.group.password=" + password);
   }
 
   @Override
