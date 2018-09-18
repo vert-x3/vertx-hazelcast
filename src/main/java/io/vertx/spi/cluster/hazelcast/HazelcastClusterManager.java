@@ -117,7 +117,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       if (!active) {
         active = true;
 
-        // The hazelcast instance has been passed using the constructor.
+        // The hazelcast instance has not been passed using the constructor.
         if (!customHazelcastCluster) {
           if (conf == null) {
             conf = loadConfig();
