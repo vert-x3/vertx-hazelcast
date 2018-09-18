@@ -124,8 +124,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
             if (conf == null) {
               log.warn("Cannot find cluster configuration on 'vertx.hazelcast.config' system property, on the classpath, " +
                 "or specified programmatically. Using default hazelcast configuration");
+              conf = new Config();
             }
-            conf = new Config();
           }
 
           // We have our own shutdown hook and need to ensure ours runs before Hazelcast is shutdown
