@@ -1,6 +1,6 @@
 = Hazelcast Cluster Manager
 
-image:https://vertx.ci.cloudbees.com/buildStatus/icon?job=vert.x3-hazelcast["Build Status",link="https://vertx.ci.cloudbees.com/view/vert.x-3/job/vert.x3-hazelcast/"]
+[![Build Status](https://travis-ci.org/vert-x3/vertx-hazelcast.svg?branch=master)](https://travis-ci.org/vert-x3/vertx-hazelcast)
 
 This is a cluster manager implementation for Vert.x that uses http://hazelcast.com[Hazelcast].
 
