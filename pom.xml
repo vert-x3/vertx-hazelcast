@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -116,8 +117,26 @@
           </executions>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+            <systemPropertyVariables>
+              <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
+              <buildDirectory>${project.build.directory}</buildDirectory>
+              <vertxVersion>${project.version}</vertxVersion>
+              <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+              <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
+              <hazelcast.logging.type>slf4j</hazelcast.logging.type>
+            </systemPropertyVariables>
+            <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
+            <argLine>-Xmx1200M</argLine>
+            <forkCount>1</forkCount>
+            <reuseForks>true</reuseForks>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.19.1</version>
           <configuration>
             <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
             <systemPropertyVariables>
@@ -137,12 +156,18 @@
       </plugins>
     </pluginManagement>
     <plugins>
-
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/LiteMembers*Test.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>bnd-maven-plugin</artifactId>
         <version>3.2.0</version>
-
         <executions>
           <execution>
             <id>default-bnd-process</id>
@@ -159,15 +184,32 @@
           ]]></bnd>
         </configuration>
       </plugin>
-	  <plugin>
-	    <groupId>org.apache.maven.plugins</groupId>
-	    <artifactId>maven-jar-plugin</artifactId>
-	    <configuration>
-	        <archive>
-	            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-	        </archive>
-	    </configuration>
-	  </plugin>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>lite-members</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <phase>integration-test</phase>
+            <configuration>
+              <includes>
+                <include>**/LiteMembers*Test.java</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -178,7 +220,6 @@
         <pluginManagement>
           <plugins>
             <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
                 <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
