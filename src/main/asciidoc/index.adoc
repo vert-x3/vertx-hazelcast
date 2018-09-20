@@ -47,6 +47,8 @@ when you are creating your Vert.x instance, for example:
 [#configcluster]
 == Configuring this cluster manager
 
+=== Configuring with XML
+
 Usually the cluster manager is configured by a file
 https://github.com/vert-x3/vertx-hazelcast/blob/master/src/main/resources/default-cluster.xml[`default-cluster.xml`]
 which is packaged inside the jar.
@@ -88,18 +90,36 @@ not be used.
 The xml file is a Hazelcast configuration file and is described in detail in the documentation on the Hazelcast
 web-site.
 
-You can also specify configuration programmatically if embedding:
+=== Configuring programmatically
+
+You can specify configuration programmatically if embedding:
 
 [source,$lang]
 ----
 {@link examples.Examples#example2()}
 ----
 
-Hazelcast supports several different transports including multicast and TCP. The default configuration uses
-multicast so you must have multicast enabled on your network for this to work.
+It might also be useful to customize an existing XML configuration.
+For example, you might want to change the cluster group name and password:
 
-For full documentation on how to configure the transport differently or use a different transport please consult the
-Hazelcast documentation.
+[source,$lang]
+----
+{@link examples.Examples#customizeDefaultConfig()}
+----
+
+`ConfigUtil#loadConfig` loads Hazelcast config XML and transform it into a `Config` object.
+The content is read from:
+
+. the location denoted by the `vertx.hazelcast.config` sysprop, if present, or
+. the `cluster.xml` file on the classpath, if present, or
+. the default config file
+
+=== Discovery options
+
+Hazelcast supports several different discovery options.
+The default configuration uses multicast so you must have multicast enabled on your network for this to work.
+
+For full documentation on how to configure discovery differently please consult the Hazelcast documentation.
 
 == Using an existing Hazelcast cluster
 
@@ -135,9 +155,9 @@ Notice that the custom Hazelcast instance need to be configured with:
 </semaphore>
 ----
 
-**IMPORTANT** Hazelcast clients or smart clients are not supported.
+IMPORTANT: Hazelcast clients or smart clients are not supported.
 
-**IMPORTANT** Make sure Hazelcast is started before and shut down after Vert.x.
+IMPORTANT: Make sure Hazelcast is started before and shut down after Vert.x.
 Also, the Hazelcast shutdown hook should be disabled (see xml example, or via system property).
 
 == Changing timeout for failed nodes

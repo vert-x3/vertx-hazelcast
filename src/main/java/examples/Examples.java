@@ -28,6 +28,7 @@ import io.vertx.ext.healthchecks.HealthChecks;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.spi.cluster.hazelcast.ClusterHealthCheck;
+import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 /**
@@ -53,6 +54,28 @@ public class Examples {
   public void example2() {
 
     Config hazelcastConfig = new Config();
+
+    // Now set some stuff on the config (omitted)
+
+    ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
+
+    VertxOptions options = new VertxOptions().setClusterManager(mgr);
+
+    Vertx.clusteredVertx(options, res -> {
+      if (res.succeeded()) {
+        Vertx vertx = res.result();
+      } else {
+        // failed!
+      }
+    });
+  }
+
+  public void customizeDefaultConfig() {
+
+    Config hazelcastConfig = ConfigUtil.loadConfig();
+    hazelcastConfig.getGroupConfig()
+      .setName("my-cluster-name")
+      .setPassword("passwd");
 
     // Now set some stuff on the config (omitted)
 
