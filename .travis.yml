@@ -3,7 +3,7 @@ before_install:
 - cp .travis.maven.settings.xml $HOME/.m2/settings.xml
 jdk:
 - oraclejdk8
-install: mvn -q -B dependency:go-offline
+install: true
 script:
 - set -e
 - mvn -DtestLogLevel=OFF clean verify -B
