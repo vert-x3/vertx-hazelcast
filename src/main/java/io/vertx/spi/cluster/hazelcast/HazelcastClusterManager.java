@@ -17,7 +17,6 @@
 package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.config.Config;
-import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.*;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -36,7 +35,6 @@ import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncCounter;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncMap;
 
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -55,10 +53,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   private static final String LOCK_SEMAPHORE_PREFIX = "__vertx.";
   private static final String NODE_ID_ATTRIBUTE = "__vertx.nodeId";
-
-  // Hazelcast config file
-  private static final String DEFAULT_CONFIG_FILE = "default-cluster.xml";
-  private static final String CONFIG_FILE = "cluster.xml";
 
   /**
    * Set "vertx.hazelcast.async-api" system property to {@code true} to use the
@@ -352,49 +346,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
   }
 
-  private InputStream getConfigStream() {
-    InputStream is = getConfigStreamFromSystemProperty();
-    if (is == null) {
-      is = getConfigStreamFromClasspath(CONFIG_FILE, DEFAULT_CONFIG_FILE);
-    }
-    return is;
-  }
-
-  private InputStream getConfigStreamFromSystemProperty() {
-    String configProp = System.getProperty("vertx.hazelcast.config");
-    InputStream is = null;
-    if (configProp != null) {
-      if (configProp.startsWith("classpath:")) {
-        return getConfigStreamFromClasspath(configProp.substring("classpath:".length()), CONFIG_FILE);
-      }
-      File cfgFile = new File(configProp);
-      if (cfgFile.exists()) {
-        try {
-          is = new FileInputStream(cfgFile);
-        } catch (FileNotFoundException ex) {
-          log.warn("Failed to open file '" + configProp + "' defined in 'vertx.hazelcast.config'. Continuing " +
-            "classpath search for " + CONFIG_FILE);
-        }
-      }
-    }
-    return is;
-  }
-
-  private InputStream getConfigStreamFromClasspath(String configFile, String defaultConfig) {
-    InputStream is = null;
-    ClassLoader ctxClsLoader = Thread.currentThread().getContextClassLoader();
-    if (ctxClsLoader != null) {
-      is = ctxClsLoader.getResourceAsStream(configFile);
-    }
-    if (is == null) {
-      is = getClass().getClassLoader().getResourceAsStream(configFile);
-      if (is == null) {
-        is = getClass().getClassLoader().getResourceAsStream(defaultConfig);
-      }
-    }
-    return is;
-  }
-
   /**
    * Get the Hazelcast config.
    *
@@ -432,14 +383,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
    * @return a config object
    */
   public Config loadConfig() {
-    Config cfg = null;
-    try (InputStream is = getConfigStream();
-         InputStream bis = new BufferedInputStream(is)) {
-      cfg = new XmlConfigBuilder(bis).build();
-    } catch (IOException ex) {
-      log.error("Failed to read config", ex);
-    }
-    return cfg;
+    return ConfigUtil.loadConfig();
   }
 
   public HazelcastInstance getHazelcastInstance() {
