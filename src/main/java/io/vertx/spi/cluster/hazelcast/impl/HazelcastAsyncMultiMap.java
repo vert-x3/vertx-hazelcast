@@ -44,6 +44,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
 
   private final VertxInternal vertx;
   private final com.hazelcast.core.MultiMap<K, V> map;
+  private final String listenerRegistrationId;
   private final TaskQueue taskQueue = new TaskQueue();
 
 
@@ -62,7 +63,7 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
   public HazelcastAsyncMultiMap(Vertx vertx, com.hazelcast.core.MultiMap<K, V> map) {
     this.vertx = (VertxInternal) vertx;
     this.map = map;
-    map.addEntryListener(this, true);
+    listenerRegistrationId = map.addEntryListener(this, true);
   }
 
   @Override
@@ -81,6 +82,11 @@ public class HazelcastAsyncMultiMap<K, V> implements AsyncMultiMap<K, V>, EntryL
       }
       fut.complete();
     }, taskQueue, completionHandler);
+  }
+
+  @Override
+  public void close() {
+    map.removeEntryListener(listenerRegistrationId);
   }
 
   @Override
