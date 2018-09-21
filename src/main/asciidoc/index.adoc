@@ -53,7 +53,7 @@ which is packaged inside the jar.
 
 If you want to override this configuration you can provide a file called `cluster.xml` on your classpath and this
 will be used instead. If you want to embed the `cluster.xml` file in a fat jar, it must be located at the root of the
-fat jar. If it's an external file, the*directory** containing the file must be added to the classpath. For
+fat jar. If it's an external file, the **directory** containing the file must be added to the classpath. For
 example, if you are using the _launcher_ class from Vert.x, the classpath enhancement can be done as follows:
 
 [source]
@@ -135,14 +135,12 @@ Notice that the custom Hazelcast instance need to be configured with:
 </semaphore>
 ----
 
-**IMPORTANT** Do not use Hazelcast clients or smart clients when using high-availability (HA, or fail-over) in your
-cluster as they do not notify when they leave the cluster and you may loose data, or leave the cluster in an
-inconsistent state. See https://github.com/vert-x3/vertx-hazelcast/issues/24 for more details.
+**IMPORTANT** Hazelcast clients or smart clients are not supported.
 
 **IMPORTANT** Make sure Hazelcast is started before and shut down after Vert.x.
 Also, the Hazelcast shutdown hook should be disabled (see xml example, or via system property).
 
-=== Changing timeout for failed nodes
+== Changing timeout for failed nodes
 
 By default a node will be removed from the cluster if Hazelcast didn't receive a heartbeat for 300 seconds. To change
 this value `hazelcast.max.no.heartbeat.seconds` system property such as in:
@@ -159,15 +157,11 @@ http://docs.hazelcast.org/docs/3.6/manual/html-single/index.html#configuring-wit
 with system properties] for the other properties you can configure.
 
 == Using Hazelcast async methods
-Hazelcast's `IMap` and `IAtomicLong` interfaces can be used with async methods returning `ICompletableFuture<V>`,
-a natural fit for Vert.x threading model. Even though these interfaces have been available for a long time, they are not
-provided by the public `HazelcastInstance` API.
 
-The default behavior of the `HazelcastClusterManager` is to use the public API. Supplying the option
-`-Dvertx.hazelcast.async-api=true` on JVM startup, will indicate that the async Hazelcast API methods will be used to
-communicate with the hazelcast cluster. Effectively, this means that when this option is enabled,
-execution of all `Counter` operations and `AsyncMap.get`,`AsyncMap.put` and `AsyncMap.remove` operations will
-occur in the calling thread (the event loop), instead of a worker thread with `vertx.executeBlocking`.
+Hazelcast's `IMap` and `IAtomicLong` interfaces can be used with async methods returning `ICompletableFuture<V>`, a natural fit for Vert.x threading model.
+
+Supplying the option `-Dvertx.hazelcast.async-api=true` on JVM startup, will indicate that the async Hazelcast API methods will be used to communicate with the hazelcast cluster.
+Effectively, this means that when this option is enabled, execution of all `Counter` operations and `AsyncMap.get`,`AsyncMap.put` and `AsyncMap.remove` operations will occur in the calling thread (the event loop), instead of a worker thread with `vertx.executeBlocking`.
 
 == Trouble shooting clustering
 
@@ -292,7 +286,7 @@ dependencies {
 
 On Kubernetes, Hazelcast should be configured to use the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes] plugin.
 
-First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes-version}`
+First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes.version}`
 dependencies to your project. With Maven it looks like:
 
 [source,xml]
@@ -305,39 +299,37 @@ dependencies to your project. With Maven it looks like:
 <dependency>
   <groupId>com.hazelcast</groupId>
   <artifactId>hazelcast-kubernetes</artifactId>
-  <version>${hazelcast-kubernetes-version}</version>
+  <version>${hazelcast-kubernetes.version}</version>
 </dependency>
 <dependency>
 ----
 
-The second step is to configure the discovery plugin inside of your Hazelcast configuration, by either providing a custom
-`cluster.xml` file or programmatically, as described in <<configcluster>>.
+NOTE: If you use a different version of the Hazelcast core library, make sure to use a compatible version of the Kubernetes discovery plugin.
 
-The following properties have to be changed / added:
+The second step is to configure the discovery plugin inside of your Hazelcast configuration, by either providing a custom `cluster.xml` file or programmatically, as described in <<configcluster>>.
+
+The plugin provides two https://github.com/hazelcast/hazelcast-kubernetes#understanding-discovery-modes[discovery modes]: _Kubernetes API_ and _DNS Lookup_.
+Please refer to the plugin project page for pros and cons of both modes.
+
+In this document, we will use _DNS Lookup_ discovery. The following properties have to be changed / added:
 
 [source,xml]
 ----
 <hazelcast>
   <properties>
-    <!-- only necessary prior Hazelcast 3.8 -->
-    <property name="hazelcast.discovery.enabled">true</property>
+    <property name="hazelcast.discovery.enabled">true</property> <!--1-->
   </properties>
 
   <network>
     <join>
-      <!-- deactivate normal discovery -->
-      <multicast enabled="false"/>
+      <multicast enabled="false"/> <!--2-->
       <tcp-ip enabled="false" />
 
-      <!-- activate the Kubernetes plugin -->
       <discovery-strategies>
-        <discovery-strategy enabled="true"
+        <discovery-strategy enabled="true" <!--3-->
             class="com.hazelcast.kubernetes.HazelcastKubernetesDiscoveryStrategy">
-
           <properties>
-            <!-- configure discovery service API lookup -->
-            <property name="service-dns">MY-SERVICE-DNS-NAME</property>
-            <property name="service-dns-timeout">10</property>
+            <property name="service-dns">MY-SERVICE-DNS-NAME</property> <!--4-->
           </properties>
         </discovery-strategy>
       </discovery-strategies>
@@ -345,9 +337,12 @@ The following properties have to be changed / added:
   </network>
 </hazelcast>
 ----
+<1> Activate Discovery SPI
+<2> Deactivate other discoveries
+<3> Activate the Kubernetes plugin
+<4> Service DNS, usually in the form of `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local` but depends on the Kubernetes distribution
 
 The `MY-SERVICE-DNS-NAME` value must be a *headless* Kubernetes service name that will be used by Hazelcast to identify all cluster members.
-The format for this field is `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local`.
 A headless service can be created with:
 
 [source,yaml]
@@ -359,16 +354,17 @@ metadata:
   name: MY-SERVICE-NAME
 spec:
   selector:
-    component: MY-SERVICE-NAME
+    component: MY-SERVICE-NAME # <1>
   clusterIP: None
   ports:
   - name: hz-port-name
     port: 5701
     protocol: TCP
 ----
+<1> Cluster members selected by label
 
+Eventually, attach the `component` label to all deployments that should be part of the cluster:
 
-Then, attach the `component` label to all deployments that should be part of the cluster:
 [source,yaml]
 ----
 apiVersion: extensions/v1beta1
@@ -381,7 +377,6 @@ spec:
       labels:
         component: MY-SERVICE-NAME
 ----
-
 
 Further configuration details are available on the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes Plugin page].
 
