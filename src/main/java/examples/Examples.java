@@ -71,13 +71,11 @@ public class Examples {
   }
 
   public void customizeDefaultConfig() {
-
     Config hazelcastConfig = ConfigUtil.loadConfig();
+
     hazelcastConfig.getGroupConfig()
       .setName("my-cluster-name")
       .setPassword("passwd");
-
-    // Now set some stuff on the config (omitted)
 
     ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
 
@@ -112,5 +110,22 @@ public class Examples {
   public void healthCheckHandler(Vertx vertx, HealthChecks checks) {
     Router router = Router.router(vertx);
     router.get("/readiness").handler(HealthCheckHandler.createWithHealthChecks(checks));
+  }
+
+  public void liteMemberConfig() {
+    Config hazelcastConfig = ConfigUtil.loadConfig()
+      .setLiteMember(true);
+
+    ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
+
+    VertxOptions options = new VertxOptions().setClusterManager(mgr);
+
+    Vertx.clusteredVertx(options, res -> {
+      if (res.succeeded()) {
+        Vertx vertx = res.result();
+      } else {
+        // failed!
+      }
+    });
   }
 }

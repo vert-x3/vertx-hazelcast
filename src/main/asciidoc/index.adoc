@@ -441,3 +441,78 @@ After creation, it can be exposed over HTTP with a link:../../vertx-web/$lang/[V
 ----
 {@link examples.Examples#healthCheckHandler(io.vertx.core.Vertx, io.vertx.ext.healthchecks.HealthChecks)}
 ----
+
+== Cluster administration
+
+The Hazelcast cluster manager works by turning Vert.x nodes into members of a Hazelcast cluster.
+As a consequence, Vert.x cluster manager administration should follow the Hazelcast management guidelines.
+
+First, let's take a step back and introduce data partioning and split-brain syndrome.
+
+=== Data partitioning
+
+Each Vert.x node holds pieces of the clustering data: eventbus subscriptions, async map entries, clustered counters... etc.
+
+When a member joins or leaves the cluster, Hazelcast migrates data partitions.
+In other words, it moves data around to accomodate the new cluster topology.
+This process may take some time, depending on the amount of clustered data and number of nodes.
+
+=== Split-brain syndrome
+
+In an perfect world, there would be no network equipment failures.
+Reality is, though, that sooner or later your cluster will be divided into smaller groups, unable to see each others.
+
+Hazelcast is capable of merging the nodes back into a single cluster.
+But just as with data partition migrations, this process may take some time.
+Before the cluster is fully functional again, some eventbus consumers might not be able to get messages.
+Or high-availability may not be able to redeploy a failing verticle.
+
+[NOTE]
+====
+It is difficult (if possible at all) to make a difference between a network partition and:
+
+- long GC pauses (leading to missed heartbeats checks),
+- many nodes being killed forcefully, at-once, because you are deploying a new version of your application
+====
+
+=== Recommendations
+
+Considering the common clustering issues discussed above, it is recommended to stick to the following good practices.
+
+==== Graceful shutdown
+
+Avoid stopping members forcefully.
+
+Of course process crashes are inevitable, but a graceful shutdown helps to get the remaining nodes in a stable state faster.
+
+==== One node after the other
+
+When rolling a new version of your app, scaling-up or down your cluster, add or remove nodes one after the other.
+
+Stopping nodes one by one prevents the cluster from thinking a network partition occured.
+Adding them one by one allows for clean, incremental data partition migrations.
+
+==== Using Lite Members
+
+To minimize the time a Vert.x cluster spends accomodating a new topology, you may use external data nodes and mark Vert.x nodes as _Lite Members_.
+
+_Lite Members_ participate in a Hazelcast cluster like regular members, but they do not own any data partition.
+Therefore, Hazelcast does not need to migrate partitions when such members are added or removed.
+
+IMPORTANT: You must start the external data nodes beforehand as Hazelcast won't create a cluster with _Lite Members_ only.
+
+To start an external node, you can use the Hazelcast distribution start script, or proceed programmatically.
+
+Vert.x nodes can be marked as _Lite Members_ in the XML configuration:
+
+[source,xml]
+----
+<lite-member enabled="true"/>
+----
+
+You can also do it programmatically:
+
+[source,$lang]
+----
+{@link examples.Examples#liteMemberConfig()}
+----
