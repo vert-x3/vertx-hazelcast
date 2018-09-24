@@ -481,7 +481,7 @@ Considering the common clustering issues discussed above, it is recommended to s
 
 ==== Graceful shutdown
 
-Avoid stopping members forcefully.
+Avoid stopping members forcefully (e.g, `kill -9` a node).
 
 Of course process crashes are inevitable, but a graceful shutdown helps to get the remaining nodes in a stable state faster.
 
