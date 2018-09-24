@@ -494,7 +494,7 @@ Adding them one by one allows for clean, incremental data partition migrations.
 
 ==== Using Lite Members
 
-To minimize the time a Vert.x cluster spends accomodating a new topology, you may use external data nodes and mark Vert.x nodes as _Lite Members_.
+To minimize the time a Vert.x cluster spends accomodating a new topology, you may use external data nodes and mark Vert.x nodes as https://docs.hazelcast.org/docs/latest/manual/html-single/#enabling-lite-members[_Lite Members_].
 
 _Lite Members_ participate in a Hazelcast cluster like regular members, but they do not own any data partition.
 Therefore, Hazelcast does not need to migrate partitions when such members are added or removed.
