@@ -14,25 +14,26 @@
  * under the License.
  */
 
-package io.vertx.core.shareddata;
+package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import io.vertx.core.net.impl.ServerID;
-import io.vertx.core.spi.cluster.ChoosableIterable;
+import io.vertx.core.shareddata.ClusteredAsyncMapTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * @author Thomas Segismont
  */
-public class LiteMembersHazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
+public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
 
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 
@@ -58,45 +59,10 @@ public class LiteMembersHazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
     dataNodes.forEach(HazelcastInstance::shutdown);
   }
 
+  @Override
   @Test
-  public void shouldNotAddToMapCacheIfKeyDoesntAlreadyExist() throws Exception {
-    String nonexistentKey = "non-existent-key." + UUID.randomUUID();
-
-    map.get(nonexistentKey, ar -> {
-      if (ar.succeeded()) {
-        try {
-          ChoosableIterable<ServerID> s = ar.result();
-          Map<String, ChoosableIterable<ServerID>> cache = getCacheFromMap();
-
-          // System.err.println("CACHE CONTENTS: " + cache);
-
-          // check result
-          assertNotNull(s);
-          assertTrue(s.isEmpty());
-
-          // check cache
-          assertNotNull(cache);
-          assertFalse(
-            "Map cache should not contain key " + nonexistentKey,
-            cache.containsKey(nonexistentKey));
-
-        } catch (Exception e) {
-          fail(e.toString());
-        } finally {
-          testComplete();
-        }
-      } else {
-        fail(ar.cause().toString());
-      }
-    });
-
-    await();
-  }
-
-  @SuppressWarnings("unchecked")
-  private Map<String, ChoosableIterable<ServerID>> getCacheFromMap() throws Exception {
-    Field field = map.getClass().getDeclaredField("cache");
-    field.setAccessible(true);
-    return (Map<String, ChoosableIterable<ServerID>>) field.get(map);
+  @Ignore("Hazelcast removes the binding even if a new entry is added without ttl")
+  public void testMapPutTtlThenPut() {
+    super.testMapPutTtlThenPut();
   }
 }

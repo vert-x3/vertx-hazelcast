@@ -14,14 +14,14 @@
  * under the License.
  */
 
-package io.vertx.core.shareddata;
+package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.core.shareddata.ClusteredSharedCounterTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.Random;
 /**
  * @author Thomas Segismont
  */
-public class LiteMembersHazelcastClusteredAsynchronousLockTest extends ClusteredAsynchronousLockTest {
+public class HazelcastClusteredSharedCounterTest extends ClusteredSharedCounterTest {
 
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 
@@ -55,17 +55,5 @@ public class LiteMembersHazelcastClusteredAsynchronousLockTest extends Clustered
   protected void tearDown() throws Exception {
     super.tearDown();
     dataNodes.forEach(HazelcastInstance::shutdown);
-  }
-
-  @Override
-  @Test
-  public void testLockReleasedForClosedNode() throws Exception {
-    super.testLockReleasedForClosedNode();
-  }
-
-  @Override
-  @Test
-  public void testLockReleasedForKilledNode() throws Exception {
-    super.testLockReleasedForKilledNode();
   }
 }

@@ -14,10 +14,11 @@
  * under the License.
  */
 
-package io.vertx.core;
+package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.core.HATest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -26,11 +27,13 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Thomas Segismont
  */
-public class LiteMembersHazelcastComplexHATest extends ComplexHATest {
+public class HazelcastHATest extends HATest {
 
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 
@@ -54,5 +57,10 @@ public class LiteMembersHazelcastComplexHATest extends ComplexHATest {
   protected void tearDown() throws Exception {
     super.tearDown();
     dataNodes.forEach(HazelcastInstance::shutdown);
+  }
+
+  @Override
+  protected void awaitLatch(CountDownLatch latch) throws InterruptedException {
+    assertTrue(latch.await(30, TimeUnit.SECONDS));
   }
 }

@@ -14,10 +14,11 @@
  * under the License.
  */
 
-package io.vertx.core.shareddata;
+package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.core.eventbus.ClusteredEventBusTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -30,7 +31,7 @@ import java.util.Random;
 /**
  * @author Thomas Segismont
  */
-public class LiteMembersHazelcastClusteredSharedCounterTest extends ClusteredSharedCounterTest {
+public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
 
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 

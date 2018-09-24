@@ -160,7 +160,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <excludes>
-            <exclude>**/LiteMembers*Test.java</exclude>
+            <exclude>**/it/**/*Test.java</exclude>
           </excludes>
         </configuration>
       </plugin>
@@ -204,7 +204,7 @@
             <phase>integration-test</phase>
             <configuration>
               <includes>
-                <include>**/LiteMembers*Test.java</include>
+                <include>**/it/litemembers/*Test.java</include>
               </includes>
             </configuration>
           </execution>

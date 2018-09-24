@@ -14,14 +14,14 @@
  * under the License.
  */
 
-package io.vertx.core.shareddata;
+package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.core.shareddata.ClusteredAsynchronousLockTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -32,7 +32,7 @@ import java.util.Random;
 /**
  * @author Thomas Segismont
  */
-public class LiteMembersHazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
+public class HazelcastClusteredAsynchronousLockTest extends ClusteredAsynchronousLockTest {
 
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 
@@ -60,8 +60,13 @@ public class LiteMembersHazelcastClusteredAsyncMapTest extends ClusteredAsyncMap
 
   @Override
   @Test
-  @Ignore("Hazelcast removes the binding even if a new entry is added without ttl")
-  public void testMapPutTtlThenPut() {
-    super.testMapPutTtlThenPut();
+  public void testLockReleasedForClosedNode() throws Exception {
+    super.testLockReleasedForClosedNode();
+  }
+
+  @Override
+  @Test
+  public void testLockReleasedForKilledNode() throws Exception {
+    super.testLockReleasedForKilledNode();
   }
 }
