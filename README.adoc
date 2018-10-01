@@ -10,3 +10,20 @@ cluster managers are pluggable.
 Please see the main documentation on the web-site for a full description:
 
 * https://vertx.io/docs/vertx-hazelcast/java/[Web-site documentation]
+
+== Running tests
+
+To run the clustering test suite, open a terminal and type:
+
+[source,shell]
+----
+mvn test
+----
+
+There are additional integration tests in this project.
+To run these tests as well:
+
+[source,shell]
+----
+mvn verify
+----
