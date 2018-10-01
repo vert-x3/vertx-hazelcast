@@ -44,7 +44,7 @@ when you are creating your Vert.x instance, for example:
 {@link examples.Examples#example1()}
 ----
 
-[#configcluster]
+[[configcluster]]
 == Configuring this cluster manager
 
 === Configuring with XML
@@ -306,8 +306,8 @@ dependencies {
 
 On Kubernetes, Hazelcast should be configured to use the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes] plugin.
 
-First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes.version}`
-dependencies to your project. With Maven it looks like:
+First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes.version}` dependencies to your project.
+With Maven it looks like:
 
 [source,xml]
 ----
@@ -425,22 +425,7 @@ spec:
 <2> the maximum number of pods that can be created over the desired number of pods
 
 Also, the pod readiness probe must take the cluster state into account.
-Indeed, when a node joins or leaves the cluster, Hazelcast rebalances the data across members, and it is better to avoid concurrent state transfers.
-When the state transfer completes, the cluster goes back to a safe state.
-
-The readiness probe can be implemented with link:../../vertx-health-check/$lang/[Vert.x Health Checks]:
-
-[source,$lang]
-----
-{@link examples.Examples#healthCheck(io.vertx.core.Vertx)}
-----
-
-After creation, it can be exposed over HTTP with a link:../../vertx-web/$lang/[Vert.x Web] router handler:
-
-[source,$lang]
-----
-{@link examples.Examples#healthCheckHandler(io.vertx.core.Vertx, io.vertx.ext.healthchecks.HealthChecks)}
-----
+Please refer to the <<one-by-one, cluster administration>> section for details on how to implement a readiness probe with link:../../vertx-health-check/$lang/[Vert.x Health Checks].
 
 == Cluster administration
 
@@ -485,12 +470,28 @@ Avoid stopping members forcefully (e.g, `kill -9` a node).
 
 Of course process crashes are inevitable, but a graceful shutdown helps to get the remaining nodes in a stable state faster.
 
+[[one-by-one]]
 ==== One node after the other
 
 When rolling a new version of your app, scaling-up or down your cluster, add or remove nodes one after the other.
 
 Stopping nodes one by one prevents the cluster from thinking a network partition occured.
 Adding them one by one allows for clean, incremental data partition migrations.
+
+The cluster safety can be verified with link:../../vertx-health-check/$lang/[Vert.x Health Checks]:
+
+[source,$lang]
+----
+{@link examples.Examples#healthCheck(io.vertx.core.Vertx)}
+----
+
+After creation, the health check can be exposed over HTTP with a link:../../vertx-web/$lang/[Vert.x Web] router handler:
+
+[source,$lang]
+----
+{@link examples.Examples#healthCheckHandler(io.vertx.core.Vertx, io.vertx.ext.healthchecks.HealthChecks)}
+----
+
 
 ==== Using Lite Members
 
