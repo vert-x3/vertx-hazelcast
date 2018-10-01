@@ -18,10 +18,12 @@ package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.LoggingTestWatcher;
 import io.vertx.core.HATest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Rule;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -34,6 +36,9 @@ import java.util.concurrent.TimeUnit;
  * @author Thomas Segismont
  */
 public class HazelcastHATest extends HATest {
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 

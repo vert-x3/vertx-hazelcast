@@ -16,8 +16,10 @@
 
 package io.vertx.core.shareddata;
 
+import io.vertx.LoggingTestWatcher;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Rule;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -26,6 +28,9 @@ import java.util.Random;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class HazelcastClusteredSharedCounterTest extends ClusteredSharedCounterTest {
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   @Override
   public void setUp() throws Exception {

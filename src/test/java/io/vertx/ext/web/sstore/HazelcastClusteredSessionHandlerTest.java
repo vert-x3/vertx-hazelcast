@@ -16,8 +16,10 @@
 
 package io.vertx.ext.web.sstore;
 
+import io.vertx.LoggingTestWatcher;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Rule;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -31,6 +33,9 @@ public class HazelcastClusteredSessionHandlerTest extends ClusteredSessionHandle
     System.setProperty("hazelcast.wait.seconds.before.join", "0");
     System.setProperty("hazelcast.local.localAddress", "127.0.0.1");
   }
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   @Override
   public void setUp() throws Exception {

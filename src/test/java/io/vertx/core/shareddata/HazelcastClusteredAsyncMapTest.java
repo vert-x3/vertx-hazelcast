@@ -16,9 +16,11 @@
 
 package io.vertx.core.shareddata;
 
+import io.vertx.LoggingTestWatcher;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -28,6 +30,9 @@ import java.util.Random;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   @Override
   public void setUp() throws Exception {

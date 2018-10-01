@@ -16,9 +16,11 @@
 
 package io.vertx.core.shareddata;
 
+import io.vertx.LoggingTestWatcher;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.AfterClass;
+import org.junit.Rule;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -31,6 +33,9 @@ public class HazelcastInternalClusteredSharedCounterTest extends ClusteredShared
   static {
     System.setProperty("vertx.hazelcast.async-api", "true");
   }
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   @Override
   public void setUp() throws Exception {

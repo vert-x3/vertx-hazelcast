@@ -18,12 +18,14 @@ package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.LoggingTestWatcher;
 import io.vertx.core.net.impl.ServerID;
 import io.vertx.core.shareddata.AsyncMultiMapTest;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -34,6 +36,9 @@ import java.util.*;
  * @author Thomas Segismont
  */
 public class HazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 

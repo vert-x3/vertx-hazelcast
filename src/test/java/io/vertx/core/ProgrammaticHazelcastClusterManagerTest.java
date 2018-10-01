@@ -19,9 +19,11 @@ package io.vertx.core;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.GroupConfig;
 import com.hazelcast.core.*;
+import io.vertx.LoggingTestWatcher;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import io.vertx.test.core.AsyncTestBase;
 import org.junit.AfterClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -38,6 +40,9 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     // this is only checked once every 10 seconds by Hazelcast on client disconnect
     System.setProperty("hazelcast.client.max.no.heartbeat.seconds", "9");
   }
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   @Override
   public void setUp() throws Exception {
