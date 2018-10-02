@@ -1,19 +1,23 @@
 language: java
 before_install:
 - cp .travis.maven.settings.xml $HOME/.m2/settings.xml
-jdk:
-- oraclejdk8
-install: true
 branches:
   only:
   - master
+  - /^\d+\.\d+$/
 jobs:
   include:
     - stage: test
       name: "Unit tests"
       script: mvn -B -DtestLogLevel=OFF test
+      jdk: oraclejdk8
     - name: "Integration tests"
       script: mvn -B -DtestLogLevel=OFF -DskipUnitTests verify
+      jdk: oraclejdk8
+    - stage: deploy
+      name: "Deploy to Sonatype's snapshots repository"
+      if: type != pull_request
+      script: bash .travis.deploy.artifacts.sh
 notifications:
   email:
     recipients:
