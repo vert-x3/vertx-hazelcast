@@ -4,12 +4,15 @@ before_install:
 jdk:
 - oraclejdk8
 install: true
-script:
-- set -e
-- mvn -DtestLogLevel=OFF clean verify -B
 branches:
   only:
   - master
+jobs:
+  include:
+    - stage: test
+      script: mvn -B -DtestLogLevel=OFF test
+    - name: "Lite members"
+      script: mvn -B -DtestLogLevel=OFF -DskipUnitTests verify
 notifications:
   email:
     recipients:
