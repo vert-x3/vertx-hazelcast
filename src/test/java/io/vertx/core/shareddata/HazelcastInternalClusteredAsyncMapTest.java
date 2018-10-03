@@ -23,6 +23,7 @@ import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -30,6 +31,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
+@Category(HazelcastAsyncApi.class)
 public class HazelcastInternalClusteredAsyncMapTest extends ClusteredAsyncMapTest {
 
   static {

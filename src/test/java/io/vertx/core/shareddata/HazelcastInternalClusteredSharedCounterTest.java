@@ -21,6 +21,7 @@ import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.AfterClass;
 import org.junit.Rule;
+import org.junit.experimental.categories.Category;
 
 import java.math.BigInteger;
 import java.util.Random;
@@ -28,6 +29,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
+@Category(HazelcastAsyncApi.class)
 public class HazelcastInternalClusteredSharedCounterTest extends ClusteredSharedCounterTest {
 
   static {
