@@ -1,6 +1,5 @@
 language: java
-before_install:
-- cp .travis.maven.settings.xml $HOME/.m2/settings.xml
+install: true
 branches:
   only:
   - master
@@ -8,10 +7,14 @@ branches:
 jobs:
   include:
     - stage: test
-      name: "Unit tests"
+      name: "Unit tests - OracleJDK 8"
       script: mvn -B -DtestLogLevel=OFF test
       jdk: oraclejdk8
-    - name: "Integration tests"
+    - name: "Unit tests - OpenJDK 11"
+      if: type != pull_request
+      script: mvn -B -DtestLogLevel=OFF test
+      jdk: openjdk11
+    - name: "Integration tests - OracleJDK 8"
       script: mvn -B -DtestLogLevel=OFF -DskipUnitTests verify
       jdk: oraclejdk8
     - stage: deploy
