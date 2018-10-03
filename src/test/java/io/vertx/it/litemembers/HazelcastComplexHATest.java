@@ -33,6 +33,8 @@ import java.util.Random;
  */
 public class HazelcastComplexHATest extends ComplexHATest {
 
+  private static final int DATA_NODES = Integer.getInteger("litemembers.datanodes.count", 1);
+
   private List<HazelcastInstance> dataNodes = new ArrayList<>();
 
   @Override
@@ -40,7 +42,7 @@ public class HazelcastComplexHATest extends ComplexHATest {
     Random random = new Random();
     System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
     System.setProperty("vertx.hazelcast.test.group.password", new BigInteger(128, random).toString(32));
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < DATA_NODES; i++) {
       dataNodes.add(Hazelcast.newHazelcastInstance(ConfigUtil.loadConfig()));
     }
     super.setUp();
