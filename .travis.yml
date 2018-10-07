@@ -23,11 +23,11 @@ jobs:
       jdk: oraclejdk8
     - stage: deploy
       name: "Deploy to Sonatype's snapshots repository"
-      if: type != pull_request
+      if: type != pull_request AND env(SONATYPE_NEXUS_USERNAME) IS present
       script: bash .travis.deploy.artifacts.sh
 notifications:
   email:
     recipients:
-      - vertx3-ci@googlegroups.com
+      - secure: "Lkfu2lRhyxFtLXeecCn4I4UTthfWxoCOZhybl6NrXeThaeaiHWaVeFK89z0ZSY/jXH3dVRAy5CdSktdLBmEsQ3ElZ3nduI8DJ2D4anp9z3hTlKYn8z4dsgL/6B9xGohT+6m9R+xGfstW/bGQEm/BnQGerH33bwwhDW3JiGe+dqw="
     on_success: always
     on_failure: always
