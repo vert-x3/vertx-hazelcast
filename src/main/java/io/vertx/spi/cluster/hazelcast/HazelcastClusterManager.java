@@ -205,7 +205,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       do {
         long start = System.nanoTime();
         try {
-          locked = iSemaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS);
+          locked = iSemaphore.tryAcquire(remaining > 5000 ? 5000 : remaining, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
           // OK continue
         }
