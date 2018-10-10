@@ -432,7 +432,7 @@ Please refer to the <<one-by-one, cluster administration>> section for details o
 The Hazelcast cluster manager works by turning Vert.x nodes into members of a Hazelcast cluster.
 As a consequence, Vert.x cluster manager administration should follow the Hazelcast management guidelines.
 
-First, let's take a step back and introduce data partioning and split-brain syndrome.
+First, let's take a step back and introduce data partitioning and split-brain syndrome.
 
 === Data partitioning
 
