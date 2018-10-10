@@ -444,7 +444,7 @@ This process may take some time, depending on the amount of clustered data and n
 
 === Split-brain syndrome
 
-In an perfect world, there would be no network equipment failures.
+In a perfect world, there would be no network equipment failures.
 Reality is, though, that sooner or later your cluster will be divided into smaller groups, unable to see each others.
 
 Hazelcast is capable of merging the nodes back into a single cluster.
@@ -491,7 +491,6 @@ After creation, the health check can be exposed over HTTP with a link:../../vert
 ----
 {@link examples.Examples#healthCheckHandler(io.vertx.core.Vertx, io.vertx.ext.healthchecks.HealthChecks)}
 ----
-
 
 ==== Using Lite Members
 
