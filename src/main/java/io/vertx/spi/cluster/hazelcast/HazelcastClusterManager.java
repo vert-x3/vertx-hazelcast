@@ -204,9 +204,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
-    ContextImpl context = (ContextImpl) vertx.getOrCreateContext();
-    // Ordered on the internal blocking executor
-    context.executeBlocking(() -> {
+    vertx.executeBlocking(fut -> {
       ISemaphore iSemaphore = hazelcast.getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
       long remaining = timeout;
@@ -220,11 +218,11 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         remaining = remaining - MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
       } while (!locked && remaining > 0);
       if (locked) {
-        return new HazelcastLock(iSemaphore);
+        fut.complete(new HazelcastLock(iSemaphore));
       } else {
         throw new VertxException("Timed out waiting to get lock " + name);
       }
-    }, resultHandler);
+    }, false, resultHandler);
   }
 
   @Override
