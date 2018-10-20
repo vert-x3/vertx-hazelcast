@@ -18,7 +18,9 @@ package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.Lifecycle;
 import io.vertx.LoggingTestWatcher;
+import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.ClusteredEventBusTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
@@ -61,6 +63,11 @@ public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    dataNodes.forEach(HazelcastInstance::shutdown);
+    Lifecycle.closeDataNodes(dataNodes);
+  }
+
+  @Override
+  protected void closeClustered(List<Vertx> clustered) throws Exception {
+    Lifecycle.closeClustered(clustered);
   }
 }

@@ -18,7 +18,9 @@ package io.vertx.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import io.vertx.Lifecycle;
 import io.vertx.LoggingTestWatcher;
+import io.vertx.core.Vertx;
 import io.vertx.core.net.impl.ServerID;
 import io.vertx.core.shareddata.AsyncMultiMapTest;
 import io.vertx.core.spi.cluster.ChoosableIterable;
@@ -63,7 +65,12 @@ public class HazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    dataNodes.forEach(HazelcastInstance::shutdown);
+    Lifecycle.closeDataNodes(dataNodes);
+  }
+
+  @Override
+  protected void closeClustered(List<Vertx> clustered) throws Exception {
+    Lifecycle.closeClustered(clustered);
   }
 
   @Test

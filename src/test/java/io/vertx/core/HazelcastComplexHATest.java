@@ -16,10 +16,12 @@
 
 package io.vertx.core;
 
+import io.vertx.Lifecycle;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -40,4 +42,8 @@ public class HazelcastComplexHATest extends ComplexHATest {
     return new HazelcastClusterManager();
   }
 
+  @Override
+  protected void closeClustered(List<Vertx> clustered) throws Exception {
+    Lifecycle.closeClustered(clustered);
+  }
 }

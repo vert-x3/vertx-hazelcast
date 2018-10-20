@@ -16,7 +16,9 @@
 
 package io.vertx.core.shareddata;
 
+import io.vertx.Lifecycle;
 import io.vertx.LoggingTestWatcher;
+import io.vertx.core.Vertx;
 import io.vertx.core.net.impl.ServerID;
 import io.vertx.core.spi.cluster.ChoosableIterable;
 import io.vertx.core.spi.cluster.ClusterManager;
@@ -26,6 +28,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -49,6 +52,11 @@ public class HazelcastAsyncMultiMapTest extends AsyncMultiMapTest {
   @Override
   protected ClusterManager getClusterManager() {
     return new HazelcastClusterManager();
+  }
+
+  @Override
+  protected void closeClustered(List<Vertx> clustered) throws Exception {
+    Lifecycle.closeClustered(clustered);
   }
 
   @Test

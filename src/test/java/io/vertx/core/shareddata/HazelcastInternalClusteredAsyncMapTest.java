@@ -16,7 +16,9 @@
 
 package io.vertx.core.shareddata;
 
+import io.vertx.Lifecycle;
 import io.vertx.LoggingTestWatcher;
+import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.AfterClass;
@@ -26,6 +28,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -52,6 +55,11 @@ public class HazelcastInternalClusteredAsyncMapTest extends ClusteredAsyncMapTes
   @Override
   protected ClusterManager getClusterManager() {
     return new HazelcastClusterManager();
+  }
+
+  @Override
+  protected void closeClustered(List<Vertx> clustered) throws Exception {
+    Lifecycle.closeClustered(clustered);
   }
 
   @Override
