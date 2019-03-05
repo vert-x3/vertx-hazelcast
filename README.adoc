@@ -1,6 +1,6 @@
 = Hazelcast Cluster Manager
 
-[![Build Status](https://travis-ci.org/vert-x3/vertx-hazelcast.svg?branch=master)](https://travis-ci.org/vert-x3/vertx-hazelcast)
+image:https://travis-ci.org/vert-x3/vertx-hazelcast.svg?branch=master["Build Status", link="https://travis-ci.org/vert-x3/vertx-hazelcast"]
 
 This is a cluster manager implementation for Vert.x that uses http://hazelcast.com[Hazelcast].
 
