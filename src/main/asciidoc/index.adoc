@@ -321,7 +321,6 @@ With Maven it looks like:
   <artifactId>hazelcast-kubernetes</artifactId>
   <version>${hazelcast-kubernetes.version}</version>
 </dependency>
-<dependency>
 ----
 
 NOTE: If you use a different version of the Hazelcast core library, make sure to use a compatible version of the Kubernetes discovery plugin.
