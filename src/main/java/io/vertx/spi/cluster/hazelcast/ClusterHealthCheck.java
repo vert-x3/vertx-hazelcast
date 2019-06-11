@@ -12,8 +12,8 @@ package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.core.PartitionService;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.ext.healthchecks.Status;
@@ -32,7 +32,7 @@ public interface ClusterHealthCheck {
    * @param vertx the instance of Vert.x, must not be {@code null}
    * @return a Vert.x cluster {@link io.vertx.ext.healthchecks.HealthChecks} procedure
    */
-  static Handler<Future<Status>> createProcedure(Vertx vertx) {
+  static Handler<Promise<Status>> createProcedure(Vertx vertx) {
     Objects.requireNonNull(vertx);
     return future -> {
       VertxInternal vertxInternal = (VertxInternal) vertx;
