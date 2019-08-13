@@ -41,18 +41,22 @@ public class Lifecycle {
       VertxInternal vertxInternal = (VertxInternal) vertx;
 
       HazelcastClusterManager clusterManager = (HazelcastClusterManager) vertxInternal.getClusterManager();
-      HazelcastInstance hazelcastInstance = clusterManager.getHazelcastInstance();
 
-      SECONDS.sleep(2); // Make sure rebalancing has been triggered
+      if (clusterManager != null) {
+        HazelcastInstance hazelcastInstance = clusterManager.getHazelcastInstance();
 
-      long start = System.currentTimeMillis();
-      try {
-        while (!hazelcastInstance.getPartitionService().isClusterSafe()
-          && System.currentTimeMillis() - start < MILLISECONDS.convert(2, MINUTES)) {
-          MILLISECONDS.sleep(100);
+        SECONDS.sleep(2); // Make sure rebalancing has been triggered
+
+        long start = System.currentTimeMillis();
+        try {
+          while (!hazelcastInstance.getPartitionService().isClusterSafe()
+            && System.currentTimeMillis() - start < MILLISECONDS.convert(2, MINUTES)) {
+            MILLISECONDS.sleep(100);
+          }
+        } catch (Exception ignore) {
         }
-      } catch (Exception ignore) {
       }
+
       CountDownLatch latch = new CountDownLatch(1);
       vertxInternal.close(ar -> {
         if (ar.failed()) {
