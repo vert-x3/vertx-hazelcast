@@ -19,6 +19,7 @@ package io.vertx.spi.cluster.hazelcast;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.*;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -400,45 +401,80 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     }
 
     @Override
+    public Future<Long> get() {
+      return vertx.executeBlocking(fut -> fut.complete(atomicLong.get()));
+    }
+
+    @Override
+    public Future<Long> incrementAndGet() {
+      return vertx.executeBlocking(fut -> fut.complete(atomicLong.incrementAndGet()));
+    }
+
+    @Override
+    public Future<Long> getAndIncrement() {
+      return vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndIncrement()));
+    }
+
+    @Override
+    public Future<Long> decrementAndGet() {
+      return vertx.executeBlocking(fut -> fut.complete(atomicLong.decrementAndGet()));
+    }
+
+    @Override
+    public Future<Long> addAndGet(long value) {
+      return vertx.executeBlocking(fut -> fut.complete(atomicLong.addAndGet(value)));
+    }
+
+    @Override
+    public Future<Long> getAndAdd(long value) {
+      return vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndAdd(value)));
+    }
+
+    @Override
+    public Future<Boolean> compareAndSet(long expected, long value) {
+      return vertx.executeBlocking(fut -> fut.complete(atomicLong.compareAndSet(expected, value)));
+    }
+
+    @Override
     public void get(Handler<AsyncResult<Long>> resultHandler) {
       Objects.requireNonNull(resultHandler, "resultHandler");
-      vertx.executeBlocking(fut -> fut.complete(atomicLong.get()), resultHandler);
+      get().setHandler(resultHandler);
     }
 
     @Override
     public void incrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
       Objects.requireNonNull(resultHandler, "resultHandler");
-      vertx.executeBlocking(fut -> fut.complete(atomicLong.incrementAndGet()), resultHandler);
+      incrementAndGet().setHandler(resultHandler);
     }
 
     @Override
     public void getAndIncrement(Handler<AsyncResult<Long>> resultHandler) {
       Objects.requireNonNull(resultHandler, "resultHandler");
-      vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndIncrement()), resultHandler);
+      getAndIncrement().setHandler(resultHandler);
     }
 
     @Override
     public void decrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
       Objects.requireNonNull(resultHandler, "resultHandler");
-      vertx.executeBlocking(fut -> fut.complete(atomicLong.decrementAndGet()), resultHandler);
+      decrementAndGet().setHandler(resultHandler);
     }
 
     @Override
     public void addAndGet(long value, Handler<AsyncResult<Long>> resultHandler) {
       Objects.requireNonNull(resultHandler, "resultHandler");
-      vertx.executeBlocking(fut -> fut.complete(atomicLong.addAndGet(value)), resultHandler);
+      addAndGet(value).setHandler(resultHandler);
     }
 
     @Override
     public void getAndAdd(long value, Handler<AsyncResult<Long>> resultHandler) {
       Objects.requireNonNull(resultHandler, "resultHandler");
-      vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndAdd(value)), resultHandler);
+      getAndAdd(value).setHandler(resultHandler);
     }
 
     @Override
     public void compareAndSet(long expected, long value, Handler<AsyncResult<Boolean>> resultHandler) {
       Objects.requireNonNull(resultHandler, "resultHandler");
-      vertx.executeBlocking(fut -> fut.complete(atomicLong.compareAndSet(expected, value)), resultHandler);
+      compareAndSet(expected, value).setHandler(resultHandler);
     }
   }
 
