@@ -184,11 +184,11 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public <K, V> void getAsyncMap(String name, Handler<AsyncResult<AsyncMap<K, V>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public <K, V> Future<AsyncMap<K, V>> getAsyncMap(String name) {
+    return vertx.executeBlocking(fut -> {
       IMap<K, V> map = hazelcast.getMap(name);
       fut.complete(USE_HZ_ASYNC_API ? new HazelcastInternalAsyncMap<>(vertx, map) : new HazelcastAsyncMap<>(vertx, map));
-    }, resultHandler);
+    });
   }
 
   @Override
@@ -198,8 +198,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void getLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Lock> getLockWithTimeout(String name, long timeout) {
+    return vertx.executeBlocking(fut -> {
       ISemaphore iSemaphore = hazelcast.getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
       long remaining = timeout;
@@ -217,18 +217,17 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       } else {
         throw new VertxException("Timed out waiting to get lock " + name);
       }
-    }, false, resultHandler);
+    }, false);
   }
 
   @Override
-  public void getCounter(String name, Handler<AsyncResult<Counter>> resultHandler) {
-    vertx.executeBlocking(fut ->
+  public Future<Counter> getCounter(String name) {
+    return vertx.executeBlocking(fut ->
         fut.complete(
           USE_HZ_ASYNC_API ?
             new HazelcastInternalAsyncCounter(vertx, hazelcast.getAtomicLong(name)) :
             new HazelcastCounter(hazelcast.getAtomicLong(name))
-        )
-      , resultHandler);
+        ));
   }
 
   public void leave(Handler<AsyncResult<Void>> resultHandler) {
