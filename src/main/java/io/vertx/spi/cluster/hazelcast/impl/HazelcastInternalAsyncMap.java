@@ -19,8 +19,12 @@ package io.vertx.spi.cluster.hazelcast.impl;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.PromiseInternal;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
 
 import java.util.ArrayList;
@@ -44,121 +48,107 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public void get(K k, Handler<AsyncResult<V>> asyncResultHandler) {
-    executeAsync(
-            map.getAsync(convertParam(k)),
-            asyncResultHandler
-    );
+  public Future<V> get(K k) {
+    return executeAsync(map.getAsync(convertParam(k)));
   }
 
   @Override
-  public void put(K k, V v, Handler<AsyncResult<Void>> completionHandler) {
+  public Future<Void> put(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    executeAsyncVoid(
-            map.setAsync(kk, vv),
-            completionHandler
-    );
+    return executeAsync(map.setAsync(kk, vv));
   }
 
   @Override
-  public void putIfAbsent(K k, V v, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> putIfAbsent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv)))),
-                          resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv)))));
   }
 
   @Override
-  public void put(K k, V v, long ttl, Handler<AsyncResult<Void>> completionHandler) {
+  public Future<Void> put(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    executeAsyncVoid(
-            (ICompletableFuture<Void>) map.putAsync(kk, vv, ttl, TimeUnit.MILLISECONDS),
-            completionHandler
-    );
+    return executeAsync((ICompletableFuture<Void>) map.putAsync(kk, vv, ttl, TimeUnit.MILLISECONDS));
   }
 
   @Override
-  public void putIfAbsent(K k, V v, long ttl, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> putIfAbsent(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
-      ttl, TimeUnit.MILLISECONDS))), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
+      ttl, TimeUnit.MILLISECONDS))));
   }
 
   @Override
-  public void remove(K k, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> remove(K k) {
     K kk = convertParam(k);
-    executeAsync(
-            (ICompletableFuture<V>)map.removeAsync(kk),
-            resultHandler
-    );
+    return executeAsync(map.removeAsync(kk));
   }
 
   @Override
-  public void removeIfPresent(K k, V v, Handler<AsyncResult<Boolean>> resultHandler) {
+  public Future<Boolean> removeIfPresent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)));
   }
 
   @Override
-  public void replace(K k, V v, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> replace(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))));
   }
 
   @Override
-  public void replaceIfPresent(K k, V oldValue, V newValue, Handler<AsyncResult<Boolean>> resultHandler) {
+  public Future<Boolean> replaceIfPresent(K k, V oldValue, V newValue) {
     K kk = convertParam(k);
     V vv = convertParam(oldValue);
     V vvv = convertParam(newValue);
-    vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)));
   }
 
   @Override
-  public void clear(Handler<AsyncResult<Void>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Void> clear() {
+    return vertx.executeBlocking(fut -> {
       map.clear();
       fut.complete();
-    }, resultHandler);
+    });
   }
 
   @Override
-  public void size(Handler<AsyncResult<Integer>> resultHandler) {
-    vertx.executeBlocking(fut -> fut.complete(map.size()), resultHandler);
+  public Future<Integer> size() {
+    return vertx.executeBlocking(fut -> fut.complete(map.size()));
   }
 
-
   @Override
-  public void keys(Handler<AsyncResult<Set<K>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Set<K>> keys() {
+    return vertx.executeBlocking(fut -> {
       Set<K> set = new HashSet<>();
       for (K kk : map.keySet()) {
         K k = ConversionUtils.convertReturn(kk);
         set.add(k);
       }
       fut.complete(set);
-    }, resultHandler);
+    });
   }
 
   @Override
-  public void values(Handler<AsyncResult<List<V>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<List<V>> values() {
+    return vertx.executeBlocking(fut -> {
       List<V> list = new ArrayList<>();
       for (V vv : map.values()) {
         V v = ConversionUtils.convertReturn(vv);
         list.add(v);
       }
       fut.complete(list);
-    }, resultHandler);
+    });
   }
 
   @Override
-  public void entries(Handler<AsyncResult<Map<K, V>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Map<K, V>> entries() {
+    return vertx.executeBlocking(fut -> {
       Map<K, V> result = new HashMap<>();
       for (Map.Entry<K, V> entry : map.entrySet()) {
         K k = ConversionUtils.convertReturn(entry.getKey());
@@ -166,23 +156,12 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
         result.put(k, v);
       }
       fut.complete(result);
-    }, resultHandler);
+    });
   }
 
-  private <T> void executeAsync(ICompletableFuture<T> future,
-                              Handler<AsyncResult<T>> resultHandler) {
-    future.andThen(
-            new HandlerCallBackAdapter(resultHandler),
-            VertxExecutorAdapter.getOrCreate(vertx.getOrCreateContext())
-    );
+  private <T> Future<T> executeAsync(ICompletableFuture<T> future) {
+    Promise<T> promise = ((VertxInternal) vertx).getOrCreateContext().promise();
+    future.andThen(new HandlerCallBackAdapter<T>(promise));
+    return promise.future();
   }
-
-  private void executeAsyncVoid(ICompletableFuture<Void> future,
-                              Handler<AsyncResult<Void>> resultHandler) {
-    future.andThen(
-            new VoidHandlerCallBackAdapter(resultHandler),
-            VertxExecutorAdapter.getOrCreate(vertx.getOrCreateContext())
-    );
-  }
-
 }

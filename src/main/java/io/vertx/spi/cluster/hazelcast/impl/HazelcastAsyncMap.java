@@ -17,8 +17,7 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.core.IMap;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.shareddata.AsyncMap;
 
@@ -44,115 +43,114 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public void get(K k, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> get(K k) {
     K kk = convertParam(k);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))));
   }
 
   @Override
-  public void put(K k, V v, Handler<AsyncResult<Void>> completionHandler) {
+  public Future<Void> put(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(fut -> {
       map.set(kk, HazelcastServerID.convertServerID(vv));
       fut.complete();
-    }, completionHandler);
+    });
   }
 
   @Override
-  public void putIfAbsent(K k, V v, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> putIfAbsent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv)))),
-                          resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv)))));
   }
 
   @Override
-  public void put(K k, V v, long ttl, Handler<AsyncResult<Void>> completionHandler) {
+  public Future<Void> put(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(fut -> {
       map.set(kk, HazelcastServerID.convertServerID(vv), ttl, TimeUnit.MILLISECONDS);
       fut.complete();
-    }, completionHandler);
+    });
   }
 
   @Override
-  public void putIfAbsent(K k, V v, long ttl, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> putIfAbsent(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
-      ttl, TimeUnit.MILLISECONDS))), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
+      ttl, TimeUnit.MILLISECONDS))));
   }
 
   @Override
-  public void remove(K k, Handler<AsyncResult<V>> resultHandler) {
+  public Future<V> remove(K k) {
     K kk = convertParam(k);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.remove(kk))), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.remove(kk))));
   }
 
   @Override
-  public void removeIfPresent(K k, V v, Handler<AsyncResult<Boolean>> resultHandler) {
-    K kk = convertParam(k);
-    V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)), resultHandler);
-  }
-
-  @Override
-  public void replace(K k, V v, Handler<AsyncResult<V>> resultHandler) {
+  public Future<Boolean> removeIfPresent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)));
   }
 
   @Override
-  public void replaceIfPresent(K k, V oldValue, V newValue, Handler<AsyncResult<Boolean>> resultHandler) {
+  public Future<V> replace(K k, V v) {
+    K kk = convertParam(k);
+    V vv = convertParam(v);
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))));
+  }
+
+  @Override
+  public Future<Boolean> replaceIfPresent(K k, V oldValue, V newValue) {
     K kk = convertParam(k);
     V vv = convertParam(oldValue);
     V vvv = convertParam(newValue);
-    vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)), resultHandler);
+    return vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)));
   }
 
   @Override
-  public void clear(Handler<AsyncResult<Void>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Void> clear() {
+    return vertx.executeBlocking(fut -> {
       map.clear();
       fut.complete();
-    }, resultHandler);
+    });
   }
 
   @Override
-  public void size(Handler<AsyncResult<Integer>> resultHandler) {
-    vertx.executeBlocking(fut -> fut.complete(map.size()), resultHandler);
+  public Future<Integer> size() {
+    return vertx.executeBlocking(fut -> fut.complete(map.size()));
   }
 
   @Override
-  public void keys(Handler<AsyncResult<Set<K>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Set<K>> keys() {
+    return vertx.executeBlocking(fut -> {
       Set<K> set = new HashSet<>();
       for (K kk : map.keySet()) {
         K k = ConversionUtils.convertReturn(kk);
         set.add(k);
       }
       fut.complete(set);
-    }, resultHandler);
+    });
   }
 
   @Override
-  public void values(Handler<AsyncResult<List<V>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<List<V>> values() {
+    return vertx.executeBlocking(fut -> {
       List<V> list = new ArrayList<>();
       for (V vv : map.values()) {
         V v = ConversionUtils.convertReturn(vv);
         list.add(v);
       }
       fut.complete(list);
-    }, resultHandler);
+    });
   }
 
   @Override
-  public void entries(Handler<AsyncResult<Map<K, V>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Map<K, V>> entries() {
+    return vertx.executeBlocking(fut -> {
       Map<K, V> result = new HashMap<>();
       for (Entry<K, V> entry : map.entrySet()) {
         K k = ConversionUtils.convertReturn(entry.getKey());
@@ -160,6 +158,6 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
         result.put(k, v);
       }
       fut.complete(result);
-    }, resultHandler);
+    });
   }
 }
