@@ -18,38 +18,31 @@ package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IMap;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.PromiseInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.*;
+import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
+import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
 
 public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
 
-  private final Vertx vertx;
+  private final VertxInternal vertx;
   private final IMap<K, V> map;
 
   public HazelcastInternalAsyncMap(Vertx vertx, IMap<K, V> map) {
-    this.vertx = vertx;
+    this.vertx = (VertxInternal) vertx;
     this.map = map;
   }
 
   @Override
   public Future<V> get(K k) {
-    return executeAsync(map.getAsync(convertParam(k)));
+    return executeAsync(map.getAsync(convertParam(k))).map(ConversionUtils::convertReturn);
   }
 
   @Override
@@ -84,7 +77,7 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
   @Override
   public Future<V> remove(K k) {
     K kk = convertParam(k);
-    return executeAsync(map.removeAsync(kk));
+    return executeAsync(map.removeAsync(kk)).map(ConversionUtils::convertReturn);
   }
 
   @Override
@@ -160,7 +153,7 @@ public class HazelcastInternalAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   private <T> Future<T> executeAsync(ICompletableFuture<T> future) {
-    Promise<T> promise = ((VertxInternal) vertx).getOrCreateContext().promise();
+    Promise<T> promise = vertx.getOrCreateContext().promise();
     future.andThen(new HandlerCallBackAdapter<T>(promise));
     return promise.future();
   }
