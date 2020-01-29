@@ -18,11 +18,7 @@ package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.*;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxException;
+import io.vertx.core.*;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
@@ -37,6 +33,8 @@ import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncCounter;
 import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncMap;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -83,6 +81,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   private Config conf;
 
+  private ExecutorService lockReleaseExec;
+
   /**
    * Constructor - gets config from classpath
    */
@@ -113,6 +113,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     vertx.executeBlocking(fut -> {
       if (!active) {
         active = true;
+
+        lockReleaseExec = Executors.newCachedThreadPool(r -> new Thread(r, "vertx-hazelcast-service-release-lock-thread"));
 
         // The hazelcast instance has not been passed using the constructor.
         if (!customHazelcastCluster) {
@@ -238,6 +240,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         if (active) {
           try {
             active = false;
+            lockReleaseExec.shutdown();
             boolean left = hazelcast.getCluster().removeMembershipListener(membershipListenerId);
             if (!left) {
               log.warn("No membership listener");
@@ -489,10 +492,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     @Override
     public void release() {
       if (released.compareAndSet(false, true)) {
-        vertx.executeBlocking(future -> {
-          semaphore.release();
-          future.complete();
-        }, false, null);
+        lockReleaseExec.execute(semaphore::release);
       }
     }
   }
