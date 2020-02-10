@@ -38,7 +38,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -205,30 +204,28 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   @Override
   public void getLockWithTimeout(String name, long timeout, Handler<AsyncResult<Lock>> resultHandler) {
     long start = System.nanoTime();
-    AtomicLong remaining = new AtomicLong(timeout);
     vertx.<Lock>executeBlocking(fut -> {
       ISemaphore iSemaphore = hazelcast.getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
-      long _remaining = remaining.get();
       try {
-        locked = iSemaphore.tryAcquire(Math.min(_remaining, GET_LOCK_MAX_TIMEOUT), TimeUnit.MILLISECONDS);
+        locked = iSemaphore.tryAcquire(Math.min(timeout, GET_LOCK_MAX_TIMEOUT), TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
         // OK continue
       }
       if (locked) {
         fut.complete(new HazelcastLock(iSemaphore));
       } else {
-        throw new VertxException("Failed to acquire lock " + name);
+        throw new VertxException("Timed out waiting to get lock " + name);
       }
     }, false, lr -> {
       if (lr.succeeded()) {
         resultHandler.handle(lr);
       } else {
-        long elapsed = MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
-        if (remaining.addAndGet(-elapsed) > 0) {
-          getLockWithTimeout(name, remaining.get(), resultHandler);
+        long remaining = timeout - MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
+        if (remaining > 0) {
+          getLockWithTimeout(name, remaining, resultHandler);
         } else {
-          resultHandler.handle(Future.failedFuture(new VertxException("Timed out waiting to get lock " + name)));
+          resultHandler.handle(Future.failedFuture(lr.cause()));
         }
       }
     });
