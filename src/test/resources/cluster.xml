@@ -26,7 +26,6 @@
 
   <group>
     <name>${vertx.hazelcast.test.group.name}</name>
-    <password>${vertx.hazelcast.test.group.password}</password>
   </group>
   <management-center enabled="false">http://localhost:8080/mancenter</management-center>
   <network>

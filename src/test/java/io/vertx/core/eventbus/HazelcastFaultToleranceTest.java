@@ -30,15 +30,12 @@ import java.util.Random;
 public class HazelcastFaultToleranceTest extends FaultToleranceTest {
 
   private String groupName;
-  private String password;
 
   @Override
   public void setUp() throws Exception {
     Random random = new Random();
     groupName = new BigInteger(128, random).toString(32);
     System.setProperty("vertx.hazelcast.test.group.name", groupName);
-    password = new BigInteger(128, random).toString(32);
-    System.setProperty("vertx.hazelcast.test.group.password", password);
     super.setUp();
   }
 
@@ -49,7 +46,7 @@ public class HazelcastFaultToleranceTest extends FaultToleranceTest {
 
   @Override
   protected List<String> getExternalNodeSystemProperties() {
-    return Arrays.asList("-Djava.net.preferIPv4Stack=true", "-Dvertx.hazelcast.test.group.name=" + groupName, "-Dvertx.hazelcast.test.group.password=" + password);
+    return Arrays.asList("-Djava.net.preferIPv4Stack=true", "-Dvertx.hazelcast.test.group.name=" + groupName);
   }
 
   @Override

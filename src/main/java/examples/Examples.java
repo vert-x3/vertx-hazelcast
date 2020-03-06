@@ -74,8 +74,7 @@ public class Examples {
     Config hazelcastConfig = ConfigUtil.loadConfig();
 
     hazelcastConfig.getGroupConfig()
-      .setName("my-cluster-name")
-      .setPassword("passwd");
+      .setName("my-cluster-name");
 
     ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
 

@@ -48,7 +48,6 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   public void setUp() throws Exception {
     Random random = new Random();
     System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
-    System.setProperty("vertx.hazelcast.test.group.password", new BigInteger(128, random).toString(32));
     super.setUp();
   }
 
@@ -79,8 +78,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       .setProperty("hazelcast.wait.seconds.before.join", "0")
       .setProperty("hazelcast.local.localAddress", "127.0.0.1")
       .setGroupConfig(new GroupConfig()
-        .setName(System.getProperty("vertx.hazelcast.test.group.name"))
-        .setPassword(System.getProperty("vertx.hazelcast.test.group.password")));
+        .setName(System.getProperty("vertx.hazelcast.test.group.name")));
   }
 
   private void testProgrammatic(HazelcastClusterManager mgr, Config config) throws Exception {

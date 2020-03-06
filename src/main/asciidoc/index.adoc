@@ -100,7 +100,7 @@ You can specify configuration programmatically if embedding:
 ----
 
 It might also be useful to customize an existing XML configuration.
-For example, you might want to change the cluster group name and password:
+For example, you might want to change the cluster group name:
 
 [source,$lang]
 ----

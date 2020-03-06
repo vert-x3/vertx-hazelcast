@@ -46,7 +46,6 @@ public class HazelcastInternalClusteredSharedCounterTest extends ClusteredShared
   public void setUp() throws Exception {
     Random random = new Random();
     System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
-    System.setProperty("vertx.hazelcast.test.group.password", new BigInteger(128, random).toString(32));
     super.setUp();
   }
 
