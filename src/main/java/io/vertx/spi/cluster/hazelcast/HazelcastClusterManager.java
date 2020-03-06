@@ -105,10 +105,12 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     customHazelcastCluster = true;
   }
 
+  @Override
   public void setVertx(Vertx vertx) {
     this.vertx = vertx;
   }
 
+  @Override
   public synchronized void join(Handler<AsyncResult<Void>> resultHandler) {
     vertx.executeBlocking(fut -> {
       if (!active) {
@@ -232,6 +234,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         ));
   }
 
+  @Override
   public void leave(Handler<AsyncResult<Void>> resultHandler) {
     vertx.executeBlocking(fut -> {
       // We need to synchronized on the cluster manager instance to avoid other call to happen while leaving the
