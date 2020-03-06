@@ -27,17 +27,13 @@ import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncCounter;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastInternalAsyncMap;
+import io.vertx.spi.cluster.hazelcast.impl.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -217,7 +213,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         remaining = remaining - MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
       } while (!locked && remaining > 0);
       if (locked) {
-        fut.complete(new HazelcastLock(iSemaphore));
+        fut.complete(new HazelcastLock(iSemaphore, lockReleaseExec));
       } else {
         throw new VertxException("Timed out waiting to get lock " + name);
       }
@@ -230,7 +226,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         fut.complete(
           USE_HZ_ASYNC_API ?
             new HazelcastInternalAsyncCounter(vertx, hazelcast.getAtomicLong(name)) :
-            new HazelcastCounter(hazelcast.getAtomicLong(name))
+            new HazelcastCounter(vertx, hazelcast.getAtomicLong(name))
         ));
   }
 
@@ -395,108 +391,5 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   public HazelcastInstance getHazelcastInstance() {
     return hazelcast;
-  }
-
-  private class HazelcastCounter implements Counter {
-    private IAtomicLong atomicLong;
-
-
-    private HazelcastCounter(IAtomicLong atomicLong) {
-      this.atomicLong = atomicLong;
-    }
-
-    @Override
-    public Future<Long> get() {
-      return vertx.executeBlocking(fut -> fut.complete(atomicLong.get()));
-    }
-
-    @Override
-    public Future<Long> incrementAndGet() {
-      return vertx.executeBlocking(fut -> fut.complete(atomicLong.incrementAndGet()));
-    }
-
-    @Override
-    public Future<Long> getAndIncrement() {
-      return vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndIncrement()));
-    }
-
-    @Override
-    public Future<Long> decrementAndGet() {
-      return vertx.executeBlocking(fut -> fut.complete(atomicLong.decrementAndGet()));
-    }
-
-    @Override
-    public Future<Long> addAndGet(long value) {
-      return vertx.executeBlocking(fut -> fut.complete(atomicLong.addAndGet(value)));
-    }
-
-    @Override
-    public Future<Long> getAndAdd(long value) {
-      return vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndAdd(value)));
-    }
-
-    @Override
-    public Future<Boolean> compareAndSet(long expected, long value) {
-      return vertx.executeBlocking(fut -> fut.complete(atomicLong.compareAndSet(expected, value)));
-    }
-
-    @Override
-    public void get(Handler<AsyncResult<Long>> resultHandler) {
-      Objects.requireNonNull(resultHandler, "resultHandler");
-      get().setHandler(resultHandler);
-    }
-
-    @Override
-    public void incrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
-      Objects.requireNonNull(resultHandler, "resultHandler");
-      incrementAndGet().setHandler(resultHandler);
-    }
-
-    @Override
-    public void getAndIncrement(Handler<AsyncResult<Long>> resultHandler) {
-      Objects.requireNonNull(resultHandler, "resultHandler");
-      getAndIncrement().setHandler(resultHandler);
-    }
-
-    @Override
-    public void decrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
-      Objects.requireNonNull(resultHandler, "resultHandler");
-      decrementAndGet().setHandler(resultHandler);
-    }
-
-    @Override
-    public void addAndGet(long value, Handler<AsyncResult<Long>> resultHandler) {
-      Objects.requireNonNull(resultHandler, "resultHandler");
-      addAndGet(value).setHandler(resultHandler);
-    }
-
-    @Override
-    public void getAndAdd(long value, Handler<AsyncResult<Long>> resultHandler) {
-      Objects.requireNonNull(resultHandler, "resultHandler");
-      getAndAdd(value).setHandler(resultHandler);
-    }
-
-    @Override
-    public void compareAndSet(long expected, long value, Handler<AsyncResult<Boolean>> resultHandler) {
-      Objects.requireNonNull(resultHandler, "resultHandler");
-      compareAndSet(expected, value).setHandler(resultHandler);
-    }
-  }
-
-  private class HazelcastLock implements Lock {
-
-    private final ISemaphore semaphore;
-    private final AtomicBoolean released = new AtomicBoolean();
-
-    private HazelcastLock(ISemaphore semaphore) {
-      this.semaphore = semaphore;
-    }
-
-    @Override
-    public void release() {
-      if (released.compareAndSet(false, true)) {
-        lockReleaseExec.execute(semaphore::release);
-      }
-    }
   }
 }
