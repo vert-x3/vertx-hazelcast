@@ -19,6 +19,8 @@ package io.vertx.spi.cluster.hazelcast;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.*;
 import io.vertx.core.*;
+import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
@@ -27,7 +29,10 @@ import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.NodeListener;
-import io.vertx.spi.cluster.hazelcast.impl.*;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastCounter;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastLock;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -50,18 +55,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private static final String LOCK_SEMAPHORE_PREFIX = "__vertx.";
   private static final String NODE_ID_ATTRIBUTE = "__vertx.nodeId";
 
-  /**
-   * Set "vertx.hazelcast.async-api" system property to {@code true} to use the
-   * (currently) non-public Hazelcast async API. When {@code true}, the {@link AsyncMap} implementation
-   * will be backed by {@link HazelcastInternalAsyncMap} and the {@link Counter} is supplied by
-   * {@link HazelcastInternalAsyncCounter}, otherwise default to {@link HazelcastAsyncMap}
-   * and {@link HazelcastCounter}.
-   */
-  private static final String OPTION_USE_HZ_ASYNC_API = "vertx.hazelcast.async-api";
-
-  private static final boolean USE_HZ_ASYNC_API = Boolean.getBoolean(OPTION_USE_HZ_ASYNC_API);
-
-  private Vertx vertx;
+  private VertxInternal vertx;
 
   private HazelcastInstance hazelcast;
   private String nodeID;
@@ -103,7 +97,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void setVertx(Vertx vertx) {
-    this.vertx = vertx;
+    this.vertx = (VertxInternal) vertx;
   }
 
   @Override
@@ -185,16 +179,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public <K, V> Future<AsyncMap<K, V>> getAsyncMap(String name) {
-    return vertx.executeBlocking(fut -> {
-      IMap<K, V> map = hazelcast.getMap(name);
-      fut.complete(USE_HZ_ASYNC_API ? new HazelcastInternalAsyncMap<>(vertx, map) : new HazelcastAsyncMap<>(vertx, map));
-    });
+    ContextInternal context = vertx.getOrCreateContext();
+    return context.succeededFuture(new HazelcastAsyncMap<>(vertx, hazelcast.getMap(name)));
   }
 
   @Override
   public <K, V> Map<K, V> getSyncMap(String name) {
-    IMap<K, V> map = hazelcast.getMap(name);
-    return map;
+    return hazelcast.getMap(name);
   }
 
   @Override
@@ -222,12 +213,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public Future<Counter> getCounter(String name) {
-    return vertx.executeBlocking(fut ->
-        fut.complete(
-          USE_HZ_ASYNC_API ?
-            new HazelcastInternalAsyncCounter(vertx, hazelcast.getAtomicLong(name)) :
-            new HazelcastCounter(vertx, hazelcast.getAtomicLong(name))
-        ));
+    ContextInternal context = vertx.getOrCreateContext();
+    return context.succeededFuture(new HazelcastCounter(vertx, hazelcast.getAtomicLong(name)));
   }
 
   @Override

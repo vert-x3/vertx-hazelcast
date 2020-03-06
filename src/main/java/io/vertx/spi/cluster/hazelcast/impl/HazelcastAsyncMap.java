@@ -18,26 +18,23 @@ package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.core.IMap;
 import io.vertx.core.Future;
-import io.vertx.core.Vertx;
+import io.vertx.core.impl.PromiseInternal;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.*;
+import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
+import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
 
 public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
 
-  private final Vertx vertx;
+  private final VertxInternal vertx;
   private final IMap<K, V> map;
 
-  public HazelcastAsyncMap(Vertx vertx, IMap<K, V> map) {
+  public HazelcastAsyncMap(VertxInternal vertx, IMap<K, V> map) {
     this.vertx = vertx;
     this.map = map;
   }
@@ -45,24 +42,27 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   @Override
   public Future<V> get(K k) {
     K kk = convertParam(k);
-    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.get(kk))));
+    PromiseInternal<V> promise = vertx.promise();
+    map.getAsync(kk).andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future().map(ConversionUtils::convertReturn);
   }
 
   @Override
   public Future<Void> put(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> {
-      map.set(kk, HazelcastServerID.convertServerID(vv));
-      fut.complete();
-    });
+    PromiseInternal<Void> promise = vertx.promise();
+    map.setAsync(kk, HazelcastServerID.convertServerID(vv)).andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
   public Future<V> putIfAbsent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv)))));
+    return vertx.executeBlocking(fut -> {
+      fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv))));
+    }, false);
   }
 
   @Override
@@ -72,7 +72,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     return vertx.executeBlocking(fut -> {
       map.set(kk, HazelcastServerID.convertServerID(vv), ttl, TimeUnit.MILLISECONDS);
       fut.complete();
-    });
+    }, false);
   }
 
   @Override
@@ -80,27 +80,29 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(v);
     return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
-      ttl, TimeUnit.MILLISECONDS))));
+      ttl, TimeUnit.MILLISECONDS))), false);
   }
 
   @Override
   public Future<V> remove(K k) {
     K kk = convertParam(k);
-    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.remove(kk))));
+    PromiseInternal<V> promise = vertx.promise();
+    map.removeAsync(kk).andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future().map(ConversionUtils::convertReturn);
   }
 
   @Override
   public Future<Boolean> removeIfPresent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)));
+    return vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)), false);
   }
 
   @Override
   public Future<V> replace(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))));
+    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))), false);
   }
 
   @Override
@@ -108,7 +110,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(oldValue);
     V vvv = convertParam(newValue);
-    return vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)));
+    return vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)), false);
   }
 
   @Override
@@ -116,12 +118,12 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     return vertx.executeBlocking(fut -> {
       map.clear();
       fut.complete();
-    });
+    }, false);
   }
 
   @Override
   public Future<Integer> size() {
-    return vertx.executeBlocking(fut -> fut.complete(map.size()));
+    return vertx.executeBlocking(fut -> fut.complete(map.size()), false);
   }
 
   @Override
@@ -133,7 +135,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
         set.add(k);
       }
       fut.complete(set);
-    });
+    }, false);
   }
 
   @Override
@@ -145,7 +147,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
         list.add(v);
       }
       fut.complete(list);
-    });
+    }, false);
   }
 
   @Override
@@ -158,6 +160,6 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
         result.put(k, v);
       }
       fut.complete(result);
-    });
+    }, false);
   }
 }

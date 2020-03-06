@@ -20,55 +20,69 @@ import com.hazelcast.core.IAtomicLong;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.Promise;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.Counter;
 
 import java.util.Objects;
 
 public class HazelcastCounter implements Counter {
 
-  private final Vertx vertx;
+  private final VertxInternal vertx;
   private final IAtomicLong atomicLong;
 
-
-  public HazelcastCounter(Vertx vertx, IAtomicLong atomicLong) {
+  public HazelcastCounter(VertxInternal vertx, IAtomicLong atomicLong) {
     this.vertx = vertx;
     this.atomicLong = atomicLong;
   }
 
   @Override
   public Future<Long> get() {
-    return vertx.executeBlocking(fut -> fut.complete(atomicLong.get()));
+    Promise<Long> promise = vertx.promise();
+    atomicLong.getAsync().andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
   public Future<Long> incrementAndGet() {
-    return vertx.executeBlocking(fut -> fut.complete(atomicLong.incrementAndGet()));
+    Promise<Long> promise = vertx.promise();
+    atomicLong.incrementAndGetAsync().andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
   public Future<Long> getAndIncrement() {
-    return vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndIncrement()));
+    Promise<Long> promise = vertx.promise();
+    atomicLong.getAndIncrementAsync().andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
   public Future<Long> decrementAndGet() {
-    return vertx.executeBlocking(fut -> fut.complete(atomicLong.decrementAndGet()));
+    Promise<Long> promise = vertx.promise();
+    atomicLong.decrementAndGetAsync().andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
   public Future<Long> addAndGet(long value) {
-    return vertx.executeBlocking(fut -> fut.complete(atomicLong.addAndGet(value)));
+    Promise<Long> promise = vertx.promise();
+    atomicLong.addAndGetAsync(value).andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
   public Future<Long> getAndAdd(long value) {
-    return vertx.executeBlocking(fut -> fut.complete(atomicLong.getAndAdd(value)));
+    Promise<Long> promise = vertx.promise();
+    atomicLong.getAndAddAsync(value).andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
   public Future<Boolean> compareAndSet(long expected, long value) {
-    return vertx.executeBlocking(fut -> fut.complete(atomicLong.compareAndSet(expected, value)));
+    Promise<Boolean> promise = vertx.promise();
+    atomicLong.compareAndSetAsync(expected, value).andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future();
   }
 
   @Override
