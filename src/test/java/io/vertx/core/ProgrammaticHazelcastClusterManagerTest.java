@@ -18,7 +18,8 @@ package io.vertx.core;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.GroupConfig;
-import com.hazelcast.core.*;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import io.vertx.LoggingTestWatcher;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import io.vertx.test.core.AsyncTestBase;
@@ -203,24 +204,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     // This instance won't be used by vert.x
     HazelcastInstance instance = Hazelcast.newHazelcastInstance(createConfig());
     String nodeID = instance.getCluster().getLocalMember().getUuid();
-    instance.getCluster().addMembershipListener(new MembershipListener() {
-      @Override
-      public void memberAdded(MembershipEvent membershipEvent) {
 
-      }
-
-      @Override
-      public void memberRemoved(MembershipEvent membershipEvent) {
-
-      }
-
-      @Override
-      public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
-
-      }
-    });
-
-    HazelcastClusterManager mgr = new HazelcastClusterManager();
+    HazelcastClusterManager mgr = new HazelcastClusterManager(createConfig());
     VertxOptions options = new VertxOptions().setClusterManager(mgr).setClustered(true).setClusterHost("127.0.0.1");
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
@@ -252,7 +237,6 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     instance.shutdown();
 
     assertWaitUntil(() -> mgr.getNodes().size() == size - 1);
-    vertx1.get().close();
     vertx1.get().close(ar -> vertx1.set(null));
 
     assertWaitUntil(() -> vertx1.get() == null);
