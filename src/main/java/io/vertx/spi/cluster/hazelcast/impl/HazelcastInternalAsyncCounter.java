@@ -50,7 +50,7 @@ public class HazelcastInternalAsyncCounter
   @Override
   public void get(Handler<AsyncResult<Long>> resultHandler) {
     Objects.requireNonNull(resultHandler, "resultHandler");
-    get().setHandler(resultHandler);
+    get().onComplete(resultHandler);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class HazelcastInternalAsyncCounter
   @Override
   public void incrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
     Objects.requireNonNull(resultHandler, "resultHandler");
-    incrementAndGet().setHandler(resultHandler);
+    incrementAndGet().onComplete(resultHandler);
   }
 
   @Override
@@ -72,7 +72,7 @@ public class HazelcastInternalAsyncCounter
   @Override
   public void getAndIncrement(Handler<AsyncResult<Long>> resultHandler) {
     Objects.requireNonNull(resultHandler, "resultHandler");
-    getAndIncrement().setHandler(resultHandler);
+    getAndIncrement().onComplete(resultHandler);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class HazelcastInternalAsyncCounter
   @Override
   public void decrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
     Objects.requireNonNull(resultHandler, "resultHandler");
-    decrementAndGet().setHandler(resultHandler);
+    decrementAndGet().onComplete(resultHandler);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class HazelcastInternalAsyncCounter
   @Override
   public void addAndGet(long value, Handler<AsyncResult<Long>> resultHandler) {
     Objects.requireNonNull(resultHandler, "resultHandler");
-    addAndGet(value).setHandler(resultHandler);
+    addAndGet(value).onComplete(resultHandler);
   }
 
   @Override
@@ -105,7 +105,7 @@ public class HazelcastInternalAsyncCounter
   @Override
   public void getAndAdd(long value, Handler<AsyncResult<Long>> resultHandler) {
     Objects.requireNonNull(resultHandler, "resultHandler");
-    getAndAdd(value).setHandler(resultHandler);
+    getAndAdd(value).onComplete(resultHandler);
   }
 
   @Override
@@ -116,7 +116,7 @@ public class HazelcastInternalAsyncCounter
   @Override
   public void compareAndSet(long expected, long value, Handler<AsyncResult<Boolean>> resultHandler) {
     Objects.requireNonNull(resultHandler, "resultHandler");
-    compareAndSet(expected, value).setHandler(resultHandler);
+    compareAndSet(expected, value).onComplete(resultHandler);
   }
 
   private <T> Future<T> executeAsync(ICompletableFuture<T> future) {
