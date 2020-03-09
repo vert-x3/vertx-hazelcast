@@ -13,15 +13,11 @@ jobs:
   include:
     - stage: test
       name: "Unit tests - OpenJDK 8"
-      script: mvn -B -DtestLogLevel=OFF -DexcludedGroups=io.vertx.core.shareddata.HazelcastAsyncApi test
-      jdk: openjdk8
-    - stage: test
-      name: "Unit tests - Hazelcast Async API - OpenJDK 8"
-      script: mvn -B -DtestLogLevel=OFF -Dgroups=io.vertx.core.shareddata.HazelcastAsyncApi test
+      script: mvn -B -DtestLogLevel=OFF test
       jdk: openjdk8
     - name: "Unit tests - OpenJDK 11"
       if: type != pull_request
-      script: mvn -B -DtestLogLevel=OFF -DexcludedGroups=io.vertx.core.shareddata.HazelcastAsyncApi test
+      script: mvn -B -DtestLogLevel=OFF test
       jdk: openjdk11
     - name: "Integration tests - OpenJDK 8"
       script: mvn -B -DtestLogLevel=OFF -DskipUnitTests verify
