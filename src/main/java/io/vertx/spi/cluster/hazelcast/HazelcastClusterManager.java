@@ -18,7 +18,10 @@ package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.*;
-import io.vertx.core.*;
+import com.hazelcast.internal.cluster.ClusterService;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.VertxException;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
@@ -26,13 +29,11 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
-import io.vertx.core.spi.cluster.AsyncMultiMap;
 import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.core.spi.cluster.NodeInfo;
 import io.vertx.core.spi.cluster.NodeListener;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMultiMap;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastCounter;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastLock;
+import io.vertx.core.spi.cluster.RegistrationInfo;
+import io.vertx.spi.cluster.hazelcast.impl.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -52,19 +53,20 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
+  private static final String VERTX_SUBS = "__vertx.subs";
+  private static final String VERTX_NODE_INFO = "__vertx.nodeInfo";
   private static final String LOCK_SEMAPHORE_PREFIX = "__vertx.";
   private static final String NODE_ID_ATTRIBUTE = "__vertx.nodeId";
 
   private VertxInternal vertx;
 
   private HazelcastInstance hazelcast;
-  private String nodeID;
+  private String nodeId;
+  private NodeInfo nodeInfo;
   private String membershipListenerId;
   private String lifecycleListenerId;
   private boolean customHazelcastCluster;
   private Set<String> nodeIds = new HashSet<>();
-  // Guarded by this
-  private Set<HazelcastAsyncMultiMap> multimaps = Collections.newSetFromMap(new WeakHashMap<>(1));
 
   private NodeListener nodeListener;
   private volatile boolean active;
@@ -96,13 +98,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void setVertx(Vertx vertx) {
-    this.vertx = (VertxInternal) vertx;
+  public void setVertx(VertxInternal vertx) {
+    this.vertx = vertx;
   }
 
   @Override
-  public synchronized void join(Handler<AsyncResult<Void>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Void> join() {
+    return vertx.executeBlocking(fut -> {
       if (!active) {
         active = true;
 
@@ -126,40 +128,18 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         }
 
         Member localMember = hazelcast.getCluster().getLocalMember();
-        nodeID = localMember.getUuid();
-        localMember.setStringAttribute(NODE_ID_ATTRIBUTE, nodeID);
+        nodeId = localMember.getUuid();
+        localMember.setStringAttribute(NODE_ID_ATTRIBUTE, nodeId);
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
         fut.complete();
       }
-    }, resultHandler);
-  }
-
-  /**
-   * Every eventbus handler has an ID. SubsMap (subscriber map) is a MultiMap which
-   * maps handler-IDs with server-IDs and thus allows the eventbus to determine where
-   * to send messages.
-   *
-   * @param name          A unique name by which the the MultiMap can be identified within the cluster.
-   *                      See the cluster config file (e.g. cluster.xml in case of HazelcastClusterManager) for
-   *                      additional MultiMap config parameters.
-   * @param resultHandler handler receiving the multimap
-   */
-  @Override
-  public <K, V> void getAsyncMultiMap(String name, Handler<AsyncResult<AsyncMultiMap<K, V>>> resultHandler) {
-    vertx.executeBlocking(fut -> {
-      com.hazelcast.core.MultiMap<K, V> multiMap = hazelcast.getMultiMap(name);
-      HazelcastAsyncMultiMap<K, V> asyncMultiMap = new HazelcastAsyncMultiMap<>(vertx, multiMap);
-      synchronized (this) {
-        multimaps.add(asyncMultiMap);
-      }
-      fut.complete(asyncMultiMap);
-    }, resultHandler);
+    });
   }
 
   @Override
-  public String getNodeID() {
-    return nodeID;
+  public String getNodeId() {
+    return nodeId;
   }
 
   @Override
@@ -175,6 +155,32 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   @Override
   public void nodeListener(NodeListener listener) {
     this.nodeListener = listener;
+  }
+
+  @Override
+  public Future<Void> setNodeInfo(NodeInfo nodeInfo) {
+    synchronized (this) {
+      this.nodeInfo = nodeInfo;
+    }
+    Promise<HazelcastNodeInfo> promise = vertx.promise();
+    hazelcast.<String, HazelcastNodeInfo>getMap(VERTX_NODE_INFO)
+      .putAsync(nodeId, new HazelcastNodeInfo(nodeInfo))
+      .andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future().mapEmpty();
+  }
+
+  @Override
+  public synchronized NodeInfo getNodeInfo() {
+    return nodeInfo;
+  }
+
+  @Override
+  public Future<NodeInfo> getNodeInfo(String nodeId) {
+    Promise<HazelcastNodeInfo> promise = vertx.promise();
+    hazelcast.<String, HazelcastNodeInfo>getMap(VERTX_NODE_INFO)
+      .getAsync(nodeId)
+      .andThen(new HandlerCallBackAdapter<>(promise));
+    return promise.future().map(HazelcastNodeInfo::unwrap);
   }
 
   @Override
@@ -218,8 +224,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void leave(Handler<AsyncResult<Void>> resultHandler) {
-    vertx.executeBlocking(fut -> {
+  public Future<Void> leave() {
+    return vertx.executeBlocking(fut -> {
       // We need to synchronized on the cluster manager instance to avoid other call to happen while leaving the
       // cluster, typically, memberRemoved and memberAdded
       synchronized (HazelcastClusterManager.this) {
@@ -259,7 +265,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         }
       }
       fut.complete();
-    }, resultHandler);
+    });
   }
 
   @Override
@@ -268,15 +274,12 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String memberNodeId = member.getStringAttribute(NODE_ID_ATTRIBUTE);
-    if (memberNodeId == null) {
-      memberNodeId = member.getUuid();
-    }
+    String attribute = member.getStringAttribute(NODE_ID_ATTRIBUTE);
+    String nid = attribute != null ? attribute : member.getUuid();
     try {
-      multimaps.forEach(HazelcastAsyncMultiMap::clearCache);
       if (nodeListener != null) {
-        nodeIds.add(memberNodeId);
-        nodeListener.nodeAdded(memberNodeId);
+        nodeIds.add(nid);
+        nodeListener.nodeAdded(nid);
       }
     } catch (Throwable t) {
       log.error("Failed to handle memberAdded", t);
@@ -289,19 +292,37 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String memberNodeId = member.getStringAttribute(NODE_ID_ATTRIBUTE);
-    if (memberNodeId == null) {
-      memberNodeId = member.getUuid();
-    }
+    String attribute = member.getStringAttribute(NODE_ID_ATTRIBUTE);
+    String nid = attribute != null ? attribute : member.getUuid();
     try {
-      multimaps.forEach(HazelcastAsyncMultiMap::clearCache);
+      if (isMaster(hazelcast)) {
+        cleanSubs(nid);
+        cleanNodeInfos(nid);
+      }
       if (nodeListener != null) {
-        nodeIds.remove(memberNodeId);
-        nodeListener.nodeLeft(memberNodeId);
+        nodeIds.remove(nid);
+        nodeListener.nodeLeft(nid);
       }
     } catch (Throwable t) {
       log.error("Failed to handle memberRemoved", t);
     }
+  }
+
+  private void cleanNodeInfos(String nid) {
+    hazelcast.getMap(VERTX_NODE_INFO).remove(nid);
+  }
+
+  private void cleanSubs(String nid) {
+    MultiMap<String, HazelcastRegistrationInfo> multiMap = hazelcast.getMultiMap(VERTX_SUBS);
+    for (Map.Entry<String, HazelcastRegistrationInfo> entry : multiMap.entrySet()) {
+      if (entry.getValue().unwrap().getNodeId().equals(nid)) {
+        multiMap.remove(entry.getKey(), entry.getValue());
+      }
+    }
+  }
+
+  private static boolean isMaster(HazelcastInstance hazelcast) {
+    return ((ClusterService) hazelcast.getCluster()).isMaster();
   }
 
   @Override
@@ -309,9 +330,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     if (!active) {
       return;
     }
-    multimaps.forEach(HazelcastAsyncMultiMap::clearCache);
     // Safeguard to make sure members list is OK after a partition merge
-    if(lifecycleEvent.getState() == LifecycleEvent.LifecycleState.MERGED) {
+    if (lifecycleEvent.getState() == LifecycleEvent.LifecycleState.MERGED) {
       final List<String> currentNodes = getNodes();
       Set<String> newNodes = new HashSet<>(currentNodes);
       newNodes.removeAll(nodeIds);
@@ -330,6 +350,33 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   @Override
   public boolean isActive() {
     return active;
+  }
+
+  @Override
+  public Future<Void> register(String address, RegistrationInfo registrationInfo) {
+    return vertx.executeBlocking(promise -> {
+      hazelcast.<String, HazelcastRegistrationInfo>getMultiMap(VERTX_SUBS)
+        .put(address, new HazelcastRegistrationInfo(registrationInfo));
+      promise.complete();
+    }, false);
+  }
+
+  @Override
+  public Future<Void> unregister(String address, RegistrationInfo registrationInfo) {
+    return vertx.executeBlocking(promise -> {
+      hazelcast.<String, HazelcastRegistrationInfo>getMultiMap(VERTX_SUBS)
+        .remove(address, new HazelcastRegistrationInfo(registrationInfo));
+      promise.complete();
+    }, false);
+  }
+
+  @Override
+  public Future<RegistrationListener> registrationListener(String address) {
+    MultiMap<String, HazelcastRegistrationInfo> multiMap = hazelcast.getMultiMap(VERTX_SUBS);
+    return vertx.executeBlocking(promise -> {
+      List<RegistrationInfo> infos = HazelcastRegistrationInfo.unwrap(multiMap.get(address));
+      promise.complete(new HazelcastRegistrationListener(vertx, hazelcast, multiMap, address, infos));
+    }, false);
   }
 
   @Override

@@ -21,6 +21,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.core.spi.cluster.ClusterManagerDelegate;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 import java.util.List;
@@ -40,7 +42,7 @@ public class Lifecycle {
     for (Vertx vertx : clustered) {
       VertxInternal vertxInternal = (VertxInternal) vertx;
 
-      HazelcastClusterManager clusterManager = (HazelcastClusterManager) vertxInternal.getClusterManager();
+      HazelcastClusterManager clusterManager = getHazelcastClusterManager(vertxInternal.getClusterManager());
 
       if (clusterManager != null) {
         HazelcastInstance hazelcastInstance = clusterManager.getHazelcastInstance();
@@ -66,6 +68,19 @@ public class Lifecycle {
       });
       latch.await(2, TimeUnit.MINUTES);
     }
+  }
+
+  private static HazelcastClusterManager getHazelcastClusterManager(ClusterManager cm) {
+    if (cm == null) {
+      return null;
+    }
+    if (cm instanceof ClusterManagerDelegate) {
+      return getHazelcastClusterManager(((ClusterManagerDelegate) cm).unwrap());
+    }
+    if (cm instanceof HazelcastClusterManager) {
+      return (HazelcastClusterManager) cm;
+    }
+    throw new ClassCastException("Unexpected cluster manager implementation: " + cm.getClass());
   }
 
   public static void closeDataNodes(List<HazelcastInstance> dataNodes) throws Exception {
