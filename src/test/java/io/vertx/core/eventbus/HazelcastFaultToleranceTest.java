@@ -46,7 +46,12 @@ public class HazelcastFaultToleranceTest extends FaultToleranceTest {
 
   @Override
   protected List<String> getExternalNodeSystemProperties() {
-    return Arrays.asList("-Djava.net.preferIPv4Stack=true", "-Dvertx.hazelcast.test.group.name=" + groupName);
+    return Arrays.asList(
+      "-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory",
+      "-Dhazelcast.logging.type=slf4j",
+      "-Djava.net.preferIPv4Stack=true",
+      "-Dvertx.hazelcast.test.group.name=" + groupName
+    );
   }
 
   @Override
