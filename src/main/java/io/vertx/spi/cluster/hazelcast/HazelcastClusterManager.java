@@ -180,7 +180,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     hazelcast.<String, HazelcastNodeInfo>getMap(VERTX_NODE_INFO)
       .getAsync(nodeId)
       .andThen(new HandlerCallBackAdapter<>(promise));
-    return promise.future().map(HazelcastNodeInfo::unwrap);
+    return promise.future().map(info -> info != null ? info.unwrap() : null);
   }
 
   @Override
