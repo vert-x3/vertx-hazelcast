@@ -163,6 +163,8 @@
 
   </map>
 
+  <replicatedmap name="__vertx.nodeInfo"/>
+
   <!-- Used internally in Vert.x to implement async locks -->
   <semaphore name="__vertx.*">
     <initial-permits>1</initial-permits>
