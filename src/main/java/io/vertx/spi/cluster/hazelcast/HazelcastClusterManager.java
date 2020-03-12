@@ -20,7 +20,6 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.*;
 import com.hazelcast.internal.cluster.ClusterService;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.VertxException;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
@@ -162,11 +161,11 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     synchronized (this) {
       this.nodeInfo = nodeInfo;
     }
-    Promise<HazelcastNodeInfo> promise = vertx.promise();
-    hazelcast.<String, HazelcastNodeInfo>getMap(VERTX_NODE_INFO)
-      .putAsync(nodeId, new HazelcastNodeInfo(nodeInfo))
-      .andThen(new HandlerCallBackAdapter<>(promise));
-    return promise.future().mapEmpty();
+    HazelcastNodeInfo value = new HazelcastNodeInfo(nodeInfo);
+    return vertx.executeBlocking(promise -> {
+      hazelcast.<String, HazelcastNodeInfo>getReplicatedMap(VERTX_NODE_INFO).put(nodeId, value);
+      promise.complete();
+    }, false);
   }
 
   @Override
@@ -176,11 +175,10 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public Future<NodeInfo> getNodeInfo(String nodeId) {
-    Promise<HazelcastNodeInfo> promise = vertx.promise();
-    hazelcast.<String, HazelcastNodeInfo>getMap(VERTX_NODE_INFO)
-      .getAsync(nodeId)
-      .andThen(new HandlerCallBackAdapter<>(promise));
-    return promise.future().map(info -> info != null ? info.unwrap() : null);
+    return vertx.executeBlocking(promise -> {
+      HazelcastNodeInfo value = hazelcast.<String, HazelcastNodeInfo>getReplicatedMap(VERTX_NODE_INFO).get(nodeId);
+      promise.complete(value != null ? value.unwrap() : null);
+    }, false);
   }
 
   @Override
@@ -309,7 +307,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   private void cleanNodeInfos(String nid) {
-    hazelcast.getMap(VERTX_NODE_INFO).remove(nid);
+    hazelcast.getReplicatedMap(VERTX_NODE_INFO).remove(nid);
   }
 
   private void cleanSubs(String nid) {
