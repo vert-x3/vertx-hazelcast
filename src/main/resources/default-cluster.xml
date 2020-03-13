@@ -89,7 +89,9 @@
     <queue-capacity>0</queue-capacity>
   </executor-service>
 
-  <replicatedmap name="__vertx.subs"/>
+  <replicatedmap name="__vertx.subs">
+    <merge-policy>PutIfAbsentMergePolicy</merge-policy>
+  </replicatedmap>
 
   <map name="__vertx.haInfo">
 
@@ -154,7 +156,9 @@
 
   </map>
 
-  <replicatedmap name="__vertx.nodeInfo"/>
+  <replicatedmap name="__vertx.nodeInfo">
+    <merge-policy>LatestUpdateMapMergePolicy</merge-policy>
+  </replicatedmap>
 
   <!-- Used internally in Vert.x to implement async locks -->
   <semaphore name="__vertx.*">
