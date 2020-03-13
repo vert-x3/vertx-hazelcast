@@ -22,28 +22,35 @@ import com.hazelcast.nio.serialization.DataSerializable;
 import io.vertx.core.spi.cluster.RegistrationInfo;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Thomas Segismont
  */
 public class HazelcastRegistrationInfo implements DataSerializable {
 
+  private String address;
   private RegistrationInfo registrationInfo;
 
   public HazelcastRegistrationInfo() {
   }
 
-  public HazelcastRegistrationInfo(RegistrationInfo registrationInfo) {
-    this.registrationInfo = registrationInfo;
+  public HazelcastRegistrationInfo(String address, RegistrationInfo registrationInfo) {
+    this.address = Objects.requireNonNull(address);
+    this.registrationInfo = Objects.requireNonNull(registrationInfo);
+  }
+
+  public String getAddress() {
+    return address;
+  }
+
+  public RegistrationInfo getRegistrationInfo() {
+    return registrationInfo;
   }
 
   @Override
   public void writeData(ObjectDataOutput dataOutput) throws IOException {
+    dataOutput.writeUTF(address);
     dataOutput.writeUTF(registrationInfo.getNodeId());
     dataOutput.writeLong(registrationInfo.getSeq());
     dataOutput.writeBoolean(registrationInfo.isLocalOnly());
@@ -51,6 +58,7 @@ public class HazelcastRegistrationInfo implements DataSerializable {
 
   @Override
   public void readData(ObjectDataInput dataInput) throws IOException {
+    address = dataInput.readUTF();
     registrationInfo = new RegistrationInfo(dataInput.readUTF(), dataInput.readLong(), dataInput.readBoolean());
   }
 
@@ -61,21 +69,14 @@ public class HazelcastRegistrationInfo implements DataSerializable {
 
     HazelcastRegistrationInfo that = (HazelcastRegistrationInfo) o;
 
-    return Objects.equals(registrationInfo, that.registrationInfo);
+    if (!address.equals(that.address)) return false;
+    return registrationInfo.equals(that.registrationInfo);
   }
 
   @Override
   public int hashCode() {
-    return registrationInfo != null ? registrationInfo.hashCode() : 0;
-  }
-
-  public RegistrationInfo unwrap() {
-    return registrationInfo;
-  }
-
-  public static List<RegistrationInfo> unwrap(Collection<HazelcastRegistrationInfo> collection) {
-    return collection.stream()
-      .map(HazelcastRegistrationInfo::unwrap)
-      .collect(toList());
+    int result = address.hashCode();
+    result = 31 * result + registrationInfo.hashCode();
+    return result;
   }
 }

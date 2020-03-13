@@ -16,7 +16,6 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import com.hazelcast.core.*;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.VertxInternal;
@@ -40,18 +39,16 @@ public class HazelcastRegistrationListener implements RegistrationListener {
   }
 
   private final VertxInternal vertx;
-  private final HazelcastInstance hazelcast;
-  private final MultiMap<String, HazelcastRegistrationInfo> multiMap;
+  private final SubsMapHelper helper;
   private final String address;
   private final AtomicReference<InternalState> internalState;
 
   private Handler<List<RegistrationInfo>> handler;
   private Handler<Void> endHandler;
 
-  public HazelcastRegistrationListener(VertxInternal vertx, HazelcastInstance hazelcast, MultiMap<String, HazelcastRegistrationInfo> multiMap, String address, List<RegistrationInfo> infos) {
+  public HazelcastRegistrationListener(VertxInternal vertx, SubsMapHelper helper, String address, List<RegistrationInfo> infos) {
     this.vertx = vertx;
-    this.hazelcast = hazelcast;
-    this.multiMap = multiMap;
+    this.helper = helper;
     this.address = address;
     internalState = new AtomicReference<>(new IdleState(infos));
   }
@@ -126,7 +123,6 @@ public class HazelcastRegistrationListener implements RegistrationListener {
   private class StartedState implements InternalState {
 
     final TaskQueue taskQueue = new TaskQueue();
-    final MultiMapListener multiMapListener = new MultiMapListener(this::multimapChanged);
 
     String listenerId;
     List<RegistrationInfo> initial, last;
@@ -137,14 +133,14 @@ public class HazelcastRegistrationListener implements RegistrationListener {
           return;
         }
         initial = infos;
-        listenerId = multiMap.addEntryListener(multiMapListener, address, true);
-        multimapChanged(); // make sure state is checked if entry is removed before listener is registered
+        listenerId = helper.addEntryListener(address, this::subsChanged);
+        subsChanged(); // make sure state is checked if entry is removed before listener is registered
       }, vertx.getWorkerPool());
     }
 
-    void multimapChanged() {
+    void subsChanged() {
       taskQueue.execute(() -> {
-        handleDataUpdate(HazelcastRegistrationInfo.unwrap(multiMap.get(address)));
+        handleDataUpdate(helper.get(address));
       }, vertx.getWorkerPool());
     }
 
@@ -188,13 +184,12 @@ public class HazelcastRegistrationListener implements RegistrationListener {
     }
 
     private synchronized Runnable terminalEvent() {
-      multiMap.removeEntryListener(listenerId);
       Handler<Void> e = getEndHandler();
       return () -> {
+        stop();
         if (e != null) {
           e.handle(null);
         }
-        stop();
       };
     }
 
@@ -212,7 +207,7 @@ public class HazelcastRegistrationListener implements RegistrationListener {
       if (internalState.compareAndSet(this, new StoppedState())) {
         taskQueue.execute(() -> {
           if (listenerId != null) {
-            multiMap.removeEntryListener(listenerId);
+            helper.removeEntryListener(listenerId);
           }
         }, vertx.getWorkerPool());
       }
@@ -234,44 +229,5 @@ public class HazelcastRegistrationListener implements RegistrationListener {
     public void stop() {
     }
 
-  }
-
-  private static class MultiMapListener implements EntryListener<String, HazelcastRegistrationInfo> {
-
-    final Runnable callback;
-
-    MultiMapListener(Runnable callback) {
-      this.callback = callback;
-    }
-
-    @Override
-    public void entryAdded(EntryEvent<String, HazelcastRegistrationInfo> event) {
-      callback.run();
-    }
-
-    @Override
-    public void entryEvicted(EntryEvent<String, HazelcastRegistrationInfo> event) {
-      callback.run();
-    }
-
-    @Override
-    public void entryRemoved(EntryEvent<String, HazelcastRegistrationInfo> event) {
-      callback.run();
-    }
-
-    @Override
-    public void entryUpdated(EntryEvent<String, HazelcastRegistrationInfo> event) {
-      callback.run();
-    }
-
-    @Override
-    public void mapCleared(MapEvent event) {
-      callback.run();
-    }
-
-    @Override
-    public void mapEvicted(MapEvent event) {
-      callback.run();
-    }
   }
 }
