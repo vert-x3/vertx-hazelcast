@@ -157,7 +157,7 @@
   </map>
 
   <replicatedmap name="__vertx.nodeInfo">
-    <merge-policy>LatestUpdateMapMergePolicy</merge-policy>
+    <merge-policy>PutIfAbsentMergePolicy</merge-policy>
   </replicatedmap>
 
   <!-- Used internally in Vert.x to implement async locks -->
