@@ -85,7 +85,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   private void testProgrammatic(HazelcastClusterManager mgr, Config config) throws Exception {
     mgr.setConfig(config);
     assertEquals(config, mgr.getConfig());
-    VertxOptions options = new VertxOptions().setClusterManager(mgr).setClustered(true);
+    VertxOptions options = new VertxOptions().setClusterManager(mgr);
     Vertx.clusteredVertx(options, res -> {
       assertTrue(res.succeeded());
       assertNotNull(mgr.getHazelcastInstance());
@@ -104,8 +104,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
-    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1).setClustered(true).setClusterHost("127.0.0.1");
-    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2).setClustered(true).setClusterHost("127.0.0.1");
+    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1).setClusterHost("127.0.0.1");
+    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2).setClusterHost("127.0.0.1");
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
     AtomicReference<Vertx> vertx2 = new AtomicReference<>();
@@ -152,8 +152,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
-    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1).setClustered(true).setClusterHost("127.0.0.1");
-    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2).setClustered(true).setClusterHost("127.0.0.1");
+    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1).setClusterHost("127.0.0.1");
+    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2).setClusterHost("127.0.0.1");
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
     AtomicReference<Vertx> vertx2 = new AtomicReference<>();
@@ -206,7 +206,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     String nodeID = instance.getCluster().getLocalMember().getUuid();
 
     HazelcastClusterManager mgr = new HazelcastClusterManager(createConfig());
-    VertxOptions options = new VertxOptions().setClusterManager(mgr).setClustered(true).setClusterHost("127.0.0.1");
+    VertxOptions options = new VertxOptions().setClusterManager(mgr).setClusterHost("127.0.0.1");
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
 
