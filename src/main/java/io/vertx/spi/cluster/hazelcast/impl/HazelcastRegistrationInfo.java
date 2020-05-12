@@ -40,20 +40,20 @@ public class HazelcastRegistrationInfo implements DataSerializable {
     this.registrationInfo = Objects.requireNonNull(registrationInfo);
   }
 
-  public String getAddress() {
+  public String address() {
     return address;
   }
 
-  public RegistrationInfo getRegistrationInfo() {
+  public RegistrationInfo registrationInfo() {
     return registrationInfo;
   }
 
   @Override
   public void writeData(ObjectDataOutput dataOutput) throws IOException {
     dataOutput.writeUTF(address);
-    dataOutput.writeUTF(registrationInfo.getNodeId());
-    dataOutput.writeLong(registrationInfo.getSeq());
-    dataOutput.writeBoolean(registrationInfo.isLocalOnly());
+    dataOutput.writeUTF(registrationInfo.nodeId());
+    dataOutput.writeLong(registrationInfo.seq());
+    dataOutput.writeBoolean(registrationInfo.localOnly());
   }
 
   @Override

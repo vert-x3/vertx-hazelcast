@@ -22,7 +22,6 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.core.spi.cluster.ClusterManagerDelegate;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 import java.util.List;
@@ -73,9 +72,6 @@ public class Lifecycle {
   private static HazelcastClusterManager getHazelcastClusterManager(ClusterManager cm) {
     if (cm == null) {
       return null;
-    }
-    if (cm instanceof ClusterManagerDelegate) {
-      return getHazelcastClusterManager(((ClusterManagerDelegate) cm).unwrap());
     }
     if (cm instanceof HazelcastClusterManager) {
       return (HazelcastClusterManager) cm;

@@ -17,28 +17,37 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.core.*;
+import io.vertx.core.spi.cluster.NodeSelector;
 import io.vertx.core.spi.cluster.RegistrationInfo;
+import io.vertx.core.spi.cluster.RegistrationUpdateEvent;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * @author Thomas Segismont
  */
-public class SubsMapHelper {
+public class SubsMapHelper implements EntryListener<HazelcastRegistrationInfo, Boolean> {
 
   private final ReplicatedMap<HazelcastRegistrationInfo, Boolean> map;
+  private final NodeSelector nodeSelector;
+  private final String listenerId;
 
-  public SubsMapHelper(HazelcastInstance hazelcast) {
+  public SubsMapHelper(HazelcastInstance hazelcast, NodeSelector nodeSelector) {
     map = hazelcast.getReplicatedMap("__vertx.subs");
+    this.nodeSelector = nodeSelector;
+    listenerId = map.addEntryListener(this);
   }
 
   public List<RegistrationInfo> get(String address) {
-    return map.keySet().stream()
-      .filter(key -> key.getAddress().equals(address))
-      .map(HazelcastRegistrationInfo::getRegistrationInfo)
-      .collect(toList());
+    List<RegistrationInfo> list = new ArrayList<>();
+    for (HazelcastRegistrationInfo key : map.keySet()) {
+      if (key.address().equals(address)) {
+        RegistrationInfo registrationInfo = key.registrationInfo();
+        list.add(registrationInfo);
+      }
+    }
+    return list;
   }
 
   public void put(String address, RegistrationInfo registrationInfo) {
@@ -51,66 +60,47 @@ public class SubsMapHelper {
 
   public void removeAllForNode(String nodeId) {
     for (HazelcastRegistrationInfo key : map.keySet()) {
-      if (key.getRegistrationInfo().getNodeId().equals(nodeId)) {
+      if (key.registrationInfo().nodeId().equals(nodeId)) {
         map.remove(key);
       }
     }
   }
 
-  public String addEntryListener(String address, Runnable callback) {
-    return map.addEntryListener(new MapListener(address, callback));
+  @Override
+  public void entryAdded(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
+    String address = event.getKey().address();
+    List<RegistrationInfo> registrations = get(address);
+    nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrations));
   }
 
-  public void removeEntryListener(String listenerId) {
+  @Override
+  public void entryEvicted(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
+
+  }
+
+  @Override
+  public void entryRemoved(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
+    String address = event.getKey().address();
+    List<RegistrationInfo> registrations = get(address);
+    nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrations));
+  }
+
+  @Override
+  public void entryUpdated(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
+
+  }
+
+  @Override
+  public void mapCleared(MapEvent event) {
+
+  }
+
+  @Override
+  public void mapEvicted(MapEvent event) {
+
+  }
+
+  public void close() {
     map.removeEntryListener(listenerId);
-  }
-
-  private static class MapListener implements EntryListener<HazelcastRegistrationInfo, Boolean> {
-
-    final String address;
-    final Runnable callback;
-
-    MapListener(String address, Runnable callback) {
-      this.address = address;
-      this.callback = callback;
-    }
-
-    @Override
-    public void mapCleared(MapEvent event) {
-      callback.run();
-    }
-
-    @Override
-    public void mapEvicted(MapEvent event) {
-      callback.run();
-    }
-
-    @Override
-    public void entryAdded(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
-      if (event.getKey().getAddress().equals(address)) {
-        callback.run();
-      }
-    }
-
-    @Override
-    public void entryEvicted(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
-      if (event.getKey().getAddress().equals(address)) {
-        callback.run();
-      }
-    }
-
-    @Override
-    public void entryRemoved(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
-      if (event.getKey().getAddress().equals(address)) {
-        callback.run();
-      }
-    }
-
-    @Override
-    public void entryUpdated(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
-      if (event.getKey().getAddress().equals(address)) {
-        callback.run();
-      }
-    }
   }
 }

@@ -21,7 +21,6 @@ import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.spi.cluster.NodeAddress;
 import io.vertx.core.spi.cluster.NodeInfo;
 
 import java.io.IOException;
@@ -42,17 +41,18 @@ public class HazelcastNodeInfo implements DataSerializable {
 
   @Override
   public void writeData(ObjectDataOutput dataOutput) throws IOException {
-    dataOutput.writeUTF(nodeInfo.getAddress().getHost());
-    dataOutput.writeInt(nodeInfo.getAddress().getPort());
-    JsonObject metadata = nodeInfo.getMetadata();
+    dataOutput.writeUTF(nodeInfo.host());
+    dataOutput.writeInt(nodeInfo.port());
+    JsonObject metadata = nodeInfo.metadata();
     dataOutput.writeByteArray(metadata != null ? metadata.toBuffer().getBytes() : null);
   }
 
   @Override
   public void readData(ObjectDataInput dataInput) throws IOException {
-    NodeAddress address = new NodeAddress(dataInput.readUTF(), dataInput.readInt());
+    String host = dataInput.readUTF();
+    int port = dataInput.readInt();
     byte[] bytes = dataInput.readByteArray();
-    nodeInfo = new NodeInfo(address, bytes != null ? new JsonObject(Buffer.buffer(bytes)) : null);
+    nodeInfo = new NodeInfo(host, port, bytes != null ? new JsonObject(Buffer.buffer(bytes)) : null);
   }
 
   public NodeInfo unwrap() {
