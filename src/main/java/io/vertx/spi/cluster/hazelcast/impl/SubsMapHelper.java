@@ -68,6 +68,10 @@ public class SubsMapHelper implements EntryListener<HazelcastRegistrationInfo, B
 
   @Override
   public void entryAdded(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
+    fireRegistrationUpdateEvent(event);
+  }
+
+  private void fireRegistrationUpdateEvent(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
     String address = event.getKey().address();
     List<RegistrationInfo> registrations = get(address);
     nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrations));
@@ -80,9 +84,7 @@ public class SubsMapHelper implements EntryListener<HazelcastRegistrationInfo, B
 
   @Override
   public void entryRemoved(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
-    String address = event.getKey().address();
-    List<RegistrationInfo> registrations = get(address);
-    nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrations));
+    fireRegistrationUpdateEvent(event);
   }
 
   @Override
