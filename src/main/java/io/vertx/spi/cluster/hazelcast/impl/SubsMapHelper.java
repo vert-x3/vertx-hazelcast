@@ -79,7 +79,6 @@ public class SubsMapHelper implements EntryListener<HazelcastRegistrationInfo, B
 
   @Override
   public void entryEvicted(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
-
   }
 
   @Override
@@ -89,17 +88,14 @@ public class SubsMapHelper implements EntryListener<HazelcastRegistrationInfo, B
 
   @Override
   public void entryUpdated(EntryEvent<HazelcastRegistrationInfo, Boolean> event) {
-
   }
 
   @Override
   public void mapCleared(MapEvent event) {
-
   }
 
   @Override
   public void mapEvicted(MapEvent event) {
-
   }
 
   public void close() {
