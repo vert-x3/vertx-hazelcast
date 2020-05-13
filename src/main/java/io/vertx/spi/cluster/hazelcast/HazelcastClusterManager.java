@@ -28,10 +28,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
-import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.core.spi.cluster.NodeInfo;
-import io.vertx.core.spi.cluster.NodeListener;
-import io.vertx.core.spi.cluster.RegistrationInfo;
+import io.vertx.core.spi.cluster.*;
 import io.vertx.spi.cluster.hazelcast.impl.*;
 
 import java.util.*;
