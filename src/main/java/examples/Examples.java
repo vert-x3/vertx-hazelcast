@@ -110,21 +110,4 @@ public class Examples {
     Router router = Router.router(vertx);
     router.get("/readiness").handler(HealthCheckHandler.createWithHealthChecks(checks));
   }
-
-  public void liteMemberConfig() {
-    Config hazelcastConfig = ConfigUtil.loadConfig()
-      .setLiteMember(true);
-
-    ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
-
-    VertxOptions options = new VertxOptions().setClusterManager(mgr);
-
-    Vertx.clusteredVertx(options, res -> {
-      if (res.succeeded()) {
-        Vertx vertx = res.result();
-      } else {
-        // failed!
-      }
-    });
-  }
 }

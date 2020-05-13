@@ -79,12 +79,6 @@ public class Lifecycle {
     throw new ClassCastException("Unexpected cluster manager implementation: " + cm.getClass());
   }
 
-  public static void closeDataNodes(List<HazelcastInstance> dataNodes) throws Exception {
-    for (HazelcastInstance dataNode : dataNodes) {
-      dataNode.getLifecycleService().terminate();
-    }
-  }
-
   private Lifecycle() {
     // Utility
   }
