@@ -352,18 +352,20 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void addRegistration(String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
-    vertx.executeBlocking(prom -> {
+    SubsOpSerializer serializer = SubsOpSerializer.get(vertx.getOrCreateContext());
+    serializer.execute(() -> {
       subsMapHelper.put(address, registrationInfo);
-      prom.complete();
-    }, false, promise);
+      promise.complete();
+    });
   }
 
   @Override
   public void removeRegistration(String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
-    vertx.executeBlocking(prom -> {
+    SubsOpSerializer serializer = SubsOpSerializer.get(vertx.getOrCreateContext());
+    serializer.execute(() -> {
       subsMapHelper.remove(address, registrationInfo);
-      prom.complete();
-    }, false, promise);
+      promise.complete();
+    });
   }
 
   @Override
