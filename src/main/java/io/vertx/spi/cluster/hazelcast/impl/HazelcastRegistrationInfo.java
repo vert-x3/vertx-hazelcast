@@ -29,28 +29,21 @@ import java.util.Objects;
  */
 public class HazelcastRegistrationInfo implements DataSerializable {
 
-  private String address;
   private RegistrationInfo registrationInfo;
 
   public HazelcastRegistrationInfo() {
   }
 
-  public HazelcastRegistrationInfo(String address, RegistrationInfo registrationInfo) {
-    this.address = Objects.requireNonNull(address);
+  public HazelcastRegistrationInfo(RegistrationInfo registrationInfo) {
     this.registrationInfo = Objects.requireNonNull(registrationInfo);
   }
 
-  public String address() {
-    return address;
-  }
-
-  public RegistrationInfo registrationInfo() {
+  public RegistrationInfo unwrap() {
     return registrationInfo;
   }
 
   @Override
   public void writeData(ObjectDataOutput dataOutput) throws IOException {
-    dataOutput.writeUTF(address);
     dataOutput.writeUTF(registrationInfo.nodeId());
     dataOutput.writeLong(registrationInfo.seq());
     dataOutput.writeBoolean(registrationInfo.localOnly());
@@ -58,7 +51,6 @@ public class HazelcastRegistrationInfo implements DataSerializable {
 
   @Override
   public void readData(ObjectDataInput dataInput) throws IOException {
-    address = dataInput.readUTF();
     registrationInfo = new RegistrationInfo(dataInput.readUTF(), dataInput.readLong(), dataInput.readBoolean());
   }
 
@@ -69,14 +61,16 @@ public class HazelcastRegistrationInfo implements DataSerializable {
 
     HazelcastRegistrationInfo that = (HazelcastRegistrationInfo) o;
 
-    if (!address.equals(that.address)) return false;
     return registrationInfo.equals(that.registrationInfo);
   }
 
   @Override
   public int hashCode() {
-    int result = address.hashCode();
-    result = 31 * result + registrationInfo.hashCode();
-    return result;
+    return registrationInfo.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return registrationInfo.toString();
   }
 }

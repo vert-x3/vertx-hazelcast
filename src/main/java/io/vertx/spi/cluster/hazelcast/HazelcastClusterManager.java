@@ -59,7 +59,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private String nodeId;
   private NodeInfo nodeInfo;
   private SubsMapHelper subsMapHelper;
-  private ReplicatedMap<String, HazelcastNodeInfo> nodeInfoMap;
+  private IMap<String, HazelcastNodeInfo> nodeInfoMap;
   private String membershipListenerId;
   private String lifecycleListenerId;
   private boolean customHazelcastCluster;
@@ -131,8 +131,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
 
-        subsMapHelper = new SubsMapHelper(hazelcast, nodeSelector);
-        nodeInfoMap = hazelcast.getReplicatedMap("__vertx.nodeInfo");
+        subsMapHelper = new SubsMapHelper(vertx, hazelcast, nodeSelector);
+        nodeInfoMap = hazelcast.getMap("__vertx.nodeInfo");
 
         prom.complete();
       }
@@ -298,16 +298,23 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     String attribute = member.getStringAttribute(NODE_ID_ATTRIBUTE);
     String nid = attribute != null ? attribute : member.getUuid();
     try {
-      if (isMaster()) {
-        cleanSubs(nid);
-        cleanNodeInfos(nid);
-      }
-      if (nodeListener != null) {
-        nodeIds.remove(nid);
-        nodeListener.nodeLeft(nid);
-      }
+      membersRemoved(Collections.singleton(nid));
     } catch (Throwable t) {
       log.error("Failed to handle memberRemoved", t);
+    }
+  }
+
+  private synchronized void membersRemoved(Set<String> ids) {
+    if (isMaster()) {
+      cleanSubs(ids);
+      cleanNodeInfos(ids);
+    }
+    nodeInfoMap.put(nodeId, new HazelcastNodeInfo(getNodeInfo()));
+    nodeSelector.registrationsLost();
+    republishOwnSubs();
+    if (nodeListener != null) {
+      nodeIds.removeAll(ids);
+      ids.forEach(nodeListener::nodeLeft);
     }
   }
 
@@ -315,12 +322,19 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     return ((ClusterService) hazelcast.getCluster()).isMaster();
   }
 
-  private void cleanSubs(String nodeId) {
-    subsMapHelper.removeAllForNode(nodeId);
+  private void cleanSubs(Set<String> ids) {
+    subsMapHelper.removeAllForNodes(ids);
   }
 
-  private void cleanNodeInfos(String nid) {
-    nodeInfoMap.remove(nid);
+  private void cleanNodeInfos(Set<String> ids) {
+    ids.forEach(nodeInfoMap::remove);
+  }
+
+  private void republishOwnSubs() {
+    vertx.executeBlocking(prom -> {
+      subsMapHelper.republishOwnSubs();
+      prom.complete();
+    }, false);
   }
 
   @Override
@@ -338,9 +352,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       for (String nodeId : newNodes) {
         nodeListener.nodeAdded(nodeId);
       }
-      for (String nodeId : removedMembers) {
-        nodeListener.nodeLeft(nodeId);
-      }
+      membersRemoved(removedMembers);
       nodeIds.retainAll(currentNodes);
     }
   }

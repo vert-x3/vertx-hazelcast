@@ -90,7 +90,10 @@
     <queue-capacity>0</queue-capacity>
   </executor-service>
 
-  <replicatedmap name="__vertx.subs"/>
+  <multimap name="__vertx.subs">
+    <backup-count>1</backup-count>
+    <value-collection-type>SET</value-collection-type>
+  </multimap>
 
   <map name="__vertx.haInfo">
 
@@ -155,7 +158,9 @@
 
   </map>
 
-  <replicatedmap name="__vertx.nodeInfo"/>
+  <map name="__vertx.nodeInfo">
+    <backup-count>1</backup-count>
+  </map>
 
   <!-- Used internally in Vert.x to implement async locks -->
   <semaphore name="__vertx.*">
