@@ -18,7 +18,6 @@ package io.vertx.spi.cluster.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.*;
-import com.hazelcast.internal.cluster.ClusterService;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -302,10 +301,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   private synchronized void membersRemoved(Set<String> ids) {
-    if (isMaster()) {
-      cleanSubs(ids);
-      cleanNodeInfos(ids);
-    }
+    cleanSubs(ids);
+    cleanNodeInfos(ids);
     nodeInfoMap.put(nodeId, new HazelcastNodeInfo(getNodeInfo()));
     nodeSelector.registrationsLost();
     republishOwnSubs();
@@ -313,10 +310,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       nodeIds.removeAll(ids);
       ids.forEach(nodeListener::nodeLeft);
     }
-  }
-
-  private boolean isMaster() {
-    return ((ClusterService) hazelcast.getCluster()).isMaster();
   }
 
   private void cleanSubs(Set<String> ids) {
