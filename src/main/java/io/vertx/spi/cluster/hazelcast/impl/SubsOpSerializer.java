@@ -16,11 +16,14 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
+import io.vertx.core.Promise;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
 import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.spi.cluster.RegistrationInfo;
 
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 /**
  * @author Thomas Segismont
@@ -46,7 +49,14 @@ public class SubsOpSerializer {
     return instance;
   }
 
-  public void execute(Runnable task) {
-    taskQueue.execute(task, vertx.getWorkerPool());
+  public void execute(BiConsumer<String, RegistrationInfo> op, String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
+    taskQueue.execute(() -> {
+      try {
+        op.accept(address, registrationInfo);
+        promise.complete();
+      } catch (Exception e) {
+        promise.fail(e);
+      }
+    }, vertx.getWorkerPool());
   }
 }

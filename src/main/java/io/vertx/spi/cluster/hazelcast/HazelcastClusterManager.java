@@ -259,9 +259,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
               hazelcast.getCluster().getLocalMember().removeAttribute(NODE_ID_ATTRIBUTE);
             }
 
-            subsMapHelper = null;
-            nodeInfoMap = null;
-
           } catch (Throwable t) {
             prom.fail(t);
           }
@@ -365,19 +362,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   @Override
   public void addRegistration(String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
     SubsOpSerializer serializer = SubsOpSerializer.get(vertx.getOrCreateContext());
-    serializer.execute(() -> {
-      subsMapHelper.put(address, registrationInfo);
-      promise.complete();
-    });
+    serializer.execute(subsMapHelper::put, address, registrationInfo, promise);
   }
 
   @Override
   public void removeRegistration(String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
     SubsOpSerializer serializer = SubsOpSerializer.get(vertx.getOrCreateContext());
-    serializer.execute(() -> {
-      subsMapHelper.remove(address, registrationInfo);
-      promise.complete();
-    });
+    serializer.execute(subsMapHelper::remove, address, registrationInfo, promise);
   }
 
   @Override
