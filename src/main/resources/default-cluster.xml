@@ -90,13 +90,8 @@
   </executor-service>
 
   <multimap name="__vertx.subs">
-
-    <!--
-        Number of backups. If 1 is set as the backup-count for example,
-        then all entries of the map will be copied to another JVM for
-        fail-safety. 0 means no backup.
-    -->
     <backup-count>1</backup-count>
+    <value-collection-type>SET</value-collection-type>
   </multimap>
 
   <map name="__vertx.haInfo">
@@ -160,6 +155,10 @@
     -->
     <merge-policy>com.hazelcast.map.merge.LatestUpdateMapMergePolicy</merge-policy>
 
+  </map>
+
+  <map name="__vertx.nodeInfo">
+    <backup-count>1</backup-count>
   </map>
 
   <!-- Used internally in Vert.x to implement async locks -->

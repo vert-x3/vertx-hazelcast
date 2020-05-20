@@ -2,8 +2,7 @@
 
 This is a cluster manager implementation for Vert.x that uses http://hazelcast.com[Hazelcast].
 
-It is the default cluster manager used in the Vert.x distribution, but it can be replaced with another implementation as Vert.x
-cluster managers are pluggable.  This implementation is packaged inside:
+It is the default cluster manager used in the Vert.x distribution, but it can be replaced with another implementation as Vert.x cluster managers are pluggable.This implementation is packaged inside:
 
 [source,xml,subs="+attributes"]
 ----
@@ -130,17 +129,18 @@ You can pass an existing `HazelcastInstance` in the cluster manager to reuse an 
 {@link examples.Examples#example3(com.hazelcast.core.HazelcastInstance)}
 ----
 
-In this case, vert.x is not the cluster owner and so do not shutdown the cluster on close.
+In this case, Vert.x is not the cluster owner and so do not shutdown the cluster on close.
 
 Notice that the custom Hazelcast instance need to be configured with:
 
-[source, xml]
+[source,xml]
 ----
 <properties>
   <property name="hazelcast.shutdownhook.enabled">false</property>
 </properties>
 <multimap name="__vertx.subs">
   <backup-count>1</backup-count>
+  <value-collection-type>SET</value-collection-type>
 </multimap>
 <map name="__vertx.haInfo">
   <time-to-live-seconds>0</time-to-live-seconds>
@@ -149,6 +149,9 @@ Notice that the custom Hazelcast instance need to be configured with:
   <max-size policy="PER_NODE">0</max-size>
   <eviction-percentage>25</eviction-percentage>
   <merge-policy>com.hazelcast.map.merge.LatestUpdateMapMergePolicy</merge-policy>
+</map>
+<map name="__vertx.nodeInfo">
+  <backup-count>1</backup-count>
 </map>
 <semaphore name="__vertx.*">
   <initial-permits>1</initial-permits>
@@ -216,7 +219,7 @@ vertx run myverticle.js -cluster -cluster-host your-ip-address
 Where `your-ip-address` is the same IP address you specified in the Hazelcast configuration.
 
 If using Vert.x programmatically you can specify this using
-{@link io.vertx.core.VertxOptions#setClusterHost(java.lang.String)}.
+{@link io.vertx.core.eventbus.EventBusOptions#setHost}.
 
 === Using a VPN
 

@@ -104,8 +104,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
-    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1).setClusterHost("127.0.0.1");
-    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2).setClusterHost("127.0.0.1");
+    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1);
+    options1.getEventBusOptions().setHost("127.0.0.1");
+    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2);
+    options2.getEventBusOptions().setHost("127.0.0.1");
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
     AtomicReference<Vertx> vertx2 = new AtomicReference<>();
@@ -152,8 +154,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
-    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1).setClusterHost("127.0.0.1");
-    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2).setClusterHost("127.0.0.1");
+    VertxOptions options1 = new VertxOptions().setClusterManager(mgr1);
+    options1.getEventBusOptions().setHost("127.0.0.1");
+    VertxOptions options2 = new VertxOptions().setClusterManager(mgr2);
+    options2.getEventBusOptions().setHost("127.0.0.1");
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
     AtomicReference<Vertx> vertx2 = new AtomicReference<>();
@@ -206,7 +210,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     String nodeID = instance.getCluster().getLocalMember().getUuid();
 
     HazelcastClusterManager mgr = new HazelcastClusterManager(createConfig());
-    VertxOptions options = new VertxOptions().setClusterManager(mgr).setClusterHost("127.0.0.1");
+    VertxOptions options = new VertxOptions().setClusterManager(mgr);
+    options.getEventBusOptions().setHost("127.0.0.1");
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
 
