@@ -179,7 +179,11 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   public void getNodeInfo(String nodeId, Promise<NodeInfo> promise) {
     vertx.executeBlocking(prom -> {
       HazelcastNodeInfo value = nodeInfoMap.get(nodeId);
-      prom.complete(value != null ? value.unwrap() : null);
+      if (value != null) {
+        prom.complete(value.unwrap());
+      } else {
+        promise.fail("Not a member of the cluster");
+      }
     }, false, promise);
   }
 
