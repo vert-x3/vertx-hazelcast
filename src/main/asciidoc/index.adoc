@@ -52,10 +52,7 @@ Usually the cluster manager is configured by a file
 https://github.com/vert-x3/vertx-hazelcast/blob/master/src/main/resources/default-cluster.xml[`default-cluster.xml`]
 which is packaged inside the jar.
 
-If you want to override this configuration you can provide a file called `cluster.xml` on your classpath and this
-will be used instead. If you want to embed the `cluster.xml` file in a fat jar, it must be located at the root of the
-fat jar. If it's an external file, the **directory** containing the file must be added to the classpath. For
-example, if you are using the _launcher_ class from Vert.x, the classpath enhancement can be done as follows:
+If you want to override this configuration you can provide a file called `cluster.xml` on your classpath and this will be used instead.If you want to embed the `cluster.xml` file in a fat jar, it must be located at the root of the fat jar.If it's an external file, the **directory** containing the file must be added to the classpath.For example, if you are using the _launcher_ class from Vert.x, the classpath enhancement can be done as follows:
 
 [source]
 ----
@@ -99,7 +96,7 @@ You can specify configuration programmatically if embedding:
 ----
 
 It might also be useful to customize an existing XML configuration.
-For example, you might want to change the cluster group name:
+For example, you might want to change the cluster name:
 
 [source,$lang]
 ----
@@ -135,27 +132,29 @@ Notice that the custom Hazelcast instance need to be configured with:
 
 [source,xml]
 ----
-<properties>
-  <property name="hazelcast.shutdownhook.enabled">false</property>
-</properties>
 <multimap name="__vertx.subs">
   <backup-count>1</backup-count>
   <value-collection-type>SET</value-collection-type>
 </multimap>
+
 <map name="__vertx.haInfo">
-  <time-to-live-seconds>0</time-to-live-seconds>
-  <max-idle-seconds>0</max-idle-seconds>
-  <eviction-policy>NONE</eviction-policy>
-  <max-size policy="PER_NODE">0</max-size>
-  <eviction-percentage>25</eviction-percentage>
-  <merge-policy>com.hazelcast.map.merge.LatestUpdateMapMergePolicy</merge-policy>
+  <backup-count>1</backup-count>
 </map>
+
 <map name="__vertx.nodeInfo">
   <backup-count>1</backup-count>
 </map>
-<semaphore name="__vertx.*">
-  <initial-permits>1</initial-permits>
-</semaphore>
+
+<cp-subsystem>
+  <cp-member-count>0</cp-member-count>
+  <semaphores>
+    <semaphore>
+      <name>__vertx.*</name>
+      <jdk-compatible>false</jdk-compatible>
+      <initial-permits>1</initial-permits>
+    </semaphore>
+  </semaphores>
+</cp-subsystem>
 ----
 
 IMPORTANT: Hazelcast clients or smart clients are not supported.
