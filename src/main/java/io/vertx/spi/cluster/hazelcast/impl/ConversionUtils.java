@@ -59,12 +59,24 @@ public class ConversionUtils {
       byte[] bytes = new byte[length];
       objectDataInput.readFully(bytes);
       try {
-        Class<?> clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
+        Class<?> clazz = loadClass(className);
         clusterSerializable = (ClusterSerializable) clazz.newInstance();
         clusterSerializable.readFromBuffer(0, Buffer.buffer(bytes));
       } catch (Exception e) {
-        throw new IllegalStateException("Failed to load class " + e.getMessage(), e);
+        throw new IOException("Failed to load class " + className, e);
       }
+    }
+
+    private Class<?> loadClass(String className) throws ClassNotFoundException {
+      Class<?> res = null;
+      ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+      if (tccl != null) {
+        res = tccl.loadClass(className);
+      }
+      if (res == null) {
+        return ConversionUtils.class.getClassLoader().loadClass(className);
+      }
+      return res;
     }
 
     @Override
