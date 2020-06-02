@@ -46,6 +46,8 @@
 
   <cp-subsystem>
     <cp-member-count>0</cp-member-count>
+    <session-heartbeat-interval-seconds>1</session-heartbeat-interval-seconds>
+    <session-time-to-live-seconds>5</session-time-to-live-seconds>
     <semaphores>
       <semaphore>
         <name>__vertx.*</name>
