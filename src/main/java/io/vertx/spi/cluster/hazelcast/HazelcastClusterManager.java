@@ -16,8 +16,16 @@
 
 package io.vertx.spi.cluster.hazelcast;
 
+import com.hazelcast.cluster.Member;
+import com.hazelcast.cluster.MembershipEvent;
+import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.config.Config;
-import com.hazelcast.core.*;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.LifecycleEvent;
+import com.hazelcast.core.LifecycleListener;
+import com.hazelcast.cp.ISemaphore;
+import com.hazelcast.map.IMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -49,18 +57,17 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
   private static final String LOCK_SEMAPHORE_PREFIX = "__vertx.";
-  private static final String NODE_ID_ATTRIBUTE = "__vertx.nodeId";
 
   private VertxInternal vertx;
   private NodeSelector nodeSelector;
 
   private HazelcastInstance hazelcast;
-  private String nodeId;
+  private UUID nodeId;
   private NodeInfo nodeInfo;
   private SubsMapHelper subsMapHelper;
   private IMap<String, HazelcastNodeInfo> nodeInfoMap;
-  private String membershipListenerId;
-  private String lifecycleListenerId;
+  private UUID membershipListenerId;
+  private UUID lifecycleListenerId;
   private boolean customHazelcastCluster;
   private Set<String> nodeIds = new HashSet<>();
 
@@ -126,7 +133,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
         Member localMember = hazelcast.getCluster().getLocalMember();
         nodeId = localMember.getUuid();
-        localMember.setStringAttribute(NODE_ID_ATTRIBUTE, nodeId);
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
 
@@ -140,15 +146,14 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public String getNodeId() {
-    return nodeId;
+    return nodeId.toString();
   }
 
   @Override
   public List<String> getNodes() {
     List<String> list = new ArrayList<>();
     for (Member member : hazelcast.getCluster().getMembers()) {
-      String nodeIdAttribute = member.getStringAttribute(NODE_ID_ATTRIBUTE);
-      list.add(nodeIdAttribute != null ? nodeIdAttribute : member.getUuid());
+      list.add(member.getUuid().toString());
     }
     return list;
   }
@@ -165,7 +170,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     }
     HazelcastNodeInfo value = new HazelcastNodeInfo(nodeInfo);
     vertx.executeBlocking(prom -> {
-      nodeInfoMap.put(nodeId, value);
+      nodeInfoMap.put(nodeId.toString(), value);
       prom.complete();
     }, false, promise);
   }
@@ -200,7 +205,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   @Override
   public void getLockWithTimeout(String name, long timeout, Promise<Lock> promise) {
     vertx.executeBlocking(prom -> {
-      ISemaphore iSemaphore = hazelcast.getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
+      ISemaphore iSemaphore = hazelcast.getCPSubsystem().getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
       long remaining = timeout;
       do {
@@ -222,7 +227,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getCounter(String name, Promise<Counter> promise) {
-    promise.complete(new HazelcastCounter(vertx, hazelcast.getAtomicLong(name)));
+    promise.complete(new HazelcastCounter(vertx, hazelcast.getCPSubsystem().getAtomicLong(name)));
   }
 
   @Override
@@ -258,10 +263,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
               }
             }
 
-            if (customHazelcastCluster) {
-              hazelcast.getCluster().getLocalMember().removeAttribute(NODE_ID_ATTRIBUTE);
-            }
-
           } catch (Throwable t) {
             prom.fail(t);
           }
@@ -277,8 +278,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String attribute = member.getStringAttribute(NODE_ID_ATTRIBUTE);
-    String nid = attribute != null ? attribute : member.getUuid();
+    String nid = member.getUuid().toString();
     try {
       if (nodeListener != null) {
         nodeIds.add(nid);
@@ -295,8 +295,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String attribute = member.getStringAttribute(NODE_ID_ATTRIBUTE);
-    String nid = attribute != null ? attribute : member.getUuid();
+    String nid = member.getUuid().toString();
     try {
       membersRemoved(Collections.singleton(nid));
     } catch (Throwable t) {
@@ -307,7 +306,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private synchronized void membersRemoved(Set<String> ids) {
     cleanSubs(ids);
     cleanNodeInfos(ids);
-    nodeInfoMap.put(nodeId, new HazelcastNodeInfo(getNodeInfo()));
+    nodeInfoMap.put(nodeId.toString(), new HazelcastNodeInfo(getNodeInfo()));
     nodeSelector.registrationsLost();
     republishOwnSubs();
     if (nodeListener != null) {
@@ -373,10 +372,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     vertx.executeBlocking(prom -> {
       prom.complete(subsMapHelper.get(address));
     }, false, promise);
-  }
-
-  @Override
-  public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
   }
 
   /**

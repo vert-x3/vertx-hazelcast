@@ -16,18 +16,19 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import com.hazelcast.core.IMap;
+import com.hazelcast.map.IMap;
 import io.vertx.core.Future;
-import io.vertx.core.impl.PromiseInternal;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletionStage;
 
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
 
@@ -42,18 +43,16 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   @Override
   public Future<V> get(K k) {
     K kk = convertParam(k);
-    PromiseInternal<V> promise = vertx.promise();
-    map.getAsync(kk).andThen(new HandlerCallBackAdapter<>(promise));
-    return promise.future().map(ConversionUtils::convertReturn);
+    ContextInternal context = vertx.getOrCreateContext();
+    return Future.fromCompletionStage(map.getAsync(kk), context).map(ConversionUtils::convertReturn);
   }
 
   @Override
   public Future<Void> put(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    PromiseInternal<Void> promise = vertx.promise();
-    map.setAsync(kk, HazelcastServerID.convertServerID(vv)).andThen(new HandlerCallBackAdapter<>(promise));
-    return promise.future();
+    ContextInternal context = vertx.getOrCreateContext();
+    return Future.fromCompletionStage(map.setAsync(kk, HazelcastServerID.convertServerID(vv)), context);
   }
 
   @Override
@@ -69,26 +68,26 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   public Future<Void> put(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> {
-      map.set(kk, HazelcastServerID.convertServerID(vv), ttl, TimeUnit.MILLISECONDS);
-      fut.complete();
-    }, false);
+    ContextInternal context = vertx.getOrCreateContext();
+    CompletionStage<Void> completionStage = map.setAsync(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS);
+    return Future.fromCompletionStage(completionStage, context);
   }
 
   @Override
   public Future<V> putIfAbsent(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv),
-      ttl, TimeUnit.MILLISECONDS))), false);
+    return vertx.executeBlocking(fut -> {
+      fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS)));
+    }, false);
   }
 
   @Override
   public Future<V> remove(K k) {
     K kk = convertParam(k);
-    PromiseInternal<V> promise = vertx.promise();
-    map.removeAsync(kk).andThen(new HandlerCallBackAdapter<>(promise));
-    return promise.future().map(ConversionUtils::convertReturn);
+    ContextInternal context = vertx.getOrCreateContext();
+    CompletionStage<V> completionStage = map.removeAsync(kk);
+    return Future.fromCompletionStage(completionStage, context).map(ConversionUtils::convertReturn);
   }
 
   @Override

@@ -16,7 +16,11 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import com.hazelcast.core.*;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.MapEvent;
+import com.hazelcast.multimap.MultiMap;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -42,7 +46,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
   private final VertxInternal vertx;
   private final MultiMap<String, HazelcastRegistrationInfo> map;
   private final NodeSelector nodeSelector;
-  private final String listenerId;
+  private final UUID listenerId;
 
   private final ConcurrentMap<String, Set<RegistrationInfo>> ownSubs = new ConcurrentHashMap<>();
   private final ReadWriteLock republishLock = new ReentrantReadWriteLock();
@@ -160,6 +164,10 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
 
   @Override
   public void mapEvicted(MapEvent event) {
+  }
+
+  @Override
+  public void entryExpired(EntryEvent<String, HazelcastRegistrationInfo> event) {
   }
 
   public void close() {

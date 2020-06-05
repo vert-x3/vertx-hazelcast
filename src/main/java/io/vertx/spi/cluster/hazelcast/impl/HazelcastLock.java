@@ -16,7 +16,7 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import com.hazelcast.core.ISemaphore;
+import com.hazelcast.cp.ISemaphore;
 import io.vertx.core.shareddata.Lock;
 
 import java.util.concurrent.Executor;

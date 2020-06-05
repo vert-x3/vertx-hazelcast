@@ -10,7 +10,7 @@
  */
 package io.vertx.spi.cluster.hazelcast;
 
-import com.hazelcast.core.PartitionService;
+import com.hazelcast.partition.PartitionService;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
