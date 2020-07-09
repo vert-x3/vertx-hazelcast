@@ -173,17 +173,7 @@ this value `hazelcast.max.no.heartbeat.seconds` system property such as in:
 
 Afterwards a node will be removed from the cluster after 5 seconds without a heartbeat.
 
-See http://docs.hazelcast.org/docs/3.6/manual/html-single/index.html#system-properties[Hazelcast
-system-properties] and
-http://docs.hazelcast.org/docs/3.6/manual/html-single/index.html#configuring-with-system-properties[configuring Hazelcast
-with system properties] for the other properties you can configure.
-
-== Using Hazelcast async methods
-
-Hazelcast's `IMap` and `IAtomicLong` interfaces can be used with async methods returning `ICompletableFuture<V>`, a natural fit for Vert.x threading model.
-
-Supplying the option `-Dvertx.hazelcast.async-api=true` on JVM startup, will indicate that the async Hazelcast API methods will be used to communicate with the hazelcast cluster.
-Effectively, this means that when this option is enabled, execution of all `Counter` operations and `AsyncMap.get`,`AsyncMap.put` and `AsyncMap.remove` operations will occur in the calling thread (the event loop), instead of a worker thread with `vertx.executeBlocking`.
+See https://docs.hazelcast.org/docs/latest/manual/html-single/#system-properties[Hazelcast system-properties].
 
 == Trouble shooting clustering
 
@@ -207,18 +197,6 @@ element of the configuration. Make sure you set the `enabled` attribute to `true
   <interface>192.168.1.20</interface>
 </interfaces>
 ----
-
-When running Vert.x is in clustered mode, you should also make sure that Vert.x knows about the correct interface.
-When running at the command line this is done by specifying the `cluster-host` option:
-
-----
-vertx run myverticle.js -cluster -cluster-host your-ip-address
-----
-
-Where `your-ip-address` is the same IP address you specified in the Hazelcast configuration.
-
-If using Vert.x programmatically you can specify this using
-{@link io.vertx.core.eventbus.EventBusOptions#setHost}.
 
 === Using a VPN
 
@@ -347,7 +325,7 @@ In this document, we will use _DNS Lookup_ discovery. The following properties h
       <tcp-ip enabled="false" />
 
       <discovery-strategies>
-        <discovery-strategy enabled="true" <!--3-->
+        <discovery-strategy enabled="true"> <!--3-->
             class="com.hazelcast.kubernetes.HazelcastKubernetesDiscoveryStrategy">
           <properties>
             <property name="service-dns">MY-SERVICE-DNS-NAME</property> <!--4-->
