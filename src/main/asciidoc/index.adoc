@@ -117,6 +117,17 @@ The default configuration uses multicast so you must have multicast enabled on y
 
 For full documentation on how to configure discovery differently please consult the Hazelcast documentation.
 
+=== Changing local and public address with system properties
+
+Sometimes, cluster nodes must bind to an address that is not reachable by other members.
+For example, this may happen when nodes are not in the same network area, or on certain clouds with specific firewall configurations.
+
+The bind address and public address (the address advertised to other members) can be set with system properties:
+
+----
+-Dhazelcast.local.localAddress=172.16.5.131 -Dhazelcast.local.publicAddress=104.198.78.81
+----
+
 == Using an existing Hazelcast cluster
 
 You can pass an existing `HazelcastInstance` in the cluster manager to reuse an existing cluster:
