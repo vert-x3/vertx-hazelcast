@@ -1,8 +1,10 @@
 = Hazelcast Cluster Manager
 
-This is a cluster manager implementation for Vert.x that uses http://hazelcast.com[Hazelcast].
+This is a cluster manager implementation for Vert.x that uses https://hazelcast.com[Hazelcast].
 
-It is the default cluster manager used in the Vert.x distribution, but it can be replaced with another implementation as Vert.x cluster managers are pluggable.This implementation is packaged inside:
+It is the default cluster manager used in the Vert.x CLI, but it can be replaced with another implementation as Vert.x cluster managers are pluggable.
+
+This implementation is packaged inside:
 
 [source,xml,subs="+attributes"]
 ----
@@ -21,7 +23,7 @@ In Vert.x a cluster manager is used for various functions including:
 * Distributed Locks
 * Distributed Counters
 
-Cluster managersdo not* handle the event bus inter-node transport, this is done directly by Vert.x with TCP connections.
+Cluster managers do *not* handle the event bus inter-node transport, this is done directly by Vert.x with TCP connections.
 
 == Using this cluster manager
 
