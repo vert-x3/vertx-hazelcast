@@ -374,6 +374,30 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     }, false, promise);
   }
 
+  @Override
+  public String clusterHost() {
+    String host;
+    if (!customHazelcastCluster && (host = System.getProperty("hazelcast.local.localAddress")) != null) {
+      return host;
+    }
+    if (!customHazelcastCluster && conf.getNetworkConfig().getPublicAddress() == null) {
+      return hazelcast.getCluster().getLocalMember().getAddress().getHost();
+    }
+    return null;
+  }
+
+  @Override
+  public String clusterPublicHost() {
+    String host;
+    if (!customHazelcastCluster && (host = System.getProperty("hazelcast.local.publicAddress")) != null) {
+      return host;
+    }
+    if (!customHazelcastCluster && (host = conf.getNetworkConfig().getPublicAddress()) != null) {
+      return host;
+    }
+    return null;
+  }
+
   /**
    * Get the Hazelcast config.
    *
