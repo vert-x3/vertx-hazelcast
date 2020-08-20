@@ -17,7 +17,9 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.map.IMap;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
@@ -79,6 +81,28 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     V vv = convertParam(v);
     return vertx.executeBlocking(fut -> {
       fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS)));
+    }, false);
+  }
+
+  /**
+   * Updates the TTL (time to live) value of the entry specified by {@code k}
+   * with a new TTL value.
+   *
+   * @param k  the key
+   * @param ttl  The time to live (in ms) for the entry
+   * @param completionHandler  the handler
+   */
+  public void setTtl(K k, long ttl, Handler<AsyncResult<Boolean>> completionHandler) {
+    setTtl(k, ttl).onComplete(completionHandler);
+  }
+
+  /**
+   * Same as {@link #setTtl(K, long, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  public Future<Boolean> setTtl(K k, long ttl) {
+    K kk = convertParam(k);
+    return vertx.executeBlocking(fut -> {
+      fut.complete(map.setTtl(kk, ttl, MILLISECONDS));
     }, false);
   }
 
