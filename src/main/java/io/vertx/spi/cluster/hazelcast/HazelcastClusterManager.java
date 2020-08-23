@@ -194,7 +194,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public <K, V> void getAsyncMap(String name, Promise<AsyncMap<K, V>> promise) {
-    promise.complete(new HazelcastAsyncMap<>(vertx, hazelcast.getMap(name)));
+    promise.complete(new HazelcastAsyncMapImpl<>(vertx, hazelcast.getMap(name)));
   }
 
   @Override

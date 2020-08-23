@@ -18,10 +18,8 @@ package examples;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
+import io.vertx.core.*;
+import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
 import io.vertx.ext.healthchecks.HealthChecks;
@@ -29,6 +27,7 @@ import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.spi.cluster.hazelcast.ClusterHealthCheck;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
+import io.vertx.spi.cluster.hazelcast.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 /**
@@ -68,6 +67,11 @@ public class Examples {
         // failed!
       }
     });
+  }
+
+  public <K, V> void setTtl(AsyncMap<K, V> asyncMap, K key) {
+    HazelcastAsyncMap<K, V> hazelcastAsyncMap = HazelcastAsyncMap.unwrap(asyncMap);
+    Future<Boolean> fut = hazelcastAsyncMap.setTtl(key, 1000);
   }
 
   public void customizeDefaultConfig() {

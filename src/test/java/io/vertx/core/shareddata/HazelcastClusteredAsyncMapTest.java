@@ -20,10 +20,9 @@ import com.hazelcast.map.impl.record.Record;
 import io.vertx.Lifecycle;
 import io.vertx.LoggingTestWatcher;
 import io.vertx.core.Vertx;
-import io.vertx.core.shareddata.impl.SharedDataImpl;
 import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,8 +61,7 @@ public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
     getVertx().sharedData().<String, String>getAsyncMap("foo", onSuccess(map -> {
       map.put("pipo", "molo", Record.UNSET, onSuccess(vd -> {
         getVertx().sharedData().<String, String>getAsyncMap("foo", onSuccess(map2 -> {
-          AsyncMap<String, String> delegate = ((SharedDataImpl.WrappedAsyncMap<String, String>) map).getDelegate();
-          HazelcastAsyncMap<String, String> hzMap2 = (HazelcastAsyncMap<String, String>) delegate;
+          HazelcastAsyncMap<String, String> hzMap2 = HazelcastAsyncMap.unwrap(map);
           hzMap2.setTtl("pipo", 10, onSuccess(bool -> {
             assertTrue(bool);
             checkMapSetTtl(map, "pipo", 15);

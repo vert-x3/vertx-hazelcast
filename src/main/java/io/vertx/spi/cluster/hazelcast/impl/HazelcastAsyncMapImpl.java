@@ -17,12 +17,11 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.map.IMap;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
+import io.vertx.spi.cluster.hazelcast.HazelcastAsyncMap;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -32,12 +31,12 @@ import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
+public class HazelcastAsyncMapImpl<K, V> implements AsyncMap<K, V>, HazelcastAsyncMap<K, V> {
 
   private final VertxInternal vertx;
   private final IMap<K, V> map;
 
-  public HazelcastAsyncMap(VertxInternal vertx, IMap<K, V> map) {
+  public HazelcastAsyncMapImpl(VertxInternal vertx, IMap<K, V> map) {
     this.vertx = vertx;
     this.map = map;
   }
@@ -84,21 +83,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     }, false);
   }
 
-  /**
-   * Updates the TTL (time to live) value of the entry specified by {@code k}
-   * with a new TTL value.
-   *
-   * @param k  the key
-   * @param ttl  The time to live (in ms) for the entry
-   * @param completionHandler  the handler
-   */
-  public void setTtl(K k, long ttl, Handler<AsyncResult<Boolean>> completionHandler) {
-    setTtl(k, ttl).onComplete(completionHandler);
-  }
-
-  /**
-   * Same as {@link #setTtl(K, long, Handler)} but returns a {@code Future} of the asynchronous result
-   */
+  @Override
   public Future<Boolean> setTtl(K k, long ttl) {
     K kk = convertParam(k);
     return vertx.executeBlocking(fut -> {
