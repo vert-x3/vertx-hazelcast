@@ -18,7 +18,6 @@
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
     <hazelcast.version>4.0.2</hazelcast.version>
     <hazelcast-kubernetes.version>2.0.1</hazelcast-kubernetes.version>
-    <skipUnitTests>${skipTests}</skipUnitTests>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
@@ -181,7 +180,6 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <skipTests>${skipUnitTests}</skipTests>
           <excludes>
             <exclude>**/it/**/*Test.java</exclude>
           </excludes>
