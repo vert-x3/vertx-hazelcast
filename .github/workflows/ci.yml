@@ -73,7 +73,7 @@ jobs:
       - uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: maven-java-${{ matrix.jdk }}
+          key: maven-java-8
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install JDK
