@@ -31,11 +31,6 @@ jobs:
           java-version: ${{ matrix.jdk }}
       - name: Run tests
         run: mvn -B -DtestLogLevel=OFF test
-      - name: Publish Unit Test Results
-        uses: scacap/action-surefire-report@v1
-        if: ${{ always() }}
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
   IT:
     name: Run integration tests
     runs-on: ubuntu-latest
