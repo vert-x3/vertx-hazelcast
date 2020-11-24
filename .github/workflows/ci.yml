@@ -67,7 +67,9 @@ jobs:
     steps:
       - uses: actions/cache@v2
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/io/vertx
           key: maven-java-8
       - name: Checkout
         uses: actions/checkout@v2
