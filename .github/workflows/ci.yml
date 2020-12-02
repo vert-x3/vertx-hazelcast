@@ -19,10 +19,6 @@ jobs:
         jdk: [8]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: maven-java-${{ matrix.jdk }}
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install JDK
@@ -39,10 +35,6 @@ jobs:
         os: [ubuntu-latest]
         jdk: [8]
     steps:
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: maven-java-${{ matrix.jdk }}
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install JDK
@@ -65,12 +57,6 @@ jobs:
       SONATYPE_NEXUS_USERNAME: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
       SONATYPE_NEXUS_PASSWORD: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
     steps:
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.m2/repository
-            !~/.m2/repository/io/vertx
-          key: maven-java-8
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install JDK
