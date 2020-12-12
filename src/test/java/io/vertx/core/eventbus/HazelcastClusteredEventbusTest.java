@@ -21,11 +21,18 @@ import io.vertx.LoggingTestWatcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.test.core.Repeat;
+
 import org.junit.Rule;
+import org.junit.Test;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.function.BiFunction;
+import java.util.stream.IntStream;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -35,6 +42,21 @@ public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
+  @Test
+  public void testRoundRobinPTPMessages() throws Exception {
+    Map<String, Long> counter = new HashMap<>();
+    BiFunction<String, Long, Long> add = (address, old) -> old == null ? 1 : ++old;
+    startNodes(2);
+    vertices[0].eventBus().consumer(ADDRESS1, messgae -> counter.compute("node1", add));
+    vertices[1].eventBus().consumer(ADDRESS1, messgae -> counter.compute("node2", add));
+    IntStream.range(0, 10).forEach(i -> vertices[0].eventBus().send(ADDRESS1, "wololo"));
+    vertices[0].setTimer(1000, id -> {
+      assertEquals(counter.get("node1"), counter.get("node2"));
+      testComplete();
+    });
+    await();
+  }
+  
   @Override
   public void setUp() throws Exception {
     Random random = new Random();
