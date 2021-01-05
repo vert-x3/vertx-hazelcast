@@ -25,6 +25,8 @@ In Vert.x a cluster manager is used for various functions including:
 
 Cluster managers do *not* handle the event bus inter-node transport, this is done directly by Vert.x with TCP connections.
 
+WARNING: The default method of discovery for the Hazelcast cluster manager is to use https://en.wikipedia.org/wiki/Multicast_DNS[multicast DNS] (mDNS). This is often blocked or disallowed by firewalls and security applications on various operating systems like https://support.microsoft.com/en-us/windows/risks-of-allowing-apps-through-windows-defender-firewall-654559af-3f54-3dcf-349f-71ccd90bcc5c[Windows] or https://support.apple.com/en-us/HT201642[MacOS].
+
 == Using this cluster manager
 
 If you are using Vert.x from the command line, the jar corresponding to this cluster manager (it will be named `${maven.artifactId}-${maven.version}.jar`
