@@ -341,7 +341,7 @@ In this document, we will use _DNS Lookup_ discovery. The following properties h
         <discovery-strategy enabled="true"> <!--3-->
             class="com.hazelcast.kubernetes.HazelcastKubernetesDiscoveryStrategy">
           <properties>
-            <property name="service-dns">MY-SERVICE-DNS-NAME</property> <!--4-->
+            <property name="service-name">MY-SERVICE-NAME</property> <!--4-->
           </properties>
         </discovery-strategy>
       </discovery-strategies>
