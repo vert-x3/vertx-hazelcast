@@ -127,21 +127,25 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
 
   @Override
   public void entryAdded(EntryEvent<String, HazelcastRegistrationInfo> event) {
-    fireRegistrationUpdateEvent(event);
+    fireRegistrationUpdateEvent(event.getKey());
   }
 
-  private void fireRegistrationUpdateEvent(EntryEvent<String, HazelcastRegistrationInfo> event) {
-    String address = event.getKey();
+  private void fireRegistrationUpdateEvent(String address) {
     vertx.<List<RegistrationInfo>>executeBlocking(prom -> {
-      prom.complete(get(address));
-    }, false, ar -> {
-      if (ar.succeeded()) {
-        nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, ar.result()));
-      } else {
-        log.trace("A failure occured while retrieving the updated registrations", ar.cause());
-        nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, Collections.emptyList()));
-      }
-    });
+      getAndUpdate(address);
+      prom.complete();
+    }, false);
+  }
+
+  private void getAndUpdate(String address) {
+    List<RegistrationInfo> registrationInfos;
+    try {
+      registrationInfos = get(address);
+    } catch (Exception e) {
+      log.trace("A failure occured while retrieving the updated registrations", e);
+      registrationInfos = Collections.emptyList();
+    }
+    nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrationInfos));
   }
 
   @Override
@@ -150,12 +154,12 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
 
   @Override
   public void entryRemoved(EntryEvent<String, HazelcastRegistrationInfo> event) {
-    fireRegistrationUpdateEvent(event);
+    fireRegistrationUpdateEvent(event.getKey());
   }
 
   @Override
   public void entryUpdated(EntryEvent<String, HazelcastRegistrationInfo> event) {
-    fireRegistrationUpdateEvent(event);
+    fireRegistrationUpdateEvent(event.getKey());
   }
 
   @Override
