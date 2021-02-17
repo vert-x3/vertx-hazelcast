@@ -44,6 +44,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
   private static final Logger log = LoggerFactory.getLogger(SubsMapHelper.class);
 
   private final VertxInternal vertx;
+  private final Throttling throttling;
   private final MultiMap<String, HazelcastRegistrationInfo> map;
   private final NodeSelector nodeSelector;
   private final UUID listenerId;
@@ -53,6 +54,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
 
   public SubsMapHelper(VertxInternal vertx, HazelcastInstance hazelcast, NodeSelector nodeSelector) {
     this.vertx = vertx;
+    throttling = new Throttling(vertx, this::getAndUpdate);
     map = hazelcast.getMultiMap("__vertx.subs");
     this.nodeSelector = nodeSelector;
     listenerId = map.addEntryListener(this, false);
@@ -131,10 +133,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
   }
 
   private void fireRegistrationUpdateEvent(String address) {
-    vertx.<List<RegistrationInfo>>executeBlocking(prom -> {
-      getAndUpdate(address);
-      prom.complete();
-    }, false);
+    throttling.onEvent(address);
   }
 
   private void getAndUpdate(String address) {
