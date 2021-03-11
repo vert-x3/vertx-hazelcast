@@ -168,14 +168,16 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
   }
 
   private void getAndUpdate(String address) {
-    List<RegistrationInfo> registrationInfos;
-    try {
-      registrationInfos = get(address);
-    } catch (Exception e) {
-      log.trace("A failure occurred while retrieving the updated registrations", e);
-      registrationInfos = Collections.emptyList();
+    if (nodeSelector.wantsUpdatesFor(address)) {
+      List<RegistrationInfo> registrationInfos;
+      try {
+        registrationInfos = get(address);
+      } catch (Exception e) {
+        log.trace("A failure occurred while retrieving the updated registrations", e);
+        registrationInfos = Collections.emptyList();
+      }
+      nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrationInfos));
     }
-    nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrationInfos));
   }
 
   @Override
