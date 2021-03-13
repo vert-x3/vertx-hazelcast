@@ -21,6 +21,7 @@ import io.vertx.core.Future;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
+import io.vertx.spi.cluster.hazelcast.HazelcastAsyncMap;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -30,12 +31,12 @@ import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertParam;
 import static io.vertx.spi.cluster.hazelcast.impl.ConversionUtils.convertReturn;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
+public class HazelcastAsyncMapImpl<K, V> implements AsyncMap<K, V>, HazelcastAsyncMap<K, V> {
 
   private final VertxInternal vertx;
   private final IMap<K, V> map;
 
-  public HazelcastAsyncMap(VertxInternal vertx, IMap<K, V> map) {
+  public HazelcastAsyncMapImpl(VertxInternal vertx, IMap<K, V> map) {
     this.vertx = vertx;
     this.map = map;
   }
@@ -79,6 +80,14 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     V vv = convertParam(v);
     return vertx.executeBlocking(fut -> {
       fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS)));
+    }, false);
+  }
+
+  @Override
+  public Future<Boolean> setTtl(K k, long ttl) {
+    K kk = convertParam(k);
+    return vertx.executeBlocking(fut -> {
+      fut.complete(map.setTtl(kk, ttl, MILLISECONDS));
     }, false);
   }
 

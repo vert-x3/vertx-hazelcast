@@ -16,10 +16,12 @@
 
 package io.vertx.core.shareddata;
 
+import com.hazelcast.map.impl.record.Record;
 import io.vertx.Lifecycle;
 import io.vertx.LoggingTestWatcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastAsyncMap;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -52,6 +54,34 @@ public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
   @Override
   protected void closeClustered(List<Vertx> clustered) throws Exception {
     Lifecycle.closeClustered(clustered);
+  }
+
+  @Test
+  public void testMapSetTtl() {
+    getVertx().sharedData().<String, String>getAsyncMap("foo", onSuccess(map -> {
+      map.put("pipo", "molo", Record.UNSET, onSuccess(vd -> {
+        getVertx().sharedData().<String, String>getAsyncMap("foo", onSuccess(map2 -> {
+          HazelcastAsyncMap<String, String> hzMap2 = HazelcastAsyncMap.unwrap(map);
+          hzMap2.setTtl("pipo", 10, onSuccess(bool -> {
+            assertTrue(bool);
+            checkMapSetTtl(map, "pipo", 15);
+          }));
+        }));
+      }));
+    }));
+    await();
+  }
+
+  private void checkMapSetTtl(AsyncMap<String, String> map, String k, long delay) {
+    vertx.setTimer(delay, l -> {
+      map.get(k, onSuccess(value -> {
+        if (value == null) {
+          testComplete();
+        } else {
+          checkMapSetTtl(map, k, delay);
+        }
+      }));
+    });
   }
 
   @Override
