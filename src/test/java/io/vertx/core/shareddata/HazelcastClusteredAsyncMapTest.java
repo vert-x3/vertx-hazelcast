@@ -60,4 +60,32 @@ public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
   public void testMapPutTtlThenPut() {
     super.testMapPutTtlThenPut();
   }
+
+  @Override
+  @Test
+  @Ignore
+  public void testMapReplaceIfPresentTtl() {
+    super.testMapReplaceIfPresentTtl();
+  }
+
+  @Override
+  @Test
+  @Ignore
+  public void testMapReplaceIfPresentTtlWhenNotPresent() {
+    super.testMapReplaceIfPresentTtlWhenNotPresent();
+  }
+
+  @Override
+  @Test
+  @Ignore
+  public void testMapReplaceTtl() {
+    super.testMapReplaceTtl();
+  }
+
+  @Override
+  @Test
+  @Ignore
+  public void testMapReplaceTtlWithPreviousValue() {
+    super.testMapReplaceTtlWithPreviousValue();
+  }
 }
