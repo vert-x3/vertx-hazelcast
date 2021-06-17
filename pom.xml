@@ -16,7 +16,7 @@
   <properties>
     <stack.version>4.1.1-SNAPSHOT</stack.version>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
-    <hazelcast.version>4.0.2</hazelcast.version>
+    <hazelcast.version>4.1</hazelcast.version>
     <hazelcast-kubernetes.version>2.0.1</hazelcast-kubernetes.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
