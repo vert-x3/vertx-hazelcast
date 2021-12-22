@@ -15,13 +15,13 @@
       
     <artifactId>vertx-hazelcast</artifactId>
       
-    <version>3.9.12-SNAPSHOT</version>
+    <version>3.9.12</version>
       
     <name>Vert.x Hazelcast Cluster Manager</name>
       
     <properties>
             
-        <stack.version>3.9.12-SNAPSHOT</stack.version>
+        <stack.version>3.9.12</stack.version>
             
         <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
             
