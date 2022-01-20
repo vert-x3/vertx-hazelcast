@@ -20,6 +20,7 @@ import io.vertx.core.impl.VertxInternal;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class Throttling {
@@ -73,20 +74,39 @@ public class Throttling {
   private final VertxInternal vertx;
   private final Consumer<String> action;
   private final ConcurrentMap<String, State> map;
+  /*
+  The counter is incremented when a new event is received.
+  It is decremented:
+   - immediately if the map already contains an entry for the corresponding address, or
+   - when the map entry is removed
+  When the close method is invoked, the counter is set to -1 and the previous value (N) is stored.
+  A negative counter value prevents new events from being handled.
+  The close method blocks until the counter reaches the value -(1 + N).
+  This allows to stop the throttling gracefully.
+   */
+  private final AtomicInteger counter;
+  private final Object condition;
 
   public Throttling(VertxInternal vertx, Consumer<String> action) {
     this.vertx = vertx;
     this.action = action;
     map = new ConcurrentHashMap<>();
+    counter = new AtomicInteger();
+    condition = new Object();
   }
 
   public void onEvent(String address) {
+    if (!tryIncrementCounter()) {
+      return;
+    }
     State curr = map.compute(address, (s, state) -> state == null ? State.NEW : state.pending());
     if (curr == State.NEW) {
       vertx.executeBlocking(promise -> {
         run(address);
         promise.complete();
       }, false);
+    } else {
+      decrementCounter();
     }
   }
 
@@ -109,6 +129,47 @@ public class Throttling {
     State curr = map.computeIfPresent(address, (s, state) -> state.next());
     if (curr == State.NEW) {
       run(address);
+    } else {
+      decrementCounter();
+    }
+  }
+
+  private boolean tryIncrementCounter() {
+    int i;
+    do {
+      i = counter.get();
+      if (i < 0) {
+        return false;
+      }
+    } while (!counter.compareAndSet(i, i + 1));
+    return true;
+  }
+
+  private void decrementCounter() {
+    if (counter.decrementAndGet() < 0) {
+      synchronized (condition) {
+        condition.notify();
+      }
+    }
+  }
+
+  public void close() {
+    synchronized (condition) {
+      int i = counter.getAndSet(-1);
+      if (i == 0) {
+        return;
+      }
+      boolean interrupted = false;
+      do {
+        try {
+          condition.wait();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      } while (counter.get() != -(i + 1));
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 }
