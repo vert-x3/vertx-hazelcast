@@ -68,15 +68,14 @@ public class ConversionUtils {
     }
 
     private Class<?> loadClass(String className) throws ClassNotFoundException {
-      Class<?> res = null;
       ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-      if (tccl != null) {
-        res = tccl.loadClass(className);
+      try {
+        if (tccl != null) {
+          return tccl.loadClass(className);
+        }
+      } catch(ClassNotFoundException ignored) {
       }
-      if (res == null) {
-        return ConversionUtils.class.getClassLoader().loadClass(className);
-      }
-      return res;
+      return ConversionUtils.class.getClassLoader().loadClass(className);
     }
 
     @Override
