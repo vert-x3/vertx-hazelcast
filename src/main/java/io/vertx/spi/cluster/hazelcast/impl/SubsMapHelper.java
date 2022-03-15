@@ -208,5 +208,6 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
 
   public void close() {
     map.removeEntryListener(listenerId);
+    throttling.close();
   }
 }
