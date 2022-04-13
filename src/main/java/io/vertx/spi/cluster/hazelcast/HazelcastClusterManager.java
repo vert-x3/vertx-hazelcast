@@ -342,8 +342,10 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       newNodes.removeAll(nodeIds);
       Set<String> removedMembers = new HashSet<>(nodeIds);
       removedMembers.removeAll(currentNodes);
-      for (String nodeId : newNodes) {
-        nodeListener.nodeAdded(nodeId);
+      if (nodeListener != null) {
+        for (String nodeId : newNodes) {
+          nodeListener.nodeAdded(nodeId);
+        }
       }
       membersRemoved(removedMembers);
       nodeIds.retainAll(currentNodes);
