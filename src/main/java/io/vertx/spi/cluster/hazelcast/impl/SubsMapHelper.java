@@ -21,7 +21,6 @@ import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.MapEvent;
 import com.hazelcast.multimap.MultiMap;
-import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.spi.cluster.NodeSelector;
@@ -51,8 +50,8 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
   private final ConcurrentMap<String, Set<RegistrationInfo>> localSubs = new ConcurrentHashMap<>();
   private final ReadWriteLock republishLock = new ReentrantReadWriteLock();
 
-  public SubsMapHelper(VertxInternal vertx, HazelcastInstance hazelcast, NodeSelector nodeSelector) {
-    throttling = new Throttling(vertx, this::getAndUpdate);
+  public SubsMapHelper(HazelcastInstance hazelcast, NodeSelector nodeSelector) {
+    throttling = new Throttling(this::getAndUpdate);
     map = hazelcast.getMultiMap("__vertx.subs");
     this.nodeSelector = nodeSelector;
     listenerId = map.addEntryListener(this, false);
