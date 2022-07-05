@@ -16,10 +16,7 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import io.vertx.core.impl.VertxInternal;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -71,8 +68,8 @@ public class Throttling {
   }
   // @formatter:on
 
-  private final VertxInternal vertx;
   private final Consumer<String> action;
+  private final ScheduledExecutorService executorService;
   private final ConcurrentMap<String, State> map;
   /*
   The counter is incremented when a new event is received.
@@ -87,9 +84,13 @@ public class Throttling {
   private final AtomicInteger counter;
   private final Object condition;
 
-  public Throttling(VertxInternal vertx, Consumer<String> action) {
-    this.vertx = vertx;
+  public Throttling(Consumer<String> action) {
     this.action = action;
+    this.executorService = Executors.newSingleThreadScheduledExecutor(r -> {
+      Thread thread = new Thread(r, "vertx-hazelcast-service-throttling-thread");
+      thread.setDaemon(true);
+      return thread;
+    });
     map = new ConcurrentHashMap<>();
     counter = new AtomicInteger();
     condition = new Object();
@@ -101,10 +102,9 @@ public class Throttling {
     }
     State curr = map.compute(address, (s, state) -> state == null ? State.NEW : state.pending());
     if (curr == State.NEW) {
-      vertx.executeBlocking(promise -> {
+      executorService.execute(() -> {
         run(address);
-        promise.complete();
-      }, false);
+      });
     } else {
       decrementCounter();
     }
@@ -116,12 +116,9 @@ public class Throttling {
       action.accept(address);
     } finally {
       map.computeIfPresent(address, (s, state) -> state.done());
-      vertx.setTimer(20, l-> {
-        vertx.executeBlocking(promise-> {
-          checkState(address);
-          promise.complete();
-        }, false);
-      });
+      executorService.schedule(() -> {
+        checkState(address);
+      }, 20, TimeUnit.MILLISECONDS);
     }
   }
 

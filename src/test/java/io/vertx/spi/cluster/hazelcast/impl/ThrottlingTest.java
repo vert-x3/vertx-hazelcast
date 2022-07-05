@@ -16,8 +16,8 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import io.vertx.core.impl.VertxInternal;
-import io.vertx.test.core.VertxTestBase;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -25,16 +25,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 
+import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.*;
+import static org.junit.Assert.assertTrue;
 
-public class ThrottlingTest extends VertxTestBase {
+public class ThrottlingTest {
 
   int threadCount = 4;
   ExecutorService executorService;
 
-  @Override
+  @Before
   public void setUp() throws Exception {
-    super.setUp();
     executorService = Executors.newFixedThreadPool(threadCount);
   }
 
@@ -44,7 +45,7 @@ public class ThrottlingTest extends VertxTestBase {
     String[] addresses = {"foo", "bar", "baz", "qux"};
 
     ConcurrentMap<String, List<Long>> events = new ConcurrentHashMap<>(addresses.length);
-    Throttling throttling = new Throttling((VertxInternal) vertx, address -> {
+    Throttling throttling = new Throttling(address -> {
       events.compute(address, (k, v) -> {
         if (v == null) {
           v = Collections.synchronizedList(new LinkedList<>());
@@ -71,7 +72,7 @@ public class ThrottlingTest extends VertxTestBase {
     }
     latch.await();
 
-    assertWaitUntil(() -> {
+    await().atMost(1, SECONDS).pollDelay(10, MILLISECONDS).until(() -> {
       if (events.size() != addresses.length) {
         return false;
       }
@@ -87,7 +88,7 @@ public class ThrottlingTest extends VertxTestBase {
         }
       }
       return true;
-    }, 1000);
+    });
   }
 
   private void sleepMax(long time) {
@@ -102,10 +103,9 @@ public class ThrottlingTest extends VertxTestBase {
     }
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @After
+  public void tearDown() throws Exception {
     executorService.shutdown();
     assertTrue(executorService.awaitTermination(5, SECONDS));
-    super.tearDown();
   }
 }
