@@ -57,6 +57,6 @@ public class SubsOpSerializer {
       } catch (Exception e) {
         promise.fail(e);
       }
-    }, vertx.getWorkerPool());
+    }, vertx.getWorkerPool().executor());
   }
 }
