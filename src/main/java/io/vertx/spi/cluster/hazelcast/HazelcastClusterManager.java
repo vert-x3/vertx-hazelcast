@@ -337,6 +337,14 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     }
     // Safeguard to make sure members list is OK after a partition merge
     if (lifecycleEvent.getState() == LifecycleEvent.LifecycleState.MERGED) {
+      Member localMember = hazelcast.getCluster().getLocalMember();
+      UUID newNodeId = localMember.getUuid();
+      log.info("Updating  nodeId to : " + newNodeId + " from : " + nodeId);
+      if (!(nodeId.toString().equals(newNodeId.toString()))) {
+          subsMapHelper.updateOwnSubs(nodeId.toString(), newNodeId.toString());
+          nodeId = newNodeId;
+      }
+
       final List<String> currentNodes = getNodes();
       Set<String> newNodes = new HashSet<>(currentNodes);
       newNodes.removeAll(nodeIds);

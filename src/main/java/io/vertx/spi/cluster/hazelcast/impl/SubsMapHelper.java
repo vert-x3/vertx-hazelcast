@@ -142,6 +142,42 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
     }
   }
 
+  public void updateOwnSubs(String oldId, String newId) {
+    log.info("updateOwnSubs:: from " + oldId + " to " + newId);
+    Lock writeLock = republishLock.readLock();
+    writeLock.lock();
+
+    try {
+      
+       ConcurrentMap<String, Set<RegistrationInfo>> tempOwnSubs = new ConcurrentHashMap<>();
+       for (Map.Entry<String, Set<RegistrationInfo>> entry : ownSubs.entrySet()) {
+           String address = entry.getKey();
+           tempOwnSubs.put(address, new HashSet<>());
+           for (RegistrationInfo registrationInfo : entry.getValue()) {
+               tempOwnSubs.compute(address, (add, curr) -> addToSet(registrationInfo, curr));
+           }
+       }
+      
+      for (Map.Entry<String, Set<RegistrationInfo>> entry : tempOwnSubs.entrySet()) {
+        String address = entry.getKey();
+        for (RegistrationInfo registrationInfo : entry.getValue()) {
+          if(registrationInfo.nodeId().equals(oldId)) {
+              RegistrationInfo newRegistrationInfo = new RegistrationInfo(newId, registrationInfo.seq(), false);
+              
+              ownSubs.computeIfPresent(address, (add, curr) -> removeFromSet(registrationInfo, curr));
+              ownSubs.compute(address, (add, curr) -> addToSet(newRegistrationInfo, curr));
+              
+              map.remove(address, new HazelcastRegistrationInfo(registrationInfo));
+              map.put(address, new HazelcastRegistrationInfo(newRegistrationInfo));
+          }
+        }
+      }
+      
+    } finally {
+        writeLock.unlock();
+    }
+  }
+
   public void republishOwnSubs() {
     Lock writeLock = republishLock.writeLock();
     writeLock.lock();
@@ -149,6 +185,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
       for (Map.Entry<String, Set<RegistrationInfo>> entry : ownSubs.entrySet()) {
         String address = entry.getKey();
         for (RegistrationInfo registrationInfo : entry.getValue()) {
+          log.info("republish for nodeId: " + registrationInfo.nodeId());
           map.put(address, new HazelcastRegistrationInfo(registrationInfo));
         }
       }
