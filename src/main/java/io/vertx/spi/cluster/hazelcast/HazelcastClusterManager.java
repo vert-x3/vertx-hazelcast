@@ -131,12 +131,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
           hazelcast = Hazelcast.newHazelcastInstance(conf);
         }
 
+        subsMapHelper = new SubsMapHelper(hazelcast, nodeSelector);
+
         Member localMember = hazelcast.getCluster().getLocalMember();
         nodeId = localMember.getUuid();
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
 
-        subsMapHelper = new SubsMapHelper(hazelcast, nodeSelector);
         nodeInfoMap = hazelcast.getMap("__vertx.nodeInfo");
 
         prom.complete();
