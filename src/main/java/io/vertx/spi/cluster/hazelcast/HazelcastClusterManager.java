@@ -173,7 +173,10 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   public List<String> getNodes() {
     List<String> list = new ArrayList<>();
     for (Member member : hazelcast.getCluster().getMembers()) {
-      list.add(member.getAttribute(NODE_ID_ATTRIBUTE));
+      String nodeId = member.getAttribute(NODE_ID_ATTRIBUTE);
+      if (nodeId != null) { // don't add data-only members
+        list.add(nodeId);
+      }
     }
     return list;
   }
