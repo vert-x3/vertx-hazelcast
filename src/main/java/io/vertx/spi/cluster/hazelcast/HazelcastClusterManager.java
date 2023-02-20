@@ -35,17 +35,32 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
-import io.vertx.core.spi.cluster.*;
-import io.vertx.spi.cluster.hazelcast.impl.*;
+import io.vertx.core.spi.cluster.ClusterManager;
+import io.vertx.core.spi.cluster.NodeInfo;
+import io.vertx.core.spi.cluster.NodeListener;
+import io.vertx.core.spi.cluster.NodeSelector;
+import io.vertx.core.spi.cluster.RegistrationInfo;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastCounter;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastLock;
+import io.vertx.spi.cluster.hazelcast.impl.HazelcastNodeInfo;
+import io.vertx.spi.cluster.hazelcast.impl.SubsMapHelper;
+import io.vertx.spi.cluster.hazelcast.impl.SubsOpSerializer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 /**
  * A cluster manager that uses Hazelcast
@@ -57,12 +72,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
   private static final String LOCK_SEMAPHORE_PREFIX = "__vertx.";
+  private static final String NODE_ID_ATTRIBUTE = "__vertx.nodeId";
 
   private VertxInternal vertx;
   private NodeSelector nodeSelector;
 
   private HazelcastInstance hazelcast;
-  private UUID nodeId;
+  private String nodeId;
   private NodeInfo nodeInfo;
   private SubsMapHelper subsMapHelper;
   private IMap<String, HazelcastNodeInfo> nodeInfoMap;
@@ -128,13 +144,16 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
           // We have our own shutdown hook and need to ensure ours runs before Hazelcast is shutdown
           conf.setProperty("hazelcast.shutdownhook.enabled", "false");
 
+          nodeId = UUID.randomUUID().toString();
+          conf.getMemberAttributeConfig().setAttribute(NODE_ID_ATTRIBUTE, nodeId);
+
           hazelcast = Hazelcast.newHazelcastInstance(conf);
+        } else {
+          nodeId = hazelcast.getCluster().getLocalMember().getAttribute(NODE_ID_ATTRIBUTE);
         }
 
         subsMapHelper = new SubsMapHelper(hazelcast, nodeSelector);
 
-        Member localMember = hazelcast.getCluster().getLocalMember();
-        nodeId = localMember.getUuid();
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
 
@@ -147,14 +166,17 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public String getNodeId() {
-    return nodeId.toString();
+    return nodeId;
   }
 
   @Override
   public List<String> getNodes() {
     List<String> list = new ArrayList<>();
     for (Member member : hazelcast.getCluster().getMembers()) {
-      list.add(member.getUuid().toString());
+      String nodeId = member.getAttribute(NODE_ID_ATTRIBUTE);
+      if (nodeId != null) { // don't add data-only members
+        list.add(nodeId);
+      }
     }
     return list;
   }
@@ -171,7 +193,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     }
     HazelcastNodeInfo value = new HazelcastNodeInfo(nodeInfo);
     vertx.executeBlocking(prom -> {
-      nodeInfoMap.put(nodeId.toString(), value);
+      nodeInfoMap.put(nodeId, value);
       prom.complete();
     }, false, promise);
   }
@@ -279,7 +301,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String nid = member.getUuid().toString();
+    String nid = member.getAttribute(NODE_ID_ATTRIBUTE);
     try {
       if (nodeListener != null) {
         nodeIds.add(nid);
@@ -296,7 +318,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String nid = member.getUuid().toString();
+    String nid = member.getAttribute(NODE_ID_ATTRIBUTE);
     try {
       membersRemoved(Collections.singleton(nid));
     } catch (Throwable t) {
@@ -307,7 +329,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private synchronized void membersRemoved(Set<String> ids) {
     cleanSubs(ids);
     cleanNodeInfos(ids);
-    nodeInfoMap.put(nodeId.toString(), new HazelcastNodeInfo(getNodeInfo()));
+    nodeInfoMap.put(nodeId, new HazelcastNodeInfo(getNodeInfo()));
     nodeSelector.registrationsLost();
     republishOwnSubs();
     if (nodeListener != null) {

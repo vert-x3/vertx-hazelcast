@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -74,10 +75,12 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   }
 
   private Config createConfig() {
-    return new Config()
+    Config config = new Config()
       .setProperty("hazelcast.wait.seconds.before.join", "0")
       .setProperty("hazelcast.local.localAddress", "127.0.0.1")
       .setClusterName(System.getProperty("vertx.hazelcast.test.group.name"));
+    config.getMemberAttributeConfig().setAttribute("__vertx.nodeId", UUID.randomUUID().toString());
+    return config;
   }
 
   private void testProgrammatic(HazelcastClusterManager mgr, Config config) throws Exception {
@@ -205,7 +208,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   public void testThatExternalHZInstanceCanBeShutdown() {
     // This instance won't be used by vert.x
     HazelcastInstance instance = Hazelcast.newHazelcastInstance(createConfig());
-    String nodeID = instance.getCluster().getLocalMember().getUuid().toString();
+    String nodeID = instance.getCluster().getLocalMember().getAttribute("__vertx.nodeId");
 
     HazelcastClusterManager mgr = new HazelcastClusterManager(createConfig());
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
