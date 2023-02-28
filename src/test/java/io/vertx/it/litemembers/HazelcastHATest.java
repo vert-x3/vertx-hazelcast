@@ -68,7 +68,7 @@ public class HazelcastHATest extends HATest {
   }
 
   @Override
-  protected void closeClustered(List<Vertx> clustered) throws Exception {
+  protected void close(List<Vertx> clustered) throws Exception {
     Lifecycle.closeClustered(clustered);
   }
 

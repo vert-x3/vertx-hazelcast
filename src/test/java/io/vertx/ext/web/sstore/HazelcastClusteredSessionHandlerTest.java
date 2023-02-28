@@ -53,7 +53,7 @@ public class HazelcastClusteredSessionHandlerTest extends ClusteredSessionHandle
   }
 
   @Override
-  protected void closeClustered(List<Vertx> clustered) throws Exception {
+  protected void close(List<Vertx> clustered) throws Exception {
     Lifecycle.closeClustered(clustered);
   }
 }
