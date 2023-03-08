@@ -1,0 +1,43 @@
+name: vertx-hazelcast (5.x)
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 5 * * *'
+jobs:
+  CI:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            jdk: 8
+    uses: ./.github/workflows/ci.yml
+    with:
+      branch: ${{ github.head_ref || github.ref_name }}
+      jdk: ${{ matrix.jdk }}
+      os: ${{ matrix.os }}
+    secrets: inherit
+  IT:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            jdk: 8
+    uses: ./.github/workflows/it.yml
+    with:
+      branch: ${{ github.head_ref || github.ref_name }}
+      jdk: ${{ matrix.jdk }}
+      os: ${{ matrix.os }}
+    secrets: inherit
+  Deploy:
+    if: ${{ github.repository_owner == 'vert-x3' && (github.event_name == 'push' || github.event_name == 'schedule') }}
+    needs: [CI, IT]
+    uses: ./.github/workflows/deploy.yml
+    with:
+      branch: ${{ github.head_ref || github.ref_name }}
+      jdk: 11
+    secrets: inherit
