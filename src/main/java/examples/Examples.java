@@ -42,7 +42,9 @@ public class Examples {
 
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
 
-    Vertx.clusteredVertx(options, res -> {
+    Vertx
+      .clusteredVertx(options)
+      .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
       } else {
@@ -61,7 +63,9 @@ public class Examples {
 
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
 
-    Vertx.clusteredVertx(options, res -> {
+    Vertx
+      .clusteredVertx(options)
+      .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
       } else {
@@ -79,7 +83,9 @@ public class Examples {
 
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
 
-    Vertx.clusteredVertx(options, res -> {
+    Vertx
+      .clusteredVertx(options)
+      .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
       } else {
@@ -91,7 +97,9 @@ public class Examples {
   public void example3(HazelcastInstance hazelcastInstance) {
     ClusterManager mgr = new HazelcastClusterManager(hazelcastInstance);
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
-    Vertx.clusteredVertx(options, res -> {
+    Vertx
+      .clusteredVertx(options)
+      .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
       } else {
@@ -118,7 +126,9 @@ public class Examples {
 
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
 
-    Vertx.clusteredVertx(options, res -> {
+    Vertx
+      .clusteredVertx(options)
+      .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
       } else {
