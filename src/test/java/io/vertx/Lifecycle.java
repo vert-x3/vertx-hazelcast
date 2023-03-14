@@ -60,7 +60,7 @@ public class Lifecycle {
       }
 
       CountDownLatch latch = new CountDownLatch(1);
-      vertxInternal.close(ar -> {
+      vertxInternal.close().onComplete(ar -> {
         if (ar.failed()) {
           log.error("Failed to shutdown vert.x", ar.cause());
         }

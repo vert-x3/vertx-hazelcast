@@ -87,10 +87,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     mgr.setConfig(config);
     assertEquals(config, mgr.getConfig());
     VertxOptions options = new VertxOptions().setClusterManager(mgr);
-    Vertx.clusteredVertx(options, res -> {
+    Vertx.clusteredVertx(options).onComplete(res -> {
       assertTrue(res.succeeded());
       assertNotNull(mgr.getHazelcastInstance());
-      res.result().close(res2 -> {
+      res.result().close().onComplete(res2 -> {
         assertTrue(res2.succeeded());
         testComplete();
       });
@@ -113,7 +113,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
     AtomicReference<Vertx> vertx2 = new AtomicReference<>();
 
-    Vertx.clusteredVertx(options1, res -> {
+    Vertx.clusteredVertx(options1).onComplete(res -> {
       assertTrue(res.succeeded());
       assertNotNull(mgr1.getHazelcastInstance());
       res.result().eventBus().consumer("news", message -> {
@@ -126,7 +126,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     assertWaitUntil(() -> vertx1.get() != null);
 
-    Vertx.clusteredVertx(options2, res -> {
+    Vertx.clusteredVertx(options2).onComplete(res -> {
       assertTrue(res.succeeded());
       assertNotNull(mgr2.getHazelcastInstance());
       vertx2.set(res.result());
@@ -135,8 +135,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     await();
 
-    vertx1.get().close(ar -> vertx1.set(null));
-    vertx2.get().close(ar -> vertx2.set(null));
+    vertx1.get().close().onComplete(ar -> vertx1.set(null));
+    vertx2.get().close().onComplete(ar -> vertx2.set(null));
 
     assertTrue(instance1.getLifecycleService().isRunning());
     assertTrue(instance2.getLifecycleService().isRunning());
@@ -163,11 +163,11 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
     AtomicReference<Vertx> vertx2 = new AtomicReference<>();
 
-    Vertx.clusteredVertx(options1, res -> {
+    Vertx.clusteredVertx(options1).onComplete(res -> {
       assertTrue(res.succeeded());
       assertNotNull(mgr1.getHazelcastInstance());
-      res.result().sharedData().getClusterWideMap("mymap1", ar -> {
-        ar.result().put("news", "hello", v -> {
+      res.result().sharedData().getClusterWideMap("mymap1").onComplete(ar -> {
+        ar.result().put("news", "hello").onComplete(v -> {
           vertx1.set(res.result());
         });
       });
@@ -175,12 +175,12 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     assertWaitUntil(() -> vertx1.get() != null);
 
-    Vertx.clusteredVertx(options2, res -> {
+    Vertx.clusteredVertx(options2).onComplete(res -> {
       assertTrue(res.succeeded());
       assertNotNull(mgr2.getHazelcastInstance());
       vertx2.set(res.result());
-      res.result().sharedData().getClusterWideMap("mymap1", ar -> {
-        ar.result().get("news", r -> {
+      res.result().sharedData().getClusterWideMap("mymap1").onComplete(ar -> {
+        ar.result().get("news").onComplete(r -> {
           assertEquals("hello", r.result());
           testComplete();
         });
@@ -189,8 +189,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     await();
 
-    vertx1.get().close(ar -> vertx1.set(null));
-    vertx2.get().close(ar -> vertx2.set(null));
+    vertx1.get().close().onComplete(ar -> vertx1.set(null));
+    vertx2.get().close().onComplete(ar -> vertx2.set(null));
 
     assertWaitUntil(() -> vertx1.get() == null && vertx2.get() == null);
 
@@ -216,11 +216,11 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
     AtomicReference<Vertx> vertx1 = new AtomicReference<>();
 
-    Vertx.clusteredVertx(options, res -> {
+    Vertx.clusteredVertx(options).onComplete(res -> {
       assertTrue(res.succeeded());
       assertNotNull(mgr.getHazelcastInstance());
-      res.result().sharedData().getClusterWideMap("mymap1", ar -> {
-        ar.result().put("news", "hello", v -> {
+      res.result().sharedData().getClusterWideMap("mymap1").onComplete(ar -> {
+        ar.result().put("news", "hello").onComplete(v -> {
           vertx1.set(res.result());
         });
       });
@@ -243,7 +243,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
     instance.shutdown();
 
     assertWaitUntil(() -> mgr.getNodes().size() == size - 1);
-    vertx1.get().close(ar -> vertx1.set(null));
+    vertx1.get().close().onComplete(ar -> vertx1.set(null));
 
     assertWaitUntil(() -> vertx1.get() == null);
   }
