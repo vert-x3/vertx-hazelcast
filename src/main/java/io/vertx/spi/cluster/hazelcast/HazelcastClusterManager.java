@@ -124,7 +124,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void join(Promise<Void> promise) {
-    vertx.executeBlocking(prom -> {
+    vertx.<Void>executeBlocking(prom -> {
       if (!active) {
         active = true;
 
@@ -161,7 +161,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
         prom.complete();
       }
-    }, promise);
+    }).onComplete(promise);
   }
 
   @Override
@@ -192,10 +192,10 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       this.nodeInfo = nodeInfo;
     }
     HazelcastNodeInfo value = new HazelcastNodeInfo(nodeInfo);
-    vertx.executeBlocking(prom -> {
+    vertx.<Void>executeBlocking(prom -> {
       nodeInfoMap.put(nodeId, value);
       prom.complete();
-    }, false, promise);
+    }, false).onComplete(promise);
   }
 
   @Override
@@ -205,14 +205,14 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getNodeInfo(String nodeId, Promise<NodeInfo> promise) {
-    vertx.executeBlocking(prom -> {
+    vertx.<NodeInfo>executeBlocking(prom -> {
       HazelcastNodeInfo value = nodeInfoMap.get(nodeId);
       if (value != null) {
         prom.complete(value.unwrap());
       } else {
         promise.fail("Not a member of the cluster");
       }
-    }, false, promise);
+    }, false).onComplete(promise);
   }
 
   @Override
@@ -227,7 +227,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getLockWithTimeout(String name, long timeout, Promise<Lock> promise) {
-    vertx.executeBlocking(prom -> {
+    vertx.<Lock>executeBlocking(prom -> {
       ISemaphore iSemaphore = hazelcast.getCPSubsystem().getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
       boolean locked = false;
       long remaining = timeout;
@@ -245,7 +245,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       } else {
         throw new VertxException("Timed out waiting to get lock " + name);
       }
-    }, false, promise);
+    }, false).onComplete(promise);
   }
 
   @Override
@@ -255,7 +255,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void leave(Promise<Void> promise) {
-    vertx.executeBlocking(prom -> {
+    vertx.<Void>executeBlocking(prom -> {
       // We need to synchronized on the cluster manager instance to avoid other call to happen while leaving the
       // cluster, typically, memberRemoved and memberAdded
       synchronized (HazelcastClusterManager.this) {
@@ -292,7 +292,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         }
       }
       prom.complete();
-    }, promise);
+    }).onComplete(promise);
   }
 
   @Override
@@ -394,9 +394,9 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getRegistrations(String address, Promise<List<RegistrationInfo>> promise) {
-    vertx.executeBlocking(prom -> {
+    vertx.<List<RegistrationInfo>>executeBlocking(prom -> {
       prom.complete(subsMapHelper.get(address));
-    }, false, promise);
+    }, false).onComplete(promise);
   }
 
   @Override
