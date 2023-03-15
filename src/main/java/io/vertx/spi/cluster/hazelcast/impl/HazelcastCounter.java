@@ -17,13 +17,9 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.cp.IAtomicLong;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.shareddata.Counter;
-
-import java.util.Objects;
 
 public class HazelcastCounter implements Counter {
 
@@ -68,47 +64,5 @@ public class HazelcastCounter implements Counter {
   @Override
   public Future<Boolean> compareAndSet(long expected, long value) {
     return Future.fromCompletionStage(atomicLong.compareAndSetAsync(expected, value), vertx.getOrCreateContext());
-  }
-
-  @Override
-  public void get(Handler<AsyncResult<Long>> resultHandler) {
-    Objects.requireNonNull(resultHandler, "resultHandler");
-    get().onComplete(resultHandler);
-  }
-
-  @Override
-  public void incrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
-    Objects.requireNonNull(resultHandler, "resultHandler");
-    incrementAndGet().onComplete(resultHandler);
-  }
-
-  @Override
-  public void getAndIncrement(Handler<AsyncResult<Long>> resultHandler) {
-    Objects.requireNonNull(resultHandler, "resultHandler");
-    getAndIncrement().onComplete(resultHandler);
-  }
-
-  @Override
-  public void decrementAndGet(Handler<AsyncResult<Long>> resultHandler) {
-    Objects.requireNonNull(resultHandler, "resultHandler");
-    decrementAndGet().onComplete(resultHandler);
-  }
-
-  @Override
-  public void addAndGet(long value, Handler<AsyncResult<Long>> resultHandler) {
-    Objects.requireNonNull(resultHandler, "resultHandler");
-    addAndGet(value).onComplete(resultHandler);
-  }
-
-  @Override
-  public void getAndAdd(long value, Handler<AsyncResult<Long>> resultHandler) {
-    Objects.requireNonNull(resultHandler, "resultHandler");
-    getAndAdd(value).onComplete(resultHandler);
-  }
-
-  @Override
-  public void compareAndSet(long expected, long value, Handler<AsyncResult<Boolean>> resultHandler) {
-    Objects.requireNonNull(resultHandler, "resultHandler");
-    compareAndSet(expected, value).onComplete(resultHandler);
   }
 }
