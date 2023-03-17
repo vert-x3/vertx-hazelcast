@@ -8,7 +8,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-@ModuleGen(name = "vertx-hazelcast", groupPackage = "io.vertx", checkCallbackDeprecation = true)
+@ModuleGen(name = "vertx-hazelcast", groupPackage = "io.vertx", useFutures = true)
 package io.vertx.spi.cluster.hazelcast;
 
 import io.vertx.codegen.annotations.ModuleGen;
