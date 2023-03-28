@@ -35,32 +35,17 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
-import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.core.spi.cluster.NodeInfo;
-import io.vertx.core.spi.cluster.NodeListener;
-import io.vertx.core.spi.cluster.NodeSelector;
-import io.vertx.core.spi.cluster.RegistrationInfo;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastAsyncMap;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastCounter;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastLock;
-import io.vertx.spi.cluster.hazelcast.impl.HazelcastNodeInfo;
-import io.vertx.spi.cluster.hazelcast.impl.SubsMapHelper;
-import io.vertx.spi.cluster.hazelcast.impl.SubsOpSerializer;
+import io.vertx.core.spi.cluster.*;
+import io.vertx.spi.cluster.hazelcast.impl.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A cluster manager that uses Hazelcast
@@ -78,7 +63,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private NodeSelector nodeSelector;
 
   private HazelcastInstance hazelcast;
-  private String nodeId;
+  private volatile String nodeId;
   private NodeInfo nodeInfo;
   private SubsMapHelper subsMapHelper;
   private IMap<String, HazelcastNodeInfo> nodeInfoMap;
@@ -150,6 +135,9 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
           hazelcast = Hazelcast.newHazelcastInstance(conf);
         } else {
           nodeId = hazelcast.getCluster().getLocalMember().getAttribute(NODE_ID_ATTRIBUTE);
+          if (nodeId == null) {
+            prom.fail("Vert.x node id not defined in Hazelcast member attributes");
+          }
         }
 
         subsMapHelper = new SubsMapHelper(hazelcast, nodeSelector);
