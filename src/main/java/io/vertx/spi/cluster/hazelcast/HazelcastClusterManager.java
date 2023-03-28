@@ -137,6 +137,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
           nodeId = hazelcast.getCluster().getLocalMember().getAttribute(NODE_ID_ATTRIBUTE);
           if (nodeId == null) {
             prom.fail("Vert.x node id not defined in Hazelcast member attributes");
+            return;
           }
         }
 
