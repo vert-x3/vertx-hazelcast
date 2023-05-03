@@ -301,7 +301,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String nid = member.getAttribute(NODE_ID_ATTRIBUTE);
+    String nid = getNodeId(member);
     try {
       if (nodeListener != null) {
         nodeIds.add(nid);
@@ -318,12 +318,20 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       return;
     }
     Member member = membershipEvent.getMember();
-    String nid = member.getAttribute(NODE_ID_ATTRIBUTE);
+    String nid = getNodeId(member);
     try {
       membersRemoved(Collections.singleton(nid));
     } catch (Throwable t) {
       log.error("Failed to handle memberRemoved", t);
     }
+  }
+
+  private static String getNodeId(Member member) {
+    String nodeId = member.getAttribute(NODE_ID_ATTRIBUTE);
+    if (nodeId == null) {
+      nodeId = member.getUuid().toString();
+    }
+    return nodeId;
   }
 
   private synchronized void membersRemoved(Set<String> ids) {
