@@ -48,7 +48,7 @@ public class ThrottlingTest {
     Throttling throttling = new Throttling(address -> {
       events.compute(address, (k, v) -> {
         if (v == null) {
-          v = Collections.synchronizedList(new LinkedList<>());
+          v = new CopyOnWriteArrayList<>();
         }
         v.add(System.nanoTime());
         return v;
