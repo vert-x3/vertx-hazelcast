@@ -59,9 +59,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   public Future<V> putIfAbsent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> {
-      fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv))));
-    }, false);
+    return vertx.executeBlocking(() -> convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv))), false);
   }
 
   @Override
@@ -77,9 +75,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   public Future<V> putIfAbsent(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> {
-      fut.complete(convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS)));
-    }, false);
+    return vertx.executeBlocking(() -> convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS)), false);
   }
 
   @Override
@@ -94,14 +90,14 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   public Future<Boolean> removeIfPresent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> fut.complete(map.remove(kk, vv)), false);
+    return vertx.executeBlocking(() -> map.remove(kk, vv), false);
   }
 
   @Override
   public Future<V> replace(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(fut -> fut.complete(convertReturn(map.replace(kk, vv))), false);
+    return vertx.executeBlocking(() -> convertReturn(map.replace(kk, vv)), false);
   }
 
   @Override
@@ -109,56 +105,56 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(oldValue);
     V vvv = convertParam(newValue);
-    return vertx.executeBlocking(fut -> fut.complete(map.replace(kk, vv, vvv)), false);
+    return vertx.executeBlocking(() -> map.replace(kk, vv, vvv), false);
   }
 
   @Override
   public Future<Void> clear() {
-    return vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(() -> {
       map.clear();
-      fut.complete();
+      return null;
     }, false);
   }
 
   @Override
   public Future<Integer> size() {
-    return vertx.executeBlocking(fut -> fut.complete(map.size()), false);
+    return vertx.executeBlocking(map::size, false);
   }
 
   @Override
   public Future<Set<K>> keys() {
-    return vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(() -> {
       Set<K> set = new HashSet<>();
       for (K kk : map.keySet()) {
         K k = ConversionUtils.convertReturn(kk);
         set.add(k);
       }
-      fut.complete(set);
+      return set;
     }, false);
   }
 
   @Override
   public Future<List<V>> values() {
-    return vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(() -> {
       List<V> list = new ArrayList<>();
       for (V vv : map.values()) {
         V v = ConversionUtils.convertReturn(vv);
         list.add(v);
       }
-      fut.complete(list);
+      return list;
     }, false);
   }
 
   @Override
   public Future<Map<K, V>> entries() {
-    return vertx.executeBlocking(fut -> {
+    return vertx.executeBlocking(() -> {
       Map<K, V> result = new HashMap<>();
       for (Entry<K, V> entry : map.entrySet()) {
         K k = ConversionUtils.convertReturn(entry.getKey());
         V v = ConversionUtils.convertReturn(entry.getValue());
         result.put(k, v);
       }
-      fut.complete(result);
+      return result;
     }, false);
   }
 }

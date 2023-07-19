@@ -35,11 +35,11 @@ public interface ClusterHealthCheck {
   static Handler<Promise<Status>> createProcedure(Vertx vertx) {
     Objects.requireNonNull(vertx);
     return healthCheckPromise -> {
-      vertx.<Status>executeBlocking(promise -> {
+      vertx.executeBlocking(() -> {
         VertxInternal vertxInternal = (VertxInternal) Vertx.currentContext().owner();
         HazelcastClusterManager clusterManager = (HazelcastClusterManager) vertxInternal.getClusterManager();
         PartitionService partitionService = clusterManager.getHazelcastInstance().getPartitionService();
-        promise.complete(new Status().setOk(partitionService.isClusterSafe()));
+        return new Status().setOk(partitionService.isClusterSafe());
       }, false).onComplete(healthCheckPromise);
     };
   }
