@@ -112,12 +112,6 @@
       <version>1.7.0</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <version>1.2.0</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -146,8 +140,6 @@
               <buildDirectory>${project.build.directory}</buildDirectory>
               <vertxVersion>${project.version}</vertxVersion>
               <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-              <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
-              <hazelcast.logging.type>slf4j</hazelcast.logging.type>
             </systemPropertyVariables>
             <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
             <argLine>-Xmx1200M</argLine>
@@ -165,8 +157,6 @@
               <buildDirectory>${project.build.directory}</buildDirectory>
               <vertxVersion>${project.version}</vertxVersion>
               <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-              <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
-              <hazelcast.logging.type>slf4j</hazelcast.logging.type>
             </systemPropertyVariables>
             <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
             <argLine>-Xmx1200M</argLine>
