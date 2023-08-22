@@ -79,6 +79,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       .setProperty("hazelcast.wait.seconds.before.join", "0")
       .setProperty("hazelcast.local.localAddress", "127.0.0.1")
       .setClusterName(System.getProperty("vertx.hazelcast.test.group.name"));
+    config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(true);
     config.getMemberAttributeConfig().setAttribute("__vertx.nodeId", UUID.randomUUID().toString());
     return config;
   }
