@@ -16,7 +16,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        jdk: [8]
+        jdk: [8,11]
+        hz: [4.2.8,5.3.2]
+        exclude:
+          - jdk: 8
+            hz: 5.3.2
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -27,14 +31,18 @@ jobs:
           java-version: ${{ matrix.jdk }}
           distribution: temurin
       - name: Run tests
-        run: mvn -s .github/maven-ci-settings.xml -B -DtestLogLevel=OFF test
+        run: mvn -s .github/maven-ci-settings.xml -B -Dhazelcast.version=${{ matrix.hz }} -DtestLogLevel=OFF test
   IT:
     name: Run integration tests
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         os: [ubuntu-latest]
-        jdk: [8]
+        jdk: [8,11]
+        hz: [4.2.8,5.3.2]
+        exclude:
+          - jdk: 8
+            hz: 5.3.2
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -44,7 +52,7 @@ jobs:
           java-version: ${{ matrix.jdk }}
           distribution: temurin
       - name: Run integration tests
-        run: mvn -s .github/maven-ci-settings.xml -B -DtestLogLevel=OFF -Dtest=DoesNotExists verify
+        run: mvn -s .github/maven-ci-settings.xml -B -Dhazelcast.version=${{ matrix.hz }} -DtestLogLevel=OFF -Dtest=DoesNotExists verify
   Deploy:
     name: Deploy to OSSRH
     if: ${{ github.repository_owner == 'vert-x3' && (github.event_name == 'push' || github.event_name == 'schedule') }}

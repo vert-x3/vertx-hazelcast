@@ -22,7 +22,7 @@
 
   <network>
     <join>
-      <multicast/>
+      <multicast enabled="true"/>
     </join>
   </network>
 

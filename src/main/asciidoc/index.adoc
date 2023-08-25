@@ -304,6 +304,14 @@ dependencies {
 
 == Configuring for Kubernetes
 
+[CAUTION]
+====
+The beginning of this section is relevant only when using the default Hazelcast version, which is `${hazelcast.version}`.
+
+Since version `5.0`, Hazelcast includes `hazelcast-kubernetes` and does not require an additional dependency.
+For details about running Hazelcast 5 on Kubernetes, check out the https://docs.hazelcast.com/hazelcast/latest/kubernetes/kubernetes-auto-discovery[documentation].
+====
+
 On Kubernetes, Hazelcast should be configured to use the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes] plugin.
 
 First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes.version}` dependencies to your project.
@@ -325,7 +333,9 @@ With Maven it looks like:
 
 NOTE: If you use a different version of the Hazelcast core library, make sure to use a compatible version of the Kubernetes discovery plugin.
 
-The second step is to configure the discovery plugin inside of your Hazelcast configuration, by either providing a custom `cluster.xml` file or programmatically, as described in <<configcluster>>.
+
+
+The second step is to configure the discovery plugin inside your Hazelcast configuration, by either providing a custom `cluster.xml` file or programmatically, as described in <<configcluster>>.
 
 The plugin provides two https://github.com/hazelcast/hazelcast-kubernetes#understanding-discovery-modes[discovery modes]: _Kubernetes API_ and _DNS Lookup_.
 Please refer to the plugin project page for pros and cons of both modes.
