@@ -6,26 +6,34 @@ jobs:
   CI:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            jdk: 8
+        os: [ubuntu-latest]
+        jdk: [8,11]
+        hz: [4.2.8,5.3.2]
+        exclude:
+          - jdk: 8
+            hz: 5.3.2
     uses: ./.github/workflows/ci.yml
     with:
       branch: 4.x
       jdk: ${{ matrix.jdk }}
       os: ${{ matrix.os }}
+      hz: ${{ matrix.hz }}
     secrets: inherit
   IT:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            jdk: 8
+        os: [ubuntu-latest]
+        jdk: [8,11]
+        hz: [4.2.8,5.3.2]
+        exclude:
+          - jdk: 8
+            hz: 5.3.2
     uses: ./.github/workflows/it.yml
     with:
       branch: 4.x
       jdk: ${{ matrix.jdk }}
       os: ${{ matrix.os }}
+      hz: ${{ matrix.hz }}
     secrets: inherit
   Deploy:
     if: ${{ github.repository_owner == 'vert-x3' && (github.event_name == 'push' || github.event_name == 'schedule') }}
