@@ -17,6 +17,7 @@
 package io.vertx.core;
 
 import com.hazelcast.config.Config;
+import com.hazelcast.config.JoinConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import io.vertx.LoggingTestWatcher;
@@ -79,6 +80,9 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       .setProperty("hazelcast.wait.seconds.before.join", "0")
       .setProperty("hazelcast.local.localAddress", "127.0.0.1")
       .setClusterName(System.getProperty("vertx.hazelcast.test.group.name"));
+    JoinConfig join = config.getNetworkConfig().getJoin();
+    join.getAutoDetectionConfig().setEnabled(false);
+    join.getMulticastConfig().setEnabled(true);
     config.getMemberAttributeConfig().setAttribute("__vertx.nodeId", UUID.randomUUID().toString());
     return config;
   }

@@ -114,8 +114,8 @@ The content is read from:
 
 === Discovery options
 
-Hazelcast supports several different discovery options.
-The default configuration uses multicast so you must have multicast enabled on your network for this to work.
+Hazelcast supports several discovery options.
+The default configuration uses multicast, so you must have multicast enabled on your network for this to work.
 
 For full documentation on how to configure discovery differently please consult the Hazelcast documentation.
 
@@ -193,15 +193,15 @@ To change this value `hazelcast.max.no.heartbeat.seconds` system property such a
 
 Afterwards a node will be removed from the cluster after 5 seconds without a heartbeat.
 
-See https://docs.hazelcast.org/docs/latest/manual/html-single/#system-properties[Hazelcast system-properties].
+See https://docs.hazelcast.com/hazelcast/5.3/system-properties[Hazelcast system-properties].
 
-== Trouble shooting clustering
+== Troubleshooting clustering
 
 If the default multicast configuration is not working here are some common causes:
 
 === Multicast not enabled on the machine.
 
-It is quite common in particular on OSX machines for multicast to be disabled by default. Please google for
+It is quite common in particular on OSX machines for multicast to be disabled by default.Please google for
 information on how to enable this.
 
 === Using wrong network interface
@@ -262,7 +262,7 @@ another library, you need to set the `hazelcast.logging.type` system property su
 -Dhazelcast.logging.type=slf4j
 ----
 
-See the http://docs.hazelcast.org/docs/3.6.1/manual/html-single/index.html#logging-configuration[hazelcast documentation] for more details.
+See the https://docs.hazelcast.com/hazelcast/5.3/clusters/logging-configuration[hazelcast documentation] for more details.
 
 == Using a different Hazelcast version
 
@@ -304,61 +304,30 @@ dependencies {
 
 == Configuring for Kubernetes
 
-On Kubernetes, Hazelcast should be configured to use the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes] plugin.
+The first step is to configure the discovery plugin inside your Hazelcast configuration, by either providing a custom `cluster.xml` file or programmatically, as described in <<configcluster>>.
 
-First, add the `io.vertx:vertx-hazelcast:${vertx.version}` and `com.hazelcast:hazelcast-kubernetes:${hazelcast-kubernetes.version}` dependencies to your project.
-With Maven it looks like:
-
-[source,xml]
-----
-<dependency>
-  <groupId>io.vertx</groupId>
-  <artifactId>vertx-hazelcast</artifactId>
-  <version>${vertx.version}</version>
-</dependency>
-<dependency>
-  <groupId>com.hazelcast</groupId>
-  <artifactId>hazelcast-kubernetes</artifactId>
-  <version>${hazelcast-kubernetes.version}</version>
-</dependency>
-----
-
-NOTE: If you use a different version of the Hazelcast core library, make sure to use a compatible version of the Kubernetes discovery plugin.
-
-The second step is to configure the discovery plugin inside of your Hazelcast configuration, by either providing a custom `cluster.xml` file or programmatically, as described in <<configcluster>>.
-
-The plugin provides two https://github.com/hazelcast/hazelcast-kubernetes#understanding-discovery-modes[discovery modes]: _Kubernetes API_ and _DNS Lookup_.
+https://docs.hazelcast.com/hazelcast/5.3/kubernetes/kubernetes-auto-discovery#discovering-members[discovery modes]: _Kubernetes API_ and _DNS Lookup_.
 Please refer to the plugin project page for pros and cons of both modes.
 
-In this document, we will use _DNS Lookup_ discovery. The following properties have to be changed / added:
+In this document, we will use _DNS Lookup_ discovery.The following properties have to be changed / added:
 
 [source,xml]
 ----
 <hazelcast>
-  <properties>
-    <property name="hazelcast.discovery.enabled">true</property> <!--1-->
-  </properties>
-
   <network>
     <join>
+      <auto-detection enabled="false"/> <!--1-->
       <multicast enabled="false"/> <!--2-->
-      <tcp-ip enabled="false" />
-
-      <discovery-strategies>
-        <discovery-strategy enabled="true"> <!--3-->
-            class="com.hazelcast.kubernetes.HazelcastKubernetesDiscoveryStrategy">
-          <properties>
-            <property name="service-dns">MY-SERVICE-DNS-NAME</property> <!--4-->
-          </properties>
-        </discovery-strategy>
-      </discovery-strategies>
+      <kubernetes enabled="true"> <!--3-->
+        <service-dns>MY-SERVICE-DNS-NAME</service-dns> <!--4-->
+      </kubernetes>
     </join>
   </network>
 </hazelcast>
 ----
-<1> Activate Discovery SPI
-<2> Deactivate other discoveries
-<3> Activate the Kubernetes plugin
+<1> Disable discovery plugin auto-detection
+<2> Disable multicast discovery
+<3> Activate Kubernetes discovery
 <4> Service DNS, usually in the form of `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local` but depends on the Kubernetes distribution
 
 The `MY-SERVICE-DNS-NAME` value must be a *headless* Kubernetes service name that will be used by Hazelcast to identify all cluster members.
@@ -372,13 +341,14 @@ metadata:
   namespace: MY-NAMESPACE
   name: MY-SERVICE-NAME
 spec:
+  type: ClusterIP
+  clusterIP: None
   selector:
     component: MY-SERVICE-NAME # <1>
-  clusterIP: None
   ports:
-  - name: hz-port-name
-    port: 5701
-    protocol: TCP
+    - name: hazelcast
+      port: 5701
+      protocol: TCP
 ----
 <1> Cluster members selected by label
 
@@ -397,7 +367,7 @@ spec:
         component: MY-SERVICE-NAME
 ----
 
-Further configuration details are available on the https://github.com/hazelcast/hazelcast-kubernetes[Hazelcast Kubernetes Plugin page].
+Further configuration details are available on the https://docs.hazelcast.com/hazelcast/5.3/kubernetes/kubernetes-auto-discovery#discovering-members[Kubernetes Auto Discovery page].
 
 === Rolling updates
 
@@ -493,7 +463,7 @@ After creation, the health check can be exposed over HTTP with a link:../../vert
 
 ==== Using Lite Members
 
-To minimize the time a Vert.x cluster spends accomodating a new topology, you may use external data nodes and mark Vert.x nodes as https://docs.hazelcast.org/docs/latest/manual/html-single/#enabling-lite-members[_Lite Members_].
+To minimize the time a Vert.x cluster spends accomodating a new topology, you may use external data nodes and mark Vert.x nodes as https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members[_Lite Members_].
 
 _Lite Members_ participate in a Hazelcast cluster like regular members, but they do not own any data partition.
 Therefore, Hazelcast does not need to migrate partitions when such members are added or removed.
