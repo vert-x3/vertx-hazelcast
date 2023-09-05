@@ -18,7 +18,7 @@
 <hazelcast xmlns="http://www.hazelcast.com/schema/config"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://www.hazelcast.com/schema/config
-           https://www.hazelcast.com/schema/config/hazelcast-config-4.2.xsd">
+           https://www.hazelcast.com/schema/config/hazelcast-config-5.3.xsd">
 
   <properties>
     <property name="hazelcast.wait.seconds.before.join">0</property>
@@ -27,7 +27,8 @@
 
   <network>
     <join>
-      <multicast/>
+      <auto-detection enabled="false"/>
+      <multicast enabled="true"/>
     </join>
   </network>
 
