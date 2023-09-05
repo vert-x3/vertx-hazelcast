@@ -11,6 +11,9 @@ on:
       os:
         default: ubuntu-latest
         type: string
+      hz:
+        default: 4.2.8
+        type: string
 jobs:
   Tests:
     name: Run integration tests
@@ -26,4 +29,4 @@ jobs:
           java-version: ${{ inputs.jdk }}
           distribution: temurin
       - name: Run integration tests
-        run: mvn -s .github/maven-ci-settings.xml -B -DtestLogLevel=OFF -Dtest=DoesNotExists verify
+        run: mvn -s .github/maven-ci-settings.xml -Dhazelcast.version=${{ inputs.hz }} -B -DtestLogLevel=OFF -Dtest=DoesNotExists verify
