@@ -17,10 +17,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         jdk: [8,11]
-        hz: [4.2.8,5.3.2]
+        hz: [4.2.8,5.3.5]
         exclude:
           - jdk: 8
-            hz: 5.3.2
+            hz: 5.3.5
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -38,10 +38,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         jdk: [8,11]
-        hz: [4.2.8,5.3.2]
+        hz: [4.2.8,5.3.5]
         exclude:
           - jdk: 8
-            hz: 5.3.2
+            hz: 5.3.5
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
