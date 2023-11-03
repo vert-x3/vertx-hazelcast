@@ -16,7 +16,7 @@
   <properties>
     <stack.version>5.0.0-SNAPSHOT</stack.version>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
-    <hazelcast.version>5.3.2</hazelcast.version>
+    <hazelcast.version>5.3.5</hazelcast.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 

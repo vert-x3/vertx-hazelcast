@@ -8,10 +8,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         jdk: [8,11]
-        hz: [4.2.8,5.3.2]
+        hz: [4.2.8,5.3.5]
         exclude:
           - jdk: 8
-            hz: 5.3.2
+            hz: 5.3.5
     uses: ./.github/workflows/ci.yml
     with:
       branch: 4.x
@@ -24,10 +24,10 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         jdk: [8,11]
-        hz: [4.2.8,5.3.2]
+        hz: [4.2.8,5.3.5]
         exclude:
           - jdk: 8
-            hz: 5.3.2
+            hz: 5.3.5
     uses: ./.github/workflows/it.yml
     with:
       branch: 4.x
