@@ -40,10 +40,10 @@ public class Examples {
 
     ClusterManager mgr = new HazelcastClusterManager();
 
-    VertxOptions options = new VertxOptions().setClusterManager(mgr);
-
     Vertx
-      .clusteredVertx(options)
+      .builder()
+      .withClusterManager(mgr)
+      .buildClustered()
       .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
@@ -61,10 +61,10 @@ public class Examples {
 
     ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
 
-    VertxOptions options = new VertxOptions().setClusterManager(mgr);
-
     Vertx
-      .clusteredVertx(options)
+      .builder()
+      .withClusterManager(mgr)
+      .buildClustered()
       .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
@@ -81,10 +81,10 @@ public class Examples {
 
     ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
 
-    VertxOptions options = new VertxOptions().setClusterManager(mgr);
-
     Vertx
-      .clusteredVertx(options)
+      .builder()
+      .withClusterManager(mgr)
+      .buildClustered()
       .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
@@ -96,9 +96,10 @@ public class Examples {
 
   public void example3(HazelcastInstance hazelcastInstance) {
     ClusterManager mgr = new HazelcastClusterManager(hazelcastInstance);
-    VertxOptions options = new VertxOptions().setClusterManager(mgr);
     Vertx
-      .clusteredVertx(options)
+      .builder()
+      .withClusterManager(mgr)
+      .buildClustered()
       .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
@@ -124,10 +125,10 @@ public class Examples {
 
     ClusterManager mgr = new HazelcastClusterManager(hazelcastConfig);
 
-    VertxOptions options = new VertxOptions().setClusterManager(mgr);
-
     Vertx
-      .clusteredVertx(options)
+      .builder()
+      .withClusterManager(mgr)
+      .buildClustered()
       .onComplete(res -> {
       if (res.succeeded()) {
         Vertx vertx = res.result();
