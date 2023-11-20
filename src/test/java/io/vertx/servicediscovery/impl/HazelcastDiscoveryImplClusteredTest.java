@@ -46,9 +46,9 @@ public class HazelcastDiscoveryImplClusteredTest extends DiscoveryImplTestBase {
   public void setUp() {
     Random random = new Random();
     System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
-    VertxOptions options = new VertxOptions()
-      .setClusterManager(new HazelcastClusterManager());
-    Vertx.clusteredVertx(options).onComplete(ar -> {
+    Vertx.builder()
+      .withClusterManager(new HazelcastClusterManager())
+      .buildClustered().onComplete(ar -> {
       vertx = ar.result();
     });
     await().until(() -> vertx != null);
