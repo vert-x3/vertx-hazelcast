@@ -9,12 +9,12 @@
   </parent>
 
   <artifactId>vertx-hazelcast</artifactId>
-  <version>4.5.5-SNAPSHOT</version>
+  <version>4.5.5</version>
 
   <name>Vert.x Hazelcast Cluster Manager</name>
 
   <properties>
-    <stack.version>4.5.5-SNAPSHOT</stack.version>
+    <stack.version>4.5.5</stack.version>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
     <hazelcast.version>4.2.8</hazelcast.version>
     <hazelcast-kubernetes.version>2.2.3</hazelcast-kubernetes.version>
