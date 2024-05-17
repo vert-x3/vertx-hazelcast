@@ -45,6 +45,12 @@ when you are creating your Vert.x instance, for example:
 {@link examples.Examples#example1()}
 ----
 
+== Hazelcast version
+
+Since Vert.x 4.5.8, the version of the Hazelcast dependency is changed to 5.3 since Hazelcast 4 is not anymore supported and 4.2.8 has known vulnerabilities (CVE-2023-45860, CVE-2023-45859, CVE-2023-33265, CVE-2023-33264).
+
+This cluster manager remains tested with Hazelcast 4.2.8 and 5.3, so 4.2.8 remains supported, the Hazelcast version must be explicitly set to 4.2.8 if needed until an upgrade can be achieved.
+
 [[configcluster]]
 == Configuring this cluster manager
 
