@@ -18,9 +18,9 @@ package io.vertx;
 
 import com.hazelcast.core.HazelcastInstance;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.VertxInternal;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.core.spi.cluster.WrappedClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;

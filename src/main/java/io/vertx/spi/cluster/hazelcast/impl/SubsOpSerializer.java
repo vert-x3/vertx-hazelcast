@@ -17,9 +17,9 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import io.vertx.core.Promise;
-import io.vertx.core.impl.ContextInternal;
+import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.impl.TaskQueue;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.spi.cluster.RegistrationInfo;
 
 import java.util.concurrent.ConcurrentMap;

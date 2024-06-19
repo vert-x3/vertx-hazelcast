@@ -18,7 +18,7 @@ package io.vertx.it.core;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Test;
 

@@ -18,8 +18,8 @@ package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.map.IMap;
 import io.vertx.core.Future;
-import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
 
 import java.util.*;

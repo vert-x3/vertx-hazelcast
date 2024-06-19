@@ -18,7 +18,7 @@ package io.vertx.spi.cluster.hazelcast.impl;
 
 import com.hazelcast.cp.IAtomicLong;
 import io.vertx.core.Future;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.Counter;
 
 public class HazelcastCounter implements Counter {
