@@ -19,7 +19,7 @@ package io.vertx.it.litemembers;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import io.vertx.Lifecycle;
-import io.vertx.core.ComplexHATest;
+import io.vertx.tests.ha.ComplexHATest;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;

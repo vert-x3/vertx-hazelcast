@@ -31,7 +31,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusteredAsynchronousLockTest extends ClusteredAsynchronousLockTest {
+public class HazelcastClusteredAsynchronousLockTest extends io.vertx.tests.shareddata.ClusteredAsynchronousLockTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();

@@ -21,7 +21,7 @@ import com.hazelcast.core.HazelcastInstance;
 import io.vertx.Lifecycle;
 import io.vertx.LoggingTestWatcher;
 import io.vertx.core.Vertx;
-import io.vertx.core.shareddata.ClusteredAsynchronousLockTest;
+import io.vertx.tests.shareddata.ClusteredAsynchronousLockTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;

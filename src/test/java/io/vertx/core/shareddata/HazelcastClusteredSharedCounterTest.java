@@ -30,7 +30,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusteredSharedCounterTest extends ClusteredSharedCounterTest {
+public class HazelcastClusteredSharedCounterTest extends io.vertx.tests.shareddata.ClusteredSharedCounterTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();

@@ -30,7 +30,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
+public class HazelcastClusteredEventbusTest extends io.vertx.tests.eventbus.ClusteredEventBusTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();

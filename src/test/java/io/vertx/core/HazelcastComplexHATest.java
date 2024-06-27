@@ -27,7 +27,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastComplexHATest extends ComplexHATest {
+public class HazelcastComplexHATest extends io.vertx.tests.ha.ComplexHATest {
 
   @Override
   public void setUp() throws Exception {

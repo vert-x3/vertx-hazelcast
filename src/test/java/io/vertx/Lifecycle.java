@@ -22,8 +22,8 @@ import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.core.spi.cluster.WrappedClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.tests.eventbus.WrappedClusterManager;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;

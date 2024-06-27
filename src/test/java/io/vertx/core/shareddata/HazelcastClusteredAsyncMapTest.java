@@ -32,7 +32,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
+public class HazelcastClusteredAsyncMapTest extends io.vertx.tests.shareddata.ClusteredAsyncMapTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();

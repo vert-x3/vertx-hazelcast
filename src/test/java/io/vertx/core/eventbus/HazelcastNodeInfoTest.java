@@ -30,7 +30,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastNodeInfoTest extends NodeInfoTest {
+public class HazelcastNodeInfoTest extends io.vertx.tests.eventbus.NodeInfoTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();

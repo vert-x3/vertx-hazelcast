@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastHATest extends HATest {
+public class HazelcastHATest extends io.vertx.tests.ha.HATest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();
