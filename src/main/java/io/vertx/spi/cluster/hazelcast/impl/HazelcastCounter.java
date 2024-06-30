@@ -16,53 +16,83 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
-import com.hazelcast.cp.IAtomicLong;
+import com.hazelcast.map.EntryProcessor;
+import com.hazelcast.map.IMap;
 import io.vertx.core.Future;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.Counter;
 
+/**
+ * {@link Counter} implementation on top of Hazelcast {@link IMap}
+ *
+ * @implNote
+ * Uses name of the counter as a key in the IMap and stores the counter as a value.
+ * Operations are impemented using {@link IMap#submitToKey(Object, EntryProcessor)}
+ * which runs on the partition owner for the particular key (so it may run on a
+ * remote member).
+ * In Hazelcast operations on a specific key are executed by a single partition
+ * thread on the owner of the partition for the key. This removes a lot of
+ */
 public class HazelcastCounter implements Counter {
 
   private final VertxInternal vertx;
-  private final IAtomicLong atomicLong;
+  private final IMap<String, Long> counterMap;
+  private final String name;
 
-  public HazelcastCounter(VertxInternal vertx, IAtomicLong atomicLong) {
+  public HazelcastCounter(VertxInternal vertx, IMap<String, Long> counterMap, String name) {
     this.vertx = vertx;
-    this.atomicLong = atomicLong;
+    this.counterMap = counterMap;
+    this.name = name;
+    counterMap.putIfAbsent(name, 0L);
   }
 
   @Override
   public Future<Long> get() {
-    return Future.fromCompletionStage(atomicLong.getAsync(), vertx.getOrCreateContext());
+    return Future.fromCompletionStage(counterMap.getAsync(name), vertx.getOrCreateContext());
   }
 
   @Override
   public Future<Long> incrementAndGet() {
-    return Future.fromCompletionStage(atomicLong.incrementAndGetAsync(), vertx.getOrCreateContext());
+    return addAndGet(1);
   }
 
   @Override
   public Future<Long> getAndIncrement() {
-    return Future.fromCompletionStage(atomicLong.getAndIncrementAsync(), vertx.getOrCreateContext());
+    return getAndAdd(1);
   }
 
   @Override
   public Future<Long> decrementAndGet() {
-    return Future.fromCompletionStage(atomicLong.decrementAndGetAsync(), vertx.getOrCreateContext());
+    return addAndGet(-1);
   }
 
   @Override
   public Future<Long> addAndGet(long value) {
-    return Future.fromCompletionStage(atomicLong.addAndGetAsync(value), vertx.getOrCreateContext());
+    return Future.fromCompletionStage(counterMap.submitToKey(name, entry -> {
+      long newValue = entry.getValue() + value;
+      entry.setValue(newValue);
+      return newValue;
+    }), vertx.getOrCreateContext());
   }
 
   @Override
   public Future<Long> getAndAdd(long value) {
-    return Future.fromCompletionStage(atomicLong.getAndAddAsync(value), vertx.getOrCreateContext());
+    return Future.fromCompletionStage(counterMap.submitToKey(name, entry -> {
+      long oldValue = entry.getValue();
+      entry.setValue(oldValue + value);
+      return oldValue;
+    }), vertx.getOrCreateContext());
   }
 
   @Override
   public Future<Boolean> compareAndSet(long expected, long value) {
-    return Future.fromCompletionStage(atomicLong.compareAndSetAsync(expected, value), vertx.getOrCreateContext());
+    return Future.fromCompletionStage(counterMap.submitToKey(name, entry -> {
+      if (entry.getValue() == expected) {
+        entry.setValue(value);
+        return true;
+      } else {
+        return false;
+      }
+    }), vertx.getOrCreateContext());
   }
 }
