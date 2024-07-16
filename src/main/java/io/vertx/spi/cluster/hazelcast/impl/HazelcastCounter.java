@@ -30,8 +30,10 @@ import io.vertx.core.shareddata.Counter;
  * Operations are impemented using {@link IMap#submitToKey(Object, EntryProcessor)}
  * which runs on the partition owner for the particular key (so it may run on a
  * remote member).
- * In Hazelcast operations on a specific key are executed by a single partition
- * thread on the owner of the partition for the key. This removes a lot of
+ * In Hazelcast, the operations on a specific key are executed by a single
+ * partition thread on the owner of the partition for the key.
+ * This removes a lot of complexity when dealing with concurrent access
+ * to the same key.
  */
 public class HazelcastCounter implements Counter {
 
