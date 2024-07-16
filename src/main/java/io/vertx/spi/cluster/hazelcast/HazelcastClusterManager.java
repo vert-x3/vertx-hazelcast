@@ -26,6 +26,7 @@ import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.map.IMap;
 import io.vertx.core.Promise;
+import io.vertx.core.ServiceHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.internal.VertxInternal;
@@ -78,13 +79,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
    * Constructor - gets config from classpath
    */
   public HazelcastClusterManager() {
-    Iterator<HazelcastObjectProvider> it = ServiceLoader.load(HazelcastObjectProvider.class).iterator();
-    if (it.hasNext()) {
-      objectProvider = it.next();
-      if (it.hasNext()) {
-        log.warn("Multiple HazelcastObjectProvider implementations were found, using first");
-      }
-    } else {
+    objectProvider = ServiceHelper.loadFactoryOrNull(HazelcastObjectProvider.class);
+    if (objectProvider == null) {
       objectProvider = new HazelcastObjectProviderImpl();
     }
   }
