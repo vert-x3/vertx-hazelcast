@@ -161,17 +161,6 @@ Notice that the custom Hazelcast instance need to be configured with:
 <map name="__vertx.nodeInfo">
   <backup-count>1</backup-count>
 </map>
-
-<cp-subsystem>
-  <cp-member-count>0</cp-member-count>
-  <semaphores>
-    <semaphore>
-      <name>__vertx.*</name>
-      <jdk-compatible>false</jdk-compatible>
-      <initial-permits>1</initial-permits>
-    </semaphore>
-  </semaphores>
-</cp-subsystem>
 ----
 
 CAUTION: The `__vertx.nodeId` is used by Vert.x as identifier of the node in the cluster.
@@ -184,7 +173,7 @@ Also, the Hazelcast shutdown hook should be disabled (see xml example, or via sy
 
 == Changing timeout for failed nodes
 
-By default, a node will be removed from the cluster if Hazelcast didn't receive a heartbeat for 300 seconds.
+By default, a node will be removed from the cluster if Hazelcast didn't receive a heartbeat for 60 seconds.
 To change this value `hazelcast.max.no.heartbeat.seconds` system property such as in:
 
 ----

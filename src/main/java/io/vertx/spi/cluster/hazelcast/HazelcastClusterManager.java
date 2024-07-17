@@ -24,9 +24,9 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleListener;
-import com.hazelcast.cp.ISemaphore;
 import com.hazelcast.map.IMap;
 import io.vertx.core.Promise;
+import io.vertx.core.ServiceHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.internal.VertxInternal;
@@ -42,10 +42,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A cluster manager that uses Hazelcast
@@ -56,13 +52,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
-  private static final String LOCK_SEMAPHORE_PREFIX = "__vertx.";
   private static final String NODE_ID_ATTRIBUTE = "__vertx.nodeId";
 
   private VertxInternal vertx;
   private NodeSelector nodeSelector;
 
   private HazelcastInstance hazelcast;
+  private HazelcastObjectProvider objectProvider;
   private volatile String nodeId;
   private NodeInfo nodeInfo;
   private SubsMapHelper subsMapHelper;
@@ -83,6 +79,10 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
    * Constructor - gets config from classpath
    */
   public HazelcastClusterManager() {
+    objectProvider = ServiceHelper.loadFactoryOrNull(HazelcastObjectProvider.class);
+    if (objectProvider == null) {
+      objectProvider = new HazelcastObjectProviderImpl();
+    }
   }
 
   /**
@@ -91,11 +91,13 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
    * @param conf Hazelcast config, not null
    */
   public HazelcastClusterManager(Config conf) {
+    this();
     Objects.requireNonNull(conf, "The Hazelcast config cannot be null.");
     this.conf = conf;
   }
 
   public HazelcastClusterManager(HazelcastInstance instance) {
+    this();
     Objects.requireNonNull(instance, "The Hazelcast instance cannot be null.");
     hazelcast = instance;
     customHazelcastCluster = true;
@@ -146,6 +148,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
 
         nodeInfoMap = hazelcast.getMap("__vertx.nodeInfo");
+
+        objectProvider.onJoin(vertx, hazelcast, lockReleaseExec);
 
       }
       return null;
@@ -205,40 +209,23 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public <K, V> void getAsyncMap(String name, Promise<AsyncMap<K, V>> promise) {
-    promise.complete(new HazelcastAsyncMap<>(vertx, hazelcast.getMap(name)));
+    promise.complete(objectProvider.getAsyncMap(name));
   }
 
   @Override
   public <K, V> Map<K, V> getSyncMap(String name) {
-    return hazelcast.getMap(name);
+    return objectProvider.getSyncMap(name);
   }
 
   @Override
   public void getLockWithTimeout(String name, long timeout, Promise<Lock> promise) {
-    vertx.<Lock>executeBlocking(() -> {
-      ISemaphore iSemaphore = hazelcast.getCPSubsystem().getSemaphore(LOCK_SEMAPHORE_PREFIX + name);
-      boolean locked = false;
-      long remaining = timeout;
-      do {
-        long start = System.nanoTime();
-        try {
-          locked = iSemaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-          // OK continue
-        }
-        remaining = remaining - MILLISECONDS.convert(System.nanoTime() - start, NANOSECONDS);
-      } while (!locked && remaining > 0);
-      if (locked) {
-        return new HazelcastLock(iSemaphore, lockReleaseExec);
-      } else {
-        throw new VertxException("Timed out waiting to get lock " + name, true);
-      }
-    }, false).onComplete(promise);
+    vertx.executeBlocking(() -> objectProvider.getLockWithTimeout(name, timeout), false)
+      .onComplete(promise);
   }
 
   @Override
   public void getCounter(String name, Promise<Counter> promise) {
-    promise.complete(new HazelcastCounter(vertx, hazelcast.getCPSubsystem().getAtomicLong(name)));
+    promise.complete(objectProvider.createCounter(name));
   }
 
   @Override
