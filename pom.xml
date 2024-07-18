@@ -21,7 +21,7 @@
 
   <properties>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
-    <hazelcast.version>5.3.5</hazelcast.version>
+    <hazelcast.version>5.3.8</hazelcast.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 

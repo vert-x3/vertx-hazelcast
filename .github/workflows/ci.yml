@@ -12,7 +12,7 @@ on:
         default: ubuntu-latest
         type: string
       hz:
-        default: 5.3.5
+        default: 5.3.8
         type: string
 jobs:
   Test:
