@@ -143,7 +143,9 @@ In this case, Vert.x is not the cluster owner and so do not shutdown the cluster
 
 Notice that the custom Hazelcast instance need to be configured with:
 
+[#_minimal_required_hazelcast_configuration]
 [source,xml]
+.Minimal required Hazelcast configuration
 ----
 <member-attributes>
   <attribute name="__vertx.nodeId">unique-identifier</attribute>
@@ -298,7 +300,8 @@ The first step is to configure the discovery plugin inside your Hazelcast config
 https://docs.hazelcast.com/hazelcast/5.3/kubernetes/kubernetes-auto-discovery#discovering-members[discovery modes]: _Kubernetes API_ and _DNS Lookup_.
 Please refer to the plugin project page for pros and cons of both modes.
 
-In this document, we will use _DNS Lookup_ discovery.The following properties have to be changed / added:
+In this document, we will use _DNS Lookup_ discovery.
+The following properties have to be changed / added:
 
 [source,xml]
 ----
@@ -318,6 +321,12 @@ In this document, we will use _DNS Lookup_ discovery.The following properties ha
 <2> Disable multicast discovery
 <3> Activate Kubernetes discovery
 <4> Service DNS, usually in the form of `MY-SERVICE-NAME.MY-NAMESPACE.svc.cluster.local` but depends on the Kubernetes distribution
+
+[IMPORTANT]
+====
+The configuration excerpt above only contains network related settings.
+The actual configuration must contain the <<_minimal_required_hazelcast_configuration, minimal required settings>>.
+====
 
 The `MY-SERVICE-DNS-NAME` value must be a *headless* Kubernetes service name that will be used by Hazelcast to identify all cluster members.
 A headless service can be created with:
