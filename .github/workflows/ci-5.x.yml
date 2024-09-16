@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        jdk: [ 17 ]
+        jdk: [ 21 ]
         hz: [  5.4.0, 5.5.0 ]
         include:
           - os: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        jdk: [ 17 ]
+        jdk: [ 21 ]
         hz: [ 5.4.0, 5.5.0 ]
         include:
           - os: ubuntu-latest
