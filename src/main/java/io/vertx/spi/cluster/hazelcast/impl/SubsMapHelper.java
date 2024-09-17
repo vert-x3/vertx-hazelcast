@@ -23,8 +23,8 @@ import com.hazelcast.map.MapEvent;
 import com.hazelcast.multimap.MultiMap;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
-import io.vertx.core.spi.cluster.NodeSelector;
 import io.vertx.core.spi.cluster.RegistrationInfo;
+import io.vertx.core.spi.cluster.RegistrationListener;
 import io.vertx.core.spi.cluster.RegistrationUpdateEvent;
 
 import java.util.*;
@@ -43,17 +43,17 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
 
   private final Throttling throttling;
   private final MultiMap<String, HazelcastRegistrationInfo> map;
-  private final NodeSelector nodeSelector;
+  private final RegistrationListener registrationListener;
   private final UUID listenerId;
 
   private final ConcurrentMap<String, Set<RegistrationInfo>> ownSubs = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, Set<RegistrationInfo>> localSubs = new ConcurrentHashMap<>();
   private final ReadWriteLock republishLock = new ReentrantReadWriteLock();
 
-  public SubsMapHelper(HazelcastInstance hazelcast, NodeSelector nodeSelector) {
+  public SubsMapHelper(HazelcastInstance hazelcast, RegistrationListener registrationListener) {
     throttling = new Throttling(this::getAndUpdate);
     map = hazelcast.getMultiMap("__vertx.subs");
-    this.nodeSelector = nodeSelector;
+    this.registrationListener = registrationListener;
     listenerId = map.addEntryListener(this, false);
   }
 
@@ -167,7 +167,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
   }
 
   private void getAndUpdate(String address) {
-    if (nodeSelector.wantsUpdatesFor(address)) {
+    if (registrationListener.wantsUpdatesFor(address)) {
       List<RegistrationInfo> registrationInfos;
       try {
         registrationInfos = get(address);
@@ -175,7 +175,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
         log.trace("A failure occurred while retrieving the updated registrations", e);
         registrationInfos = Collections.emptyList();
       }
-      nodeSelector.registrationsUpdated(new RegistrationUpdateEvent(address, registrationInfos));
+      registrationListener.registrationsUpdated(new RegistrationUpdateEvent(address, registrationInfos));
     }
   }
 

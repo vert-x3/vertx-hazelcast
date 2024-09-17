@@ -55,7 +55,6 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private static final String NODE_ID_ATTRIBUTE = "__vertx.nodeId";
 
   private VertxInternal vertx;
-  private NodeSelector nodeSelector;
 
   private HazelcastInstance hazelcast;
   private HazelcastObjectProvider objectProvider;
@@ -69,6 +68,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private Set<String> nodeIds = new HashSet<>();
 
   private NodeListener nodeListener;
+  private RegistrationListener registrationListener;
   private volatile boolean active;
 
   private Config conf;
@@ -104,9 +104,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void init(Vertx vertx, NodeSelector nodeSelector) {
+  public void init(Vertx vertx) {
     this.vertx = (VertxInternal) vertx;
-    this.nodeSelector = nodeSelector;
   }
 
   @Override
@@ -142,7 +141,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
           }
         }
 
-        subsMapHelper = new SubsMapHelper(hazelcast, nodeSelector);
+        subsMapHelper = new SubsMapHelper(hazelcast, registrationListener);
 
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
         lifecycleListenerId = hazelcast.getLifecycleService().addLifecycleListener(this);
@@ -171,6 +170,11 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
       }
     }
     return list;
+  }
+
+  @Override
+  public void registrationListener(RegistrationListener listener) {
+    this.registrationListener = listener;
   }
 
   @Override
@@ -300,7 +304,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     cleanSubs(ids);
     cleanNodeInfos(ids);
     nodeInfoMap.put(nodeId, new HazelcastNodeInfo(getNodeInfo()));
-    nodeSelector.registrationsLost();
+    registrationListener.registrationsLost();
     republishOwnSubs();
     if (nodeListener != null) {
       nodeIds.removeAll(ids);
