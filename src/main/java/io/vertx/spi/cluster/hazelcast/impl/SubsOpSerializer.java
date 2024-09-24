@@ -17,8 +17,9 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import io.vertx.core.Promise;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.internal.ContextInternal;
-import io.vertx.core.impl.TaskQueue;
+import io.vertx.core.internal.EventExecutor;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.spi.cluster.RegistrationInfo;
 
@@ -30,12 +31,13 @@ import java.util.function.BiConsumer;
  */
 public class SubsOpSerializer {
 
-  private final VertxInternal vertx;
-  private final TaskQueue taskQueue;
+  private final EventExecutor executor;
 
   private SubsOpSerializer(VertxInternal vertx) {
-    this.vertx = vertx;
-    taskQueue = new TaskQueue();
+
+    ContextInternal worker = vertx.createContext(ThreadingModel.WORKER);
+
+    this.executor = worker.executor();
   }
 
   public static SubsOpSerializer get(ContextInternal context) {
@@ -50,13 +52,13 @@ public class SubsOpSerializer {
   }
 
   public void execute(BiConsumer<String, RegistrationInfo> op, String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
-    taskQueue.execute(() -> {
+    executor.execute(() -> {
       try {
         op.accept(address, registrationInfo);
         promise.complete();
       } catch (Exception e) {
         promise.fail(e);
       }
-    }, vertx.getWorkerPool().executor());
+    });
   }
 }
