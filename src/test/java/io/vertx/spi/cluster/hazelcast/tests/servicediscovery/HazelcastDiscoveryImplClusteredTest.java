@@ -28,8 +28,6 @@ import org.junit.Rule;
 import java.math.BigInteger;
 import java.util.Random;
 
-import static com.jayway.awaitility.Awaitility.await;
-
 /**
  * @author Thomas Segismont
  */
@@ -44,7 +42,7 @@ public class HazelcastDiscoveryImplClusteredTest extends DiscoveryImplTestBase {
   public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     Random random = new Random();
     System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
     Vertx.builder()
@@ -52,7 +50,9 @@ public class HazelcastDiscoveryImplClusteredTest extends DiscoveryImplTestBase {
       .buildClustered().onComplete(ar -> {
       vertx = ar.result();
     });
-    await().until(() -> vertx != null);
+    while (vertx == null) {
+      Thread.sleep(10);
+    }
     discovery = new DiscoveryImpl(vertx, new ServiceDiscoveryOptions());
   }
 }

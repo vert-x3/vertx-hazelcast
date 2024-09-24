@@ -24,7 +24,6 @@ import org.junit.Test;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.*;
 import static org.junit.Assert.assertTrue;
 
@@ -71,23 +70,28 @@ public class ThrottlingTest {
     }
     latch.await();
 
-    await().atMost(1, SECONDS).pollDelay(10, MILLISECONDS).until(() -> {
-      if (events.size() != addresses.length) {
-        return false;
-      }
-      for (List<Long> nanoTimes : events.values()) {
-        Long previous = null;
-        for (Long nanoTime : nanoTimes) {
-          if (previous != null) {
-            if (MILLISECONDS.convert(nanoTime - previous, NANOSECONDS) < 20) {
-              return false;
-            }
+    long now = System.currentTimeMillis();
+    while (!check(events, addresses) && (System.currentTimeMillis() - now) < 1000) {
+      Thread.sleep(10);
+    }
+  }
+
+  private boolean check(ConcurrentMap<String, List<Long>> events, String[] addresses) {
+    if (events.size() != addresses.length) {
+      return false;
+    }
+    for (List<Long> nanoTimes : events.values()) {
+      Long previous = null;
+      for (Long nanoTime : nanoTimes) {
+        if (previous != null) {
+          if (MILLISECONDS.convert(nanoTime - previous, NANOSECONDS) < 20) {
+            return false;
           }
-          previous = nanoTime;
         }
+        previous = nanoTime;
       }
-      return true;
-    });
+    }
+    return true;
   }
 
   private void sleepMax(long time) {
