@@ -14,10 +14,10 @@
  * under the License.
  */
 
-package io.vertx.core.shareddata;
+package io.vertx.spi.cluster.hazelcast.tests.shareddata;
 
-import io.vertx.Lifecycle;
-import io.vertx.LoggingTestWatcher;
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;

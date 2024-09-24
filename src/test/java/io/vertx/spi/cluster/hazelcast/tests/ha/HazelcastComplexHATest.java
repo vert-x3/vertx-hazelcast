@@ -14,28 +14,26 @@
  * under the License.
  */
 
-package io.vertx.core.eventbus;
+package io.vertx.spi.cluster.hazelcast.tests.ha;
 
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 /**
- * @author Thomas Segismont
+ * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastFaultToleranceTest extends io.vertx.tests.eventbus.FaultToleranceTest {
-
-  private String groupName;
+public class HazelcastComplexHATest extends io.vertx.tests.ha.ComplexHATest {
 
   @Override
   public void setUp() throws Exception {
     Random random = new Random();
-    groupName = new BigInteger(128, random).toString(32);
-    System.setProperty("vertx.hazelcast.test.group.name", groupName);
+    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
     super.setUp();
   }
 
@@ -45,19 +43,7 @@ public class HazelcastFaultToleranceTest extends io.vertx.tests.eventbus.FaultTo
   }
 
   @Override
-  protected List<String> getExternalNodeSystemProperties() {
-    return Arrays.asList(
-      "-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory",
-      "-Dhazelcast.logging.type=slf4j",
-      "-Djava.net.preferIPv4Stack=true",
-      "-Dvertx.hazelcast.test.group.name=" + groupName
-    );
-  }
-
-  @Override
-  protected void afterNodesKilled() throws Exception {
-    super.afterNodesKilled();
-    // Additionnal wait to make sure all nodes noticed the shutdowns
-    Thread.sleep(30_000);
+  protected void close(List<Vertx> clustered) throws Exception {
+    Lifecycle.closeClustered(clustered);
   }
 }

@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package io.vertx.it.core;
+package io.vertx.spi.cluster.hazelcast.it;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;

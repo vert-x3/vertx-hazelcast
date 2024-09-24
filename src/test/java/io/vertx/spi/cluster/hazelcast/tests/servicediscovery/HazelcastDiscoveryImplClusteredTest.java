@@ -14,12 +14,13 @@
  * under the License.
  */
 
-package io.vertx.servicediscovery.impl;
+package io.vertx.spi.cluster.hazelcast.tests.servicediscovery;
 
-import io.vertx.LoggingTestWatcher;
+import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.servicediscovery.ServiceDiscoveryOptions;
+import io.vertx.servicediscovery.impl.DiscoveryImpl;
+import io.vertx.servicediscovery.impl.DiscoveryImplTestBase;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Before;
 import org.junit.Rule;

@@ -14,13 +14,14 @@
  * under the License.
  */
 
-package io.vertx.core;
+package io.vertx.spi.cluster.hazelcast.tests;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.JoinConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import io.vertx.LoggingTestWatcher;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import io.vertx.test.core.AsyncTestBase;
 import org.junit.AfterClass;

@@ -14,54 +14,50 @@
  * under the License.
  */
 
-package io.vertx.it.litemembers;
+package io.vertx.spi.cluster.hazelcast.tests.eventbus;
 
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import io.vertx.Lifecycle;
-import io.vertx.tests.ha.ComplexHATest;
-import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 /**
  * @author Thomas Segismont
  */
-public class HazelcastComplexHATest extends ComplexHATest {
+public class HazelcastFaultToleranceTest extends io.vertx.tests.eventbus.FaultToleranceTest {
 
-  private static final int DATA_NODES = Integer.getInteger("litemembers.datanodes.count", 1);
-
-  private List<HazelcastInstance> dataNodes = new ArrayList<>();
+  private String groupName;
 
   @Override
   public void setUp() throws Exception {
     Random random = new Random();
-    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
-    for (int i = 0; i < DATA_NODES; i++) {
-      dataNodes.add(Hazelcast.newHazelcastInstance(ConfigUtil.loadConfig()));
-    }
+    groupName = new BigInteger(128, random).toString(32);
+    System.setProperty("vertx.hazelcast.test.group.name", groupName);
     super.setUp();
   }
 
   @Override
   protected ClusterManager getClusterManager() {
-    return new HazelcastClusterManager(ConfigUtil.loadConfig().setLiteMember(true));
+    return new HazelcastClusterManager();
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    Lifecycle.closeDataNodes(dataNodes);
+  protected List<String> getExternalNodeSystemProperties() {
+    return Arrays.asList(
+      "-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory",
+      "-Dhazelcast.logging.type=slf4j",
+      "-Djava.net.preferIPv4Stack=true",
+      "-Dvertx.hazelcast.test.group.name=" + groupName
+    );
   }
 
   @Override
-  protected void close(List<Vertx> clustered) throws Exception {
-    Lifecycle.closeClustered(clustered);
+  protected void afterNodesKilled() throws Exception {
+    super.afterNodesKilled();
+    // Additionnal wait to make sure all nodes noticed the shutdowns
+    Thread.sleep(30_000);
   }
 }

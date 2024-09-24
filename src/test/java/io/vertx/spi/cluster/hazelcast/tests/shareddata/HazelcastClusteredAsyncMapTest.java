@@ -14,56 +14,39 @@
  * under the License.
  */
 
-package io.vertx.it.litemembers;
+package io.vertx.spi.cluster.hazelcast.tests.shareddata;
 
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import io.vertx.Lifecycle;
-import io.vertx.LoggingTestWatcher;
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
-import io.vertx.tests.shareddata.ClusteredAsynchronousLockTest;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 /**
- * @author Thomas Segismont
+ * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastClusteredAsynchronousLockTest extends ClusteredAsynchronousLockTest {
-
-  private static final int DATA_NODES = Integer.getInteger("litemembers.datanodes.count", 1);
+public class HazelcastClusteredAsyncMapTest extends io.vertx.tests.shareddata.ClusteredAsyncMapTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();
-
-  private List<HazelcastInstance> dataNodes = new ArrayList<>();
 
   @Override
   public void setUp() throws Exception {
     Random random = new Random();
     System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
-    for (int i = 0; i < DATA_NODES; i++) {
-      dataNodes.add(Hazelcast.newHazelcastInstance(ConfigUtil.loadConfig()));
-    }
     super.setUp();
   }
 
   @Override
   protected ClusterManager getClusterManager() {
-    return new HazelcastClusterManager(ConfigUtil.loadConfig().setLiteMember(true));
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    Lifecycle.closeDataNodes(dataNodes);
+    return new HazelcastClusterManager();
   }
 
   @Override
@@ -73,13 +56,36 @@ public class HazelcastClusteredAsynchronousLockTest extends ClusteredAsynchronou
 
   @Override
   @Test
-  public void testLockReleasedForClosedNode() throws Exception {
-    super.testLockReleasedForClosedNode();
+  @Ignore("Hazelcast removes the binding even if a new entry is added without ttl")
+  public void testMapPutTtlThenPut() {
+    super.testMapPutTtlThenPut();
   }
 
   @Override
   @Test
-  public void testLockReleasedForKilledNode() throws Exception {
-    super.testLockReleasedForKilledNode();
+  @Ignore
+  public void testMapReplaceIfPresentTtl() {
+    super.testMapReplaceIfPresentTtl();
+  }
+
+  @Override
+  @Test
+  @Ignore
+  public void testMapReplaceIfPresentTtlWhenNotPresent() {
+    super.testMapReplaceIfPresentTtlWhenNotPresent();
+  }
+
+  @Override
+  @Test
+  @Ignore
+  public void testMapReplaceTtl() {
+    super.testMapReplaceTtl();
+  }
+
+  @Override
+  @Test
+  @Ignore
+  public void testMapReplaceTtlWithPreviousValue() {
+    super.testMapReplaceTtlWithPreviousValue();
   }
 }

@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package io.vertx;
+package io.vertx.spi.cluster.hazelcast.tests;
 
 import com.hazelcast.core.HazelcastInstance;
 import io.vertx.core.Vertx;

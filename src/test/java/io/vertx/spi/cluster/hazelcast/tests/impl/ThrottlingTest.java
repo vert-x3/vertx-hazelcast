@@ -14,14 +14,13 @@
  * under the License.
  */
 
-package io.vertx.spi.cluster.hazelcast.impl;
+package io.vertx.spi.cluster.hazelcast.tests.impl;
 
+import io.vertx.spi.cluster.hazelcast.impl.Throttling;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 

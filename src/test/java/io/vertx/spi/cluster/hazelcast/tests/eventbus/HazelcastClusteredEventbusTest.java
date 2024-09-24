@@ -14,10 +14,10 @@
  * under the License.
  */
 
-package io.vertx.core.eventbus;
+package io.vertx.spi.cluster.hazelcast.tests.eventbus;
 
-import io.vertx.Lifecycle;
-import io.vertx.LoggingTestWatcher;
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -30,7 +30,7 @@ import java.util.Random;
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastNodeInfoTest extends io.vertx.tests.eventbus.NodeInfoTest {
+public class HazelcastClusteredEventbusTest extends io.vertx.tests.eventbus.ClusteredEventBusTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();

@@ -14,7 +14,7 @@
  * under the License.
  */
 
-package io.vertx;
+package io.vertx.spi.cluster.hazelcast.tests;
 
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;

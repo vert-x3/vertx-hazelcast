@@ -14,10 +14,11 @@
  * under the License.
  */
 
-package io.vertx.core;
+package io.vertx.spi.cluster.hazelcast.tests.shareddata;
 
-import io.vertx.Lifecycle;
-import io.vertx.LoggingTestWatcher;
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
+import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Rule;
@@ -25,13 +26,11 @@ import org.junit.Rule;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class HazelcastHATest extends io.vertx.tests.ha.HATest {
+public class HazelcastClusteredSharedCounterTest extends io.vertx.tests.shareddata.ClusteredSharedCounterTest {
 
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();
@@ -51,10 +50,5 @@ public class HazelcastHATest extends io.vertx.tests.ha.HATest {
   @Override
   protected void close(List<Vertx> clustered) throws Exception {
     Lifecycle.closeClustered(clustered);
-  }
-
-  @Override
-  protected void awaitLatch(CountDownLatch latch) throws InterruptedException {
-    assertTrue(latch.await(30, TimeUnit.SECONDS));
   }
 }

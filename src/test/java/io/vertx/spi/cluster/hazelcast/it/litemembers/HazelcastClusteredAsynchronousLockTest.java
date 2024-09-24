@@ -14,18 +14,19 @@
  * under the License.
  */
 
-package io.vertx.it.litemembers;
+package io.vertx.spi.cluster.hazelcast.it.litemembers;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import io.vertx.Lifecycle;
-import io.vertx.LoggingTestWatcher;
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
-import io.vertx.tests.eventbus.ClusteredEventBusTest;
+import io.vertx.tests.shareddata.ClusteredAsynchronousLockTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Rule;
+import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ import java.util.Random;
 /**
  * @author Thomas Segismont
  */
-public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
+public class HazelcastClusteredAsynchronousLockTest extends ClusteredAsynchronousLockTest {
 
   private static final int DATA_NODES = Integer.getInteger("litemembers.datanodes.count", 1);
 
@@ -68,5 +69,17 @@ public class HazelcastClusteredEventbusTest extends ClusteredEventBusTest {
   @Override
   protected void close(List<Vertx> clustered) throws Exception {
     Lifecycle.closeClustered(clustered);
+  }
+
+  @Override
+  @Test
+  public void testLockReleasedForClosedNode() throws Exception {
+    super.testLockReleasedForClosedNode();
+  }
+
+  @Override
+  @Test
+  public void testLockReleasedForKilledNode() throws Exception {
+    super.testLockReleasedForKilledNode();
   }
 }
