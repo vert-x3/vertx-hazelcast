@@ -52,14 +52,14 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(v);
     ContextInternal context = vertx.getOrCreateContext();
-    return Future.fromCompletionStage(map.setAsync(kk, HazelcastServerID.convertServerID(vv)), context);
+    return Future.fromCompletionStage(map.setAsync(kk, vv), context);
   }
 
   @Override
   public Future<V> putIfAbsent(K k, V v) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(() -> convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv))), false);
+    return vertx.executeBlocking(() -> convertReturn(map.putIfAbsent(kk, vv)), false);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
     K kk = convertParam(k);
     V vv = convertParam(v);
     ContextInternal context = vertx.getOrCreateContext();
-    CompletionStage<Void> completionStage = map.setAsync(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS);
+    CompletionStage<Void> completionStage = map.setAsync(kk, vv, ttl, MILLISECONDS);
     return Future.fromCompletionStage(completionStage, context);
   }
 
@@ -75,7 +75,7 @@ public class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   public Future<V> putIfAbsent(K k, V v, long ttl) {
     K kk = convertParam(k);
     V vv = convertParam(v);
-    return vertx.executeBlocking(() -> convertReturn(map.putIfAbsent(kk, HazelcastServerID.convertServerID(vv), ttl, MILLISECONDS)), false);
+    return vertx.executeBlocking(() -> convertReturn(map.putIfAbsent(kk, vv, ttl, MILLISECONDS)), false);
   }
 
   @Override
