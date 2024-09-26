@@ -19,12 +19,17 @@ jobs:
           - os: ubuntu-latest
             jdk: 11
             hz: 5.3.8
+          - os: ubuntu-latest
+            jdk: 11
+            hz: 5.3.8
+            profile: '-Ptest-jpms'
     uses: ./.github/workflows/ci.yml
     with:
       branch: ${{ github.event.pull_request.head.sha || github.ref_name }}
       jdk: ${{ matrix.jdk }}
       os: ${{ matrix.os }}
       hz: ${{ matrix.hz }}
+      profile: ${{ matrix.profile }}
     secrets: inherit
   IT:
     strategy:

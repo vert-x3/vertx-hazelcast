@@ -14,6 +14,9 @@ on:
       hz:
         default: 5.3.8
         type: string
+      profile:
+        default: ''
+        type: string
 jobs:
   Test:
     name: Run tests
@@ -29,4 +32,4 @@ jobs:
           java-version: ${{ inputs.jdk }}
           distribution: temurin
       - name: Run tests
-        run: mvn -s .github/maven-ci-settings.xml -Dhazelcast.version=${{ inputs.hz }} -B -DtestLogLevel=OFF test
+        run: mvn -s .github/maven-ci-settings.xml -Dhazelcast.version=${{ inputs.hz }} -B -DtestLogLevel=OFF  ${{ inputs.profile }} test

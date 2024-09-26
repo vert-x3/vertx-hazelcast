@@ -1,0 +1,283 @@
+/*
+ * Copyright 2018 Red Hat, Inc.
+ *
+ * Red Hat licenses this file to you under the Apache License, version 2.0
+ * (the "License"); you may not use this file except in compliance with the
+ * License.  You may obtain a copy of the License at:
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+
+package io.vertx.spi.cluster.hazelcast.tests;
+
+import com.hazelcast.config.Config;
+import com.hazelcast.config.JoinConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.test.core.AsyncTestBase;
+import org.junit.AfterClass;
+import org.junit.Rule;
+import org.junit.Test;
+
+import java.math.BigInteger;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * @author <a href="http://tfox.org">Tim Fox</a>
+ */
+public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
+
+  static {
+    // this is only checked once every 10 seconds by Hazelcast on client disconnect
+    System.setProperty("hazelcast.client.max.no.heartbeat.seconds", "9");
+  }
+
+  @Rule
+  public LoggingTestWatcher watchman = new LoggingTestWatcher();
+
+  @Override
+  public void setUp() throws Exception {
+    Random random = new Random();
+    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
+    super.setUp();
+  }
+
+  @Test
+  public void testProgrammaticSetConfig() throws Exception {
+    Config config = TestClusterManager.getConf(createConfig());
+    HazelcastClusterManager mgr = new HazelcastClusterManager();
+    mgr.setConfig(config);
+    testProgrammatic(mgr, config);
+  }
+
+  @Test
+  public void testProgrammaticSetWithConstructor() throws Exception {
+    Config config = TestClusterManager.getConf(createConfig());
+    HazelcastClusterManager mgr = new HazelcastClusterManager(config);
+    testProgrammatic(mgr, config);
+  }
+
+  @Test
+  public void testCustomHazelcastInstance() throws Exception {
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    HazelcastClusterManager mgr = new HazelcastClusterManager(instance);
+    testProgrammatic(mgr, instance.getConfig());
+  }
+
+  private Config createConfig() {
+    Config config = new Config()
+      .setProperty("hazelcast.wait.seconds.before.join", "0")
+      .setProperty("hazelcast.local.localAddress", "127.0.0.1")
+      .setClusterName(System.getProperty("vertx.hazelcast.test.group.name"));
+    JoinConfig join = config.getNetworkConfig().getJoin();
+    join.getAutoDetectionConfig().setEnabled(false);
+    join.getMulticastConfig().setEnabled(true);
+    config.getMemberAttributeConfig().setAttribute("__vertx.nodeId", UUID.randomUUID().toString());
+    return config;
+  }
+
+  private void testProgrammatic(HazelcastClusterManager mgr, Config config) throws Exception {
+    mgr.setConfig(config);
+    assertEquals(config, mgr.getConfig());
+    Vertx
+      .builder()
+      .withClusterManager(mgr)
+      .buildClustered().onComplete(res -> {
+        assertTrue(res.succeeded());
+        assertNotNull(mgr.getHazelcastInstance());
+        res.result().close().onComplete(res2 -> {
+          assertTrue(res2.succeeded());
+          testComplete();
+        });
+    });
+    await();
+  }
+
+  @Test
+  public void testEventBusWhenUsingACustomHazelcastInstance() throws Exception {
+    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+
+    HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
+    HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
+    VertxOptions options1 = new VertxOptions();
+    options1.getEventBusOptions().setHost("127.0.0.1");
+    VertxOptions options2 = new VertxOptions();
+    options2.getEventBusOptions().setHost("127.0.0.1");
+
+    AtomicReference<Vertx> vertx1 = new AtomicReference<>();
+    AtomicReference<Vertx> vertx2 = new AtomicReference<>();
+
+    Vertx.builder()
+      .with(options1)
+      .withClusterManager(mgr1)
+      .buildClustered().onComplete(res -> {
+        System.out.println("BUILD ONE");
+        assertTrue(res.succeeded());
+        assertNotNull(mgr1.getHazelcastInstance());
+        res.result().eventBus().consumer("news", message -> {
+          assertNotNull(message);
+          assertTrue(message.body().equals("hello"));
+          testComplete();
+        });
+        vertx1.set(res.result());
+      });
+
+    assertWaitUntil(() -> vertx1.get() != null);
+
+    Vertx.builder()
+      .with(options2)
+      .withClusterManager(mgr2)
+      .buildClustered().onComplete(res -> {
+        assertTrue(res.succeeded());
+        assertNotNull(mgr2.getHazelcastInstance());
+        vertx2.set(res.result());
+        EventBus eb = res.result().eventBus();
+        MessageProducer<Object> sender = eb.sender("news");
+        sender.write("hello").onComplete(onSuccess(v -> {
+        }));
+      });
+
+    await();
+
+    vertx1.get().close().onComplete(ar -> vertx1.set(null));
+    vertx2.get().close().onComplete(ar -> vertx2.set(null));
+
+    assertTrue(instance1.getLifecycleService().isRunning());
+    assertTrue(instance2.getLifecycleService().isRunning());
+
+    assertWaitUntil(() -> vertx1.get() == null && vertx2.get() == null);
+
+    instance1.shutdown();
+    instance2.shutdown();
+
+  }
+
+  @Test
+  public void testSharedDataUsingCustomHazelcast() throws Exception {
+    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+
+    HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
+    HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
+    VertxOptions options1 = new VertxOptions();
+    options1.getEventBusOptions().setHost("127.0.0.1");
+    VertxOptions options2 = new VertxOptions();
+    options2.getEventBusOptions().setHost("127.0.0.1");
+
+    AtomicReference<Vertx> vertx1 = new AtomicReference<>();
+    AtomicReference<Vertx> vertx2 = new AtomicReference<>();
+
+    Vertx.builder()
+      .with(options1)
+      .withClusterManager(mgr1)
+      .buildClustered().onComplete(res -> {
+        assertTrue(res.succeeded());
+        assertNotNull(mgr1.getHazelcastInstance());
+        res.result().sharedData().getClusterWideMap("mymap1").onComplete(ar -> {
+          ar.result().put("news", "hello").onComplete(v -> {
+            vertx1.set(res.result());
+          });
+        });
+      });
+
+    assertWaitUntil(() -> vertx1.get() != null);
+
+    Vertx.builder()
+      .with(options2)
+      .withClusterManager(mgr2)
+      .buildClustered().onComplete(res -> {
+        assertTrue(res.succeeded());
+        assertNotNull(mgr2.getHazelcastInstance());
+        vertx2.set(res.result());
+        res.result().sharedData().getClusterWideMap("mymap1").onComplete(ar -> {
+          ar.result().get("news").onComplete(r -> {
+            assertEquals("hello", r.result());
+            testComplete();
+          });
+        });
+      });
+
+    await();
+
+    vertx1.get().close().onComplete(ar -> vertx1.set(null));
+    vertx2.get().close().onComplete(ar -> vertx2.set(null));
+
+    assertWaitUntil(() -> vertx1.get() == null && vertx2.get() == null);
+
+    // be sure stopping vertx did not cause or require our custom hazelcast to shutdown
+
+    assertTrue(instance1.getLifecycleService().isRunning());
+    assertTrue(instance2.getLifecycleService().isRunning());
+
+    instance1.shutdown();
+    instance2.shutdown();
+
+  }
+
+  @Test
+  public void testThatExternalHZInstanceCanBeShutdown() {
+    // This instance won't be used by vert.x
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    String nodeID = instance.getCluster().getLocalMember().getAttribute("__vertx.nodeId");
+
+    HazelcastClusterManager mgr = new HazelcastClusterManager(TestClusterManager.getConf(createConfig()));
+    VertxOptions options = new VertxOptions();
+    options.getEventBusOptions().setHost("127.0.0.1");
+
+    AtomicReference<Vertx> vertx1 = new AtomicReference<>();
+
+    Vertx.builder()
+      .with(options)
+      .withClusterManager(mgr)
+      .buildClustered().onComplete(res -> {
+        assertTrue(res.succeeded());
+        assertNotNull(mgr.getHazelcastInstance());
+        res.result().sharedData().getClusterWideMap("mymap1").onComplete(ar -> {
+          ar.result().put("news", "hello").onComplete(v -> {
+            vertx1.set(res.result());
+          });
+        });
+      });
+
+    assertWaitUntil(() -> vertx1.get() != null);
+    int size = mgr.getNodes().size();
+    assertTrue(mgr.getNodes().contains(nodeID));
+
+    // Retrieve the value inserted by vert.x
+    Map<Object, Object> map = instance.getMap("mymap1");
+    Map<Object, Object> anotherMap = instance.getMap("mymap2");
+    assertEquals(map.get("news"), "hello");
+    map.put("another-key", "stuff");
+    anotherMap.put("another-key", "stuff");
+    map.remove("news");
+    map.remove("another-key");
+    anotherMap.remove("another-key");
+
+    instance.shutdown();
+
+    assertWaitUntil(() -> mgr.getNodes().size() == size - 1);
+    vertx1.get().close().onComplete(ar -> vertx1.set(null));
+
+    assertWaitUntil(() -> vertx1.get() == null);
+  }
+
+  @AfterClass
+  public static void afterTests() {
+    System.clearProperty("hazelcast.client.max.no.heartbeat.seconds");
+  }
+}

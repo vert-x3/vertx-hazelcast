@@ -8,10 +8,11 @@
     <version>4</version>
   </parent>
 
-  <artifactId>vertx-hazelcast</artifactId>
+  <artifactId>vertx-hazelcast-parent</artifactId>
   <version>5.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
-  <name>Vert.x Hazelcast Cluster Manager</name>
+  <name>Vert.x Hazelcast parent</name>
 
   <scm>
     <connection>scm:git:git@github.com:vert-x3/vertx-hazelcast.git</connection>
@@ -20,8 +21,8 @@
   </scm>
 
   <properties>
-    <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
     <hazelcast.version>5.3.8</hazelcast.version>
+    <vertx.testOpensModule>ALL-UNNAMED</vertx.testOpensModule>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
@@ -38,86 +39,10 @@
   </dependencyManagement>
 
   <dependencies>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen-api</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen-json</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-docgen-api</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-health-check</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.hazelcast</groupId>
-      <artifactId>hazelcast</artifactId>
-      <version>${hazelcast.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-discovery</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-proxy</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-discovery</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <version>3.3.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.jayway.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
-      <version>1.7.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -128,31 +53,14 @@
     </dependency>
   </dependencies>
 
+  <modules>
+    <module>vertx-hazelcast</module>
+    <module>vertx-hazelcast-it</module>
+  </modules>
+
   <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>default-compile</id>
-              <configuration>
-                <annotationProcessorPaths>
-                  <annotationProcessorPath>
-                    <groupId>io.vertx</groupId>
-                    <artifactId>vertx-codegen</artifactId>
-                    <classifier>processor</classifier>
-                  </annotationProcessorPath>
-                  <annotationProcessorPath>
-                    <groupId>io.vertx</groupId>
-                    <artifactId>vertx-docgen-processor</artifactId>
-                    <classifier>processor</classifier>
-                  </annotationProcessorPath>
-                </annotationProcessorPaths>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
@@ -164,12 +72,16 @@
               <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
               <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
               <hazelcast.logging.type>slf4j</hazelcast.logging.type>
+              <hazelcast.tracking.server>true</hazelcast.tracking.server>
             </systemPropertyVariables>
             <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
-            <argLine>-Xmx1200M --add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens
-              java.base/java.lang=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens
-              java.management/sun.management=ALL-UNNAMED --add-opens
-              jdk.management/com.sun.management.internal=ALL-UNNAMED
+            <argLine>-Xmx1200M --add-modules java.se
+              --add-exports java.base/jdk.internal.ref=${vertx.testOpensModule}
+              --add-opens java.base/java.lang=${vertx.testOpensModule}
+              --add-opens java.base/java.nio=${vertx.testOpensModule}
+              --add-opens java.base/sun.nio.ch=${vertx.testOpensModule}
+              --add-opens java.management/sun.management=${vertx.testOpensModule}
+              --add-opens jdk.management/com.sun.management.internal=${vertx.testOpensModule}
             </argLine>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
@@ -177,7 +89,6 @@
         </plugin>
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.19.1</version>
           <configuration>
             <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
             <systemPropertyVariables>
@@ -189,10 +100,13 @@
               <hazelcast.logging.type>slf4j</hazelcast.logging.type>
             </systemPropertyVariables>
             <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
-            <argLine>-Xmx1200M --add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens
-              java.base/java.lang=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens
-              java.management/sun.management=ALL-UNNAMED --add-opens
-              jdk.management/com.sun.management.internal=ALL-UNNAMED
+            <argLine>-Xmx1200M --add-modules java.se
+              --add-exports java.base/jdk.internal.ref=${vertx.testOpensModule}
+              --add-opens java.base/java.lang=${vertx.testOpensModule}
+              --add-opens java.base/java.nio=${vertx.testOpensModule}
+              --add-opens java.base/sun.nio.ch=${vertx.testOpensModule}
+              --add-opens java.management/sun.management=${vertx.testOpensModule}
+              --add-opens jdk.management/com.sun.management.internal=${vertx.testOpensModule}
             </argLine>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
@@ -200,61 +114,6 @@
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>**/it/**/*Test.java</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>core</id>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-            <phase>integration-test</phase>
-            <configuration>
-              <includes>
-                <include>**/it/core/*Test.java</include>
-              </includes>
-              <classpathDependencyExcludes>
-                <classpathDependencyExclude>io.vertx:vertx-core:test-jar</classpathDependencyExclude>
-              </classpathDependencyExcludes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>lite-members</id>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-            <phase>integration-test</phase>
-            <configuration>
-              <includes>
-                <include>**/it/litemembers/*Test.java</include>
-              </includes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>package-docs</id>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
 
 </project>
