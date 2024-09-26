@@ -8,10 +8,11 @@
     <version>4</version>
   </parent>
 
-  <artifactId>vertx-hazelcast</artifactId>
+  <artifactId>vertx-hazelcast-parent</artifactId>
   <version>5.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
-  <name>Vert.x Hazelcast Cluster Manager</name>
+  <name>Vert.x Hazelcast parent</name>
 
   <scm>
     <connection>scm:git:git@github.com:vert-x3/vertx-hazelcast.git</connection>
@@ -20,11 +21,9 @@
   </scm>
 
   <properties>
-    <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
     <hazelcast.version>5.3.8</hazelcast.version>
-    <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
-    <vertx.testUseModulePath>false</vertx.testUseModulePath>
     <vertx.testOpensModule>ALL-UNNAMED</vertx.testOpensModule>
+    <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
   <dependencyManagement>
@@ -40,52 +39,10 @@
   </dependencyManagement>
 
   <dependencies>
-
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen-api</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen-json</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-docgen-api</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-health-check</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.hazelcast</groupId>
-      <artifactId>hazelcast</artifactId>
-      <version>${hazelcast.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -96,36 +53,18 @@
     </dependency>
   </dependencies>
 
+  <modules>
+    <module>vertx-hazelcast</module>
+    <module>vertx-hazelcast-it</module>
+  </modules>
+
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>default-compile</id>
-              <configuration>
-                <annotationProcessorPaths>
-                  <annotationProcessorPath>
-                    <groupId>io.vertx</groupId>
-                    <artifactId>vertx-codegen</artifactId>
-                    <classifier>processor</classifier>
-                  </annotationProcessorPath>
-                  <annotationProcessorPath>
-                    <groupId>io.vertx</groupId>
-                    <artifactId>vertx-docgen-processor</artifactId>
-                    <classifier>processor</classifier>
-                  </annotationProcessorPath>
-                </annotationProcessorPaths>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
             <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-            <useModulePath>${vertx.testUseModulePath}</useModulePath>
             <systemPropertyVariables>
               <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
               <buildDirectory>${project.build.directory}</buildDirectory>
@@ -150,7 +89,6 @@
         </plugin>
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.19.1</version>
           <configuration>
             <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
             <systemPropertyVariables>
@@ -176,71 +114,6 @@
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>**/it/**/*Test.java</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>core</id>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-            <phase>integration-test</phase>
-            <configuration>
-              <includes>
-                <include>**/it/core/*Test.java</include>
-              </includes>
-              <classpathDependencyExcludes>
-                <classpathDependencyExclude>io.vertx:vertx-core:test-jar</classpathDependencyExclude>
-              </classpathDependencyExcludes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>lite-members</id>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-            <phase>integration-test</phase>
-            <configuration>
-              <includes>
-                <include>**/it/litemembers/*Test.java</include>
-              </includes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>package-docs</id>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>test-jpms</id>
-      <properties>
-        <vertx.testUseModulePath>true</vertx.testUseModulePath>
-        <vertx.testOpensModule>com.hazelcast.core</vertx.testOpensModule>
-      </properties>
-    </profile>
-  </profiles>
 
 </project>
