@@ -19,6 +19,7 @@ package io.vertx.spi.cluster.hazelcast.impl;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
+import com.hazelcast.nio.serialization.IdentifiedDataSerializable;
 import io.vertx.core.spi.cluster.RegistrationInfo;
 
 import java.io.IOException;
@@ -38,24 +39,24 @@ public class HazelcastRegistrationInfo implements DataSerializable {
     this.registrationInfo = Objects.requireNonNull(registrationInfo);
   }
 
-  public RegistrationInfo unwrap() {
+  public final RegistrationInfo unwrap() {
     return registrationInfo;
   }
 
   @Override
-  public void writeData(ObjectDataOutput dataOutput) throws IOException {
+  public final void writeData(ObjectDataOutput dataOutput) throws IOException {
     dataOutput.writeUTF(registrationInfo.nodeId());
     dataOutput.writeLong(registrationInfo.seq());
     dataOutput.writeBoolean(registrationInfo.localOnly());
   }
 
   @Override
-  public void readData(ObjectDataInput dataInput) throws IOException {
+  public final void readData(ObjectDataInput dataInput) throws IOException {
     registrationInfo = new RegistrationInfo(dataInput.readUTF(), dataInput.readLong(), dataInput.readBoolean());
   }
 
   @Override
-  public boolean equals(Object o) {
+  public final boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -65,12 +66,12 @@ public class HazelcastRegistrationInfo implements DataSerializable {
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return registrationInfo.hashCode();
   }
 
   @Override
-  public String toString() {
+  public final String toString() {
     return registrationInfo.toString();
   }
 }

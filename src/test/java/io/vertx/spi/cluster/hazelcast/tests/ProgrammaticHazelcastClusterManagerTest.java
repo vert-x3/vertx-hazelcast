@@ -22,6 +22,8 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import io.vertx.test.core.AsyncTestBase;
 import org.junit.AfterClass;
@@ -56,7 +58,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   @Test
   public void testProgrammaticSetConfig() throws Exception {
-    Config config = createConfig();
+    Config config = TestClusterManager.getConf(createConfig());
     HazelcastClusterManager mgr = new HazelcastClusterManager();
     mgr.setConfig(config);
     testProgrammatic(mgr, config);
@@ -64,14 +66,14 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   @Test
   public void testProgrammaticSetWithConstructor() throws Exception {
-    Config config = createConfig();
+    Config config = TestClusterManager.getConf(createConfig());
     HazelcastClusterManager mgr = new HazelcastClusterManager(config);
     testProgrammatic(mgr, config);
   }
 
   @Test
   public void testCustomHazelcastInstance() throws Exception {
-    HazelcastInstance instance = Hazelcast.newHazelcastInstance(createConfig());
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
     HazelcastClusterManager mgr = new HazelcastClusterManager(instance);
     testProgrammatic(mgr, instance.getConfig());
   }
@@ -107,8 +109,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   @Test
   public void testEventBusWhenUsingACustomHazelcastInstance() throws Exception {
-    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(createConfig());
-    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(createConfig());
+    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
@@ -124,6 +126,7 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
       .with(options1)
       .withClusterManager(mgr1)
       .buildClustered().onComplete(res -> {
+        System.out.println("BUILD ONE");
         assertTrue(res.succeeded());
         assertNotNull(mgr1.getHazelcastInstance());
         res.result().eventBus().consumer("news", message -> {
@@ -143,7 +146,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
         assertTrue(res.succeeded());
         assertNotNull(mgr2.getHazelcastInstance());
         vertx2.set(res.result());
-        res.result().eventBus().send("news", "hello");
+        EventBus eb = res.result().eventBus();
+        MessageProducer<Object> sender = eb.sender("news");
+        sender.write("hello").onComplete(onSuccess(v -> {
+        }));
       });
 
     await();
@@ -163,8 +169,8 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   @Test
   public void testSharedDataUsingCustomHazelcast() throws Exception {
-    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(createConfig());
-    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(createConfig());
+    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
@@ -226,10 +232,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   @Test
   public void testThatExternalHZInstanceCanBeShutdown() {
     // This instance won't be used by vert.x
-    HazelcastInstance instance = Hazelcast.newHazelcastInstance(createConfig());
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
     String nodeID = instance.getCluster().getLocalMember().getAttribute("__vertx.nodeId");
 
-    HazelcastClusterManager mgr = new HazelcastClusterManager(createConfig());
+    HazelcastClusterManager mgr = new HazelcastClusterManager(TestClusterManager.getConf(createConfig()));
     VertxOptions options = new VertxOptions();
     options.getEventBusOptions().setHost("127.0.0.1");
 

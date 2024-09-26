@@ -99,11 +99,15 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
         fireRegistrationUpdateEvent(address);
       } else {
         ownSubs.compute(address, (add, curr) -> addToSet(registrationInfo, curr));
-        map.put(address, new HazelcastRegistrationInfo(registrationInfo));
+        map.put(address, wrapRegistrationInfo(registrationInfo));
       }
     } finally {
       readLock.unlock();
     }
+  }
+
+  private HazelcastRegistrationInfo wrapRegistrationInfo(RegistrationInfo registrationInfo) {
+    return new HazelcastRegistrationInfo(registrationInfo);
   }
 
   private Set<RegistrationInfo> addToSet(RegistrationInfo registrationInfo, Set<RegistrationInfo> curr) {
@@ -121,7 +125,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
         fireRegistrationUpdateEvent(address);
       } else {
         ownSubs.computeIfPresent(address, (add, curr) -> removeFromSet(registrationInfo, curr));
-        map.remove(address, new HazelcastRegistrationInfo(registrationInfo));
+        map.remove(address, wrapRegistrationInfo(registrationInfo));
       }
     } finally {
       readLock.unlock();
@@ -149,7 +153,7 @@ public class SubsMapHelper implements EntryListener<String, HazelcastRegistratio
       for (Map.Entry<String, Set<RegistrationInfo>> entry : ownSubs.entrySet()) {
         String address = entry.getKey();
         for (RegistrationInfo registrationInfo : entry.getValue()) {
-          map.put(address, new HazelcastRegistrationInfo(registrationInfo));
+          map.put(address, wrapRegistrationInfo(registrationInfo));
         }
       }
     } finally {

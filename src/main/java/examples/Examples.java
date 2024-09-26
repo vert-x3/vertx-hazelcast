@@ -21,12 +21,9 @@ import com.hazelcast.core.HazelcastInstance;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.ext.healthchecks.HealthChecks;
 import io.vertx.ext.healthchecks.Status;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.spi.cluster.hazelcast.ClusterHealthCheck;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -112,11 +109,6 @@ public class Examples {
   public void healthCheck(Vertx vertx) {
     Handler<Promise<Status>> procedure = ClusterHealthCheck.createProcedure(vertx);
     HealthChecks checks = HealthChecks.create(vertx).register("cluster-health", procedure);
-  }
-
-  public void healthCheckHandler(Vertx vertx, HealthChecks checks) {
-    Router router = Router.router(vertx);
-    router.get("/readiness").handler(HealthCheckHandler.createWithHealthChecks(checks));
   }
 
   public void liteMemberConfig() {

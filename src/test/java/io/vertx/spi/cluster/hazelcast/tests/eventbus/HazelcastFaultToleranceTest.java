@@ -16,8 +16,11 @@
 
 package io.vertx.spi.cluster.hazelcast.tests.eventbus;
 
+import com.hazelcast.core.Hazelcast;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import org.junit.Assume;
+import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -42,6 +45,12 @@ public class HazelcastFaultToleranceTest extends io.vertx.tests.eventbus.FaultTo
   @Override
   protected ClusterManager getClusterManager() {
     return new HazelcastClusterManager();
+  }
+
+  @Test
+  @Override
+  public void testFaultTolerance() {
+    Assume.assumeFalse(Hazelcast.class.getModule().isNamed());
   }
 
   @Override

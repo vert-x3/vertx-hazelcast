@@ -19,11 +19,11 @@ package io.vertx.spi.cluster.hazelcast.it.litemembers;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.spi.cluster.hazelcast.tests.TestClusterManager;
 import io.vertx.tests.ha.ComplexHATest;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -44,14 +44,14 @@ public class HazelcastComplexHATest extends ComplexHATest {
     Random random = new Random();
     System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
     for (int i = 0; i < DATA_NODES; i++) {
-      dataNodes.add(Hazelcast.newHazelcastInstance(ConfigUtil.loadConfig()));
+      dataNodes.add(Hazelcast.newHazelcastInstance(TestClusterManager.getConf(ConfigUtil.loadConfig())));
     }
     super.setUp();
   }
 
   @Override
   protected ClusterManager getClusterManager() {
-    return new HazelcastClusterManager(ConfigUtil.loadConfig().setLiteMember(true));
+    return TestClusterManager.getClusterManager(ConfigUtil.loadConfig().setLiteMember(true));
   }
 
   @Override

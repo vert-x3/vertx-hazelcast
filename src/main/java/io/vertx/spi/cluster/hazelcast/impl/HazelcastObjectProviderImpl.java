@@ -23,6 +23,7 @@ import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
+import io.vertx.spi.cluster.hazelcast.spi.HazelcastObjectProvider;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -42,17 +43,19 @@ public class HazelcastObjectProviderImpl implements HazelcastObjectProvider {
   private VertxInternal vertx;
   private HazelcastInstance hazelcast;
   private ExecutorService lockReleaseExec;
+  private ConversionUtils conversionUtils;
 
   @Override
-  public void onJoin(VertxInternal vertx, HazelcastInstance hazelcast, ExecutorService lockReleaseExec) {
+  public void onJoin(VertxInternal vertx, ConversionUtils conversionUtils, HazelcastInstance hazelcast, ExecutorService lockReleaseExec) {
     this.vertx = vertx;
     this.hazelcast = hazelcast;
+    this.conversionUtils = conversionUtils;
     this.lockReleaseExec = lockReleaseExec;
   }
 
   @Override
   public <K, V> AsyncMap<K, V> getAsyncMap(String name) {
-    return new HazelcastAsyncMap<>(vertx, hazelcast.getMap(name));
+    return new HazelcastAsyncMap<>(vertx, conversionUtils, hazelcast.getMap(name));
   }
 
   @Override

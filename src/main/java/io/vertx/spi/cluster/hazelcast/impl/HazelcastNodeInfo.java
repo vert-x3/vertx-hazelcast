@@ -40,7 +40,7 @@ public class HazelcastNodeInfo implements DataSerializable {
   }
 
   @Override
-  public void writeData(ObjectDataOutput dataOutput) throws IOException {
+  public final void writeData(ObjectDataOutput dataOutput) throws IOException {
     dataOutput.writeUTF(nodeInfo.host());
     dataOutput.writeInt(nodeInfo.port());
     JsonObject metadata = nodeInfo.metadata();
@@ -48,14 +48,14 @@ public class HazelcastNodeInfo implements DataSerializable {
   }
 
   @Override
-  public void readData(ObjectDataInput dataInput) throws IOException {
+  public final void readData(ObjectDataInput dataInput) throws IOException {
     String host = dataInput.readUTF();
     int port = dataInput.readInt();
     byte[] bytes = dataInput.readByteArray();
     nodeInfo = new NodeInfo(host, port, bytes != null ? new JsonObject(Buffer.buffer(bytes)) : null);
   }
 
-  public NodeInfo unwrap() {
+  public final NodeInfo unwrap() {
     return nodeInfo;
   }
 }

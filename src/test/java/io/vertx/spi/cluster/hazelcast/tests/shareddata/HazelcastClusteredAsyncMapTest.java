@@ -20,7 +20,7 @@ import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
 import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.spi.cluster.hazelcast.tests.TestClusterManager;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,7 +46,7 @@ public class HazelcastClusteredAsyncMapTest extends io.vertx.tests.shareddata.Cl
 
   @Override
   protected ClusterManager getClusterManager() {
-    return new HazelcastClusterManager();
+    return TestClusterManager.getClusterManager();
   }
 
   @Override

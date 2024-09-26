@@ -20,15 +20,17 @@ import com.hazelcast.cluster.Member;
 import com.hazelcast.cluster.MembershipEvent;
 import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.config.Config;
+import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.config.SerializationConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.map.IMap;
+import com.hazelcast.nio.serialization.DataSerializableFactory;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
-import io.vertx.core.impl.ServiceHelper;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
@@ -37,6 +39,7 @@ import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
 import io.vertx.core.spi.cluster.*;
 import io.vertx.spi.cluster.hazelcast.impl.*;
+import io.vertx.spi.cluster.hazelcast.spi.HazelcastObjectProvider;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -79,7 +82,11 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
    * Constructor - gets config from classpath
    */
   public HazelcastClusterManager() {
-    objectProvider = ServiceHelper.loadFactoryOrNull(HazelcastObjectProvider.class);
+    ServiceLoader<HazelcastObjectProvider> loader = ServiceLoader.load(HazelcastObjectProvider.class);
+    Iterator<HazelcastObjectProvider> it = loader.iterator();
+    while (it.hasNext()) {
+      objectProvider = it.next();
+    }
     if (objectProvider == null) {
       objectProvider = new HazelcastObjectProviderImpl();
     }
@@ -141,6 +148,15 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
           }
         }
 
+
+        Module hzMod = NetworkConfig.class.getModule();
+        if (hzMod.isNamed()) {
+          NetworkConfig cfg = hazelcast.getConfig().getNetworkConfig();
+          if (cfg.getJoin().getMulticastConfig().isEnabled()) {
+            throw new VertxException("Hazelcast detected on module path multicast join not supported");
+          }
+        }
+
         subsMapHelper = new SubsMapHelper(hazelcast, registrationListener);
 
         membershipListenerId = hazelcast.getCluster().addMembershipListener(this);
@@ -148,7 +164,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
         nodeInfoMap = hazelcast.getMap("__vertx.nodeInfo");
 
-        objectProvider.onJoin(vertx, hazelcast, lockReleaseExec);
+        objectProvider.onJoin(vertx, new ConversionUtils(), hazelcast, lockReleaseExec);
 
       }
       return null;
@@ -187,11 +203,15 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
     synchronized (this) {
       this.nodeInfo = nodeInfo;
     }
-    HazelcastNodeInfo value = new HazelcastNodeInfo(nodeInfo);
+    HazelcastNodeInfo value = wrapNodeInfo(nodeInfo);
     vertx.<Void>executeBlocking(() -> {
       nodeInfoMap.put(nodeId, value);
       return null;
     }, false).onComplete(promise);
+  }
+
+  private HazelcastNodeInfo wrapNodeInfo(NodeInfo nodeInfo) {
+    return new HazelcastNodeInfo(nodeInfo);
   }
 
   @Override
@@ -201,7 +221,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getNodeInfo(String nodeId, Promise<NodeInfo> promise) {
-    vertx.<NodeInfo>executeBlocking(() -> {
+    vertx.executeBlocking(() -> {
       HazelcastNodeInfo value = nodeInfoMap.get(nodeId);
       if (value != null) {
         return value.unwrap();
@@ -303,7 +323,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private synchronized void membersRemoved(Set<String> ids) {
     cleanSubs(ids);
     cleanNodeInfos(ids);
-    nodeInfoMap.put(nodeId, new HazelcastNodeInfo(getNodeInfo()));
+    nodeInfoMap.put(nodeId, wrapNodeInfo(getNodeInfo()));
     registrationListener.registrationsLost();
     republishOwnSubs();
     if (nodeListener != null) {
@@ -368,7 +388,9 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
   @Override
   public void getRegistrations(String address, Promise<List<RegistrationInfo>> promise) {
-    vertx.executeBlocking(() -> subsMapHelper.get(address), false).onComplete(promise);
+    vertx
+      .executeBlocking(() -> subsMapHelper.get(address), false)
+      .onComplete(promise);
   }
 
   @Override

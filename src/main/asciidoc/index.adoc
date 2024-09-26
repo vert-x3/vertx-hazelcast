@@ -454,9 +454,10 @@ The cluster safety can be verified with link:../../vertx-health-check/$lang/[Ver
 
 After creation, the health check can be exposed over HTTP with a link:../../vertx-web/$lang/[Vert.x Web] router handler:
 
-[source,$lang]
+[source,java]
 ----
-{@link examples.Examples#healthCheckHandler(io.vertx.core.Vertx, io.vertx.ext.healthchecks.HealthChecks)}
+Router router = Router.router(vertx);
+router.get("/readiness").handler(HealthCheckHandler.createWithHealthChecks(checks));
 ----
 
 ==== Using Lite Members

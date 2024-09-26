@@ -20,7 +20,7 @@ import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
 import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.spi.cluster.hazelcast.tests.TestClusterManager;
 import org.junit.Rule;
 
 import java.math.BigInteger;
@@ -44,7 +44,7 @@ public class HazelcastClusteredEventbusTest extends io.vertx.tests.eventbus.Clus
 
   @Override
   protected ClusterManager getClusterManager() {
-    return new HazelcastClusterManager();
+    return TestClusterManager.getClusterManager();
   }
 
   @Override

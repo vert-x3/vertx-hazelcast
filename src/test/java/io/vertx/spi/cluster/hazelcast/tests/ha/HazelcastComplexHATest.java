@@ -19,7 +19,7 @@ package io.vertx.spi.cluster.hazelcast.tests.ha;
 import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.spi.cluster.hazelcast.tests.TestClusterManager;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -39,7 +39,7 @@ public class HazelcastComplexHATest extends io.vertx.tests.ha.ComplexHATest {
 
   @Override
   protected ClusterManager getClusterManager() {
-    return new HazelcastClusterManager();
+    return TestClusterManager.getClusterManager();
   }
 
   @Override

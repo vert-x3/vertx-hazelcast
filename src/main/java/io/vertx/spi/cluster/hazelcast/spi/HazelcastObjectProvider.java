@@ -14,13 +14,14 @@
  * under the License.
  */
 
-package io.vertx.spi.cluster.hazelcast.impl;
+package io.vertx.spi.cluster.hazelcast.spi;
 
 import com.hazelcast.core.HazelcastInstance;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.shareddata.AsyncMap;
 import io.vertx.core.shareddata.Counter;
 import io.vertx.core.shareddata.Lock;
+import io.vertx.spi.cluster.hazelcast.impl.ConversionUtils;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -33,7 +34,7 @@ public interface HazelcastObjectProvider {
   /**
    * Lifecycle method to initialize this provider when all dependencies become available,
    */
-  void onJoin(VertxInternal vertx, HazelcastInstance hazelcast, ExecutorService lockReleaseExec);
+  void onJoin(VertxInternal vertx, ConversionUtils conversionUtils, HazelcastInstance hazelcast, ExecutorService lockReleaseExec);
 
   /**
    * Return {@link AsyncMap} for the given name
