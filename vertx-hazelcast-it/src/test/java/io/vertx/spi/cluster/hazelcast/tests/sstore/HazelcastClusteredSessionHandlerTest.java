@@ -20,7 +20,7 @@ import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
 import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.ext.web.sstore.ClusteredSessionHandlerTest;
+import io.vertx.ext.web.it.sstore.ClusteredSessionHandlerTest;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Rule;
 
