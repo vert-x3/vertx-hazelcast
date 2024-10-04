@@ -22,8 +22,9 @@
 
   <properties>
     <hazelcast.version>5.3.8</hazelcast.version>
-    <vertx.testOpensModule>ALL-UNNAMED</vertx.testOpensModule>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
+    <vertx.surefire.opensModule>ALL-UNNAMED</vertx.surefire.opensModule>
+    <vertx.surefire.useModulePath>false</vertx.surefire.useModulePath>
   </properties>
 
   <dependencyManagement>
@@ -76,12 +77,12 @@
             </systemPropertyVariables>
             <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
             <argLine>-Xmx1200M --add-modules java.se
-              --add-exports java.base/jdk.internal.ref=${vertx.testOpensModule}
-              --add-opens java.base/java.lang=${vertx.testOpensModule}
-              --add-opens java.base/java.nio=${vertx.testOpensModule}
-              --add-opens java.base/sun.nio.ch=${vertx.testOpensModule}
-              --add-opens java.management/sun.management=${vertx.testOpensModule}
-              --add-opens jdk.management/com.sun.management.internal=${vertx.testOpensModule}
+              --add-exports java.base/jdk.internal.ref=${vertx.surefire.opensModule}
+              --add-opens java.base/java.lang=${vertx.surefire.opensModule}
+              --add-opens java.base/java.nio=${vertx.surefire.opensModule}
+              --add-opens java.base/sun.nio.ch=${vertx.surefire.opensModule}
+              --add-opens java.management/sun.management=${vertx.surefire.opensModule}
+              --add-opens jdk.management/com.sun.management.internal=${vertx.surefire.opensModule}
             </argLine>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
@@ -101,12 +102,12 @@
             </systemPropertyVariables>
             <!-- Needs to be small enough to run in a EC2 1.7GB small instance -->
             <argLine>-Xmx1200M --add-modules java.se
-              --add-exports java.base/jdk.internal.ref=${vertx.testOpensModule}
-              --add-opens java.base/java.lang=${vertx.testOpensModule}
-              --add-opens java.base/java.nio=${vertx.testOpensModule}
-              --add-opens java.base/sun.nio.ch=${vertx.testOpensModule}
-              --add-opens java.management/sun.management=${vertx.testOpensModule}
-              --add-opens jdk.management/com.sun.management.internal=${vertx.testOpensModule}
+              --add-exports java.base/jdk.internal.ref=${vertx.surefire.opensModule}
+              --add-opens java.base/java.lang=${vertx.surefire.opensModule}
+              --add-opens java.base/java.nio=${vertx.surefire.opensModule}
+              --add-opens java.base/sun.nio.ch=${vertx.surefire.opensModule}
+              --add-opens java.management/sun.management=${vertx.surefire.opensModule}
+              --add-opens jdk.management/com.sun.management.internal=${vertx.surefire.opensModule}
             </argLine>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>

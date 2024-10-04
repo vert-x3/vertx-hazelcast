@@ -16,8 +16,6 @@
 
   <properties>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
-    <vertx.testUseModulePath>false</vertx.testUseModulePath>
-    <vertx.testOpensModule>ALL-UNNAMED</vertx.testOpensModule>
   </properties>
 
   <dependencies>
