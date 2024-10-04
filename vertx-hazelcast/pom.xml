@@ -15,7 +15,6 @@
 
   <properties>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
-    <vertx.testUseModulePath>false</vertx.testUseModulePath>
   </properties>
 
   <dependencies>
@@ -83,12 +82,6 @@
             </execution>
           </executions>
         </plugin>
-        <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <configuration>
-            <useModulePath>${vertx.testUseModulePath}</useModulePath>
-          </configuration>
-        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -152,8 +145,8 @@
     <profile>
       <id>test-jpms</id>
       <properties>
-        <vertx.testUseModulePath>true</vertx.testUseModulePath>
-        <vertx.testOpensModule>com.hazelcast.core</vertx.testOpensModule>
+        <vertx.surefire.useModulePath>true</vertx.surefire.useModulePath>
+        <vertx.surefire.opensModule>com.hazelcast.core</vertx.surefire.opensModule>
       </properties>
     </profile>
   </profiles>
