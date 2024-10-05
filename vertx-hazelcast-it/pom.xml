@@ -14,10 +14,6 @@
   <!-- Holds tests that are not compatible with JPMS -->
   <name>Vert.x Hazelcast IT</name>
 
-  <properties>
-    <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
-  </properties>
-
   <dependencies>
 
     <dependency>
