@@ -14,6 +14,7 @@
  * under the License.
  */
 open module io.vertx.clustermanager.hazelcast.tests {
+  requires io.netty.common;
   requires com.hazelcast.core;
   requires io.vertx.core;
   requires io.vertx.core.logging;
