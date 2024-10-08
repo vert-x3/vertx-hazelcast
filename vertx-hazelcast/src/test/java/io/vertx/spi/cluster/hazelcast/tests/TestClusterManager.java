@@ -17,6 +17,7 @@ package io.vertx.spi.cluster.hazelcast.tests;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.NetworkConfig;
+import io.netty.util.internal.PlatformDependent;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -25,7 +26,8 @@ public class TestClusterManager {
 
   public static Config getConf(Config conf) {
     Module hzMod = NetworkConfig.class.getModule();
-    if (hzMod.isNamed()) {
+    if (hzMod.isNamed() && PlatformDependent.isOsx()) {
+      // JPMS + OSX known issue
       NetworkConfig networkConfig = conf.getNetworkConfig();
       networkConfig.getInterfaces().addInterface("127.0.0.1");
       networkConfig.getJoin().getMulticastConfig().setEnabled(false);
