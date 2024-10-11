@@ -28,6 +28,7 @@ import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.map.IMap;
 import com.hazelcast.nio.serialization.DataSerializableFactory;
+import io.netty.util.internal.PlatformDependent;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -150,10 +151,10 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
 
 
         Module hzMod = NetworkConfig.class.getModule();
-        if (hzMod.isNamed()) {
+        if (PlatformDependent.isOsx() && hzMod.isNamed()) {
           NetworkConfig cfg = hazelcast.getConfig().getNetworkConfig();
           if (cfg.getJoin().getMulticastConfig().isEnabled()) {
-            throw new VertxException("Hazelcast detected on module path multicast join not supported");
+            throw new VertxException("Hazelcast detected on module path multicast join not supported on Mac");
           }
         }
 
