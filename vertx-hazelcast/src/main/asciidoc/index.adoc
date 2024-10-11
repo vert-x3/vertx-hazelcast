@@ -56,7 +56,7 @@ which is packaged inside the jar.
 
 If you want to override this configuration you can provide a file called `cluster.xml` on your classpath and this will be used instead.If you want to embed the `cluster.xml` file in a fat jar, it must be located at the root of the fat jar.If it's an external file, the **directory** containing the file must be added to the classpath.For example, if you are using the _launcher_ class from Vert.x, the classpath enhancement can be done as follows:
 
-[source]
+[source,bash]
 ----
 # If the cluster.xml is in the current directory:
 java -jar ... -cp . -cluster
@@ -69,7 +69,7 @@ java -jar ... -cp conf -cluster
 Another way to override the configuration is by providing the system property `vertx.hazelcast.config` with a
 location:
 
-[source]
+[source,bash]
 ----
 # Use a cluster configuration located in an external file
 java -Dvertx.hazelcast.config=./config/my-cluster-config.xml -jar ... -cluster
@@ -126,6 +126,7 @@ For example, this may happen when nodes are not in the same network area, or on 
 
 The bind address and public address (the address advertised to other members) can be set with system properties:
 
+[source,bash]
 ----
 -Dhazelcast.local.localAddress=172.16.5.131 -Dhazelcast.local.publicAddress=104.198.78.81
 ----
@@ -178,6 +179,7 @@ Also, the Hazelcast shutdown hook should be disabled (see xml example, or via sy
 By default, a node will be removed from the cluster if Hazelcast didn't receive a heartbeat for 60 seconds.
 To change this value `hazelcast.max.no.heartbeat.seconds` system property such as in:
 
+[source,bash]
 ----
 -Dhazelcast.max.no.heartbeat.seconds=5
 ----
@@ -203,6 +205,7 @@ VPN software on your machine), then Hazelcast may be using the wrong one.
 To tell Hazelcast to use a specific interface you can provide the IP address of the interface in the `interfaces`
 element of the configuration. Make sure you set the `enabled` attribute to `true`. For example:
 
+[source,xml]
 ----
 <interfaces enabled="true">
   <interface>192.168.1.20</interface>
@@ -233,12 +236,14 @@ to see if it's forming a cluster properly. You can do this (when using the defau
 called `vertx-default-jul-logging.properties` on your classpath. This is a standard java.util.logging (JUL)
 configuration file. Inside it set:
 
+[source,properties]
 ----
 com.hazelcast.level=INFO
 ----
 
 and also
 
+[source,properties]
 ----
 java.util.logging.ConsoleHandler.level=INFO
 java.util.logging.FileHandler.level=INFO
@@ -249,6 +254,7 @@ java.util.logging.FileHandler.level=INFO
 The logging backend used by Hazelcast is `jdk` by default (understand JUL). If you want to redirect the logging to
 another library, you need to set the `hazelcast.logging.type` system property such as in:
 
+[source,properties]
 ----
 -Dhazelcast.logging.type=slf4j
 ----
@@ -283,7 +289,7 @@ Depending on the version, you may need to exclude some transitive dependencies.
 
 On Gradle, you can achieve the same overloading using:
 
-[source]
+[source,groovy,subs="+attributes"]
 ----
 dependencies {
  compile ("${maven.groupId}:${maven.artifactId}:${maven.version}"){
