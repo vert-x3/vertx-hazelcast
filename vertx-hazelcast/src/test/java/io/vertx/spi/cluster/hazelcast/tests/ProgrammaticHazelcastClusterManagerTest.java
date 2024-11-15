@@ -30,9 +30,7 @@ import org.junit.AfterClass;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -49,16 +47,11 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
-  @Override
-  public void setUp() throws Exception {
-    Random random = new Random();
-    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
-    super.setUp();
-  }
 
   @Test
   public void testProgrammaticSetConfig() throws Exception {
-    Config config = TestClusterManager.getConf(createConfig());
+    Config conf = createConfig();
+    Config config = conf;
     HazelcastClusterManager mgr = new HazelcastClusterManager();
     mgr.setConfig(config);
     testProgrammatic(mgr, config);
@@ -66,14 +59,16 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   @Test
   public void testProgrammaticSetWithConstructor() throws Exception {
-    Config config = TestClusterManager.getConf(createConfig());
+    Config conf = createConfig();
+    Config config = conf;
     HazelcastClusterManager mgr = new HazelcastClusterManager(config);
     testProgrammatic(mgr, config);
   }
 
   @Test
   public void testCustomHazelcastInstance() throws Exception {
-    HazelcastInstance instance = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    Config conf = createConfig();
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(conf);
     HazelcastClusterManager mgr = new HazelcastClusterManager(instance);
     testProgrammatic(mgr, instance.getConfig());
   }
@@ -81,11 +76,12 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   private Config createConfig() {
     Config config = new Config()
       .setProperty("hazelcast.wait.seconds.before.join", "0")
-      .setProperty("hazelcast.local.localAddress", "127.0.0.1")
-      .setClusterName(System.getProperty("vertx.hazelcast.test.group.name"));
+      .setProperty("hazelcast.local.localAddress", "localhost")
+      .setProperty("hazelcast.tcp.join.port.try.count", "10");
     JoinConfig join = config.getNetworkConfig().getJoin();
     join.getAutoDetectionConfig().setEnabled(false);
-    join.getMulticastConfig().setEnabled(true);
+    join.getMulticastConfig().setEnabled(false);
+    join.getTcpIpConfig().setEnabled(true).addMember("localhost");
     config.getMemberAttributeConfig().setAttribute("__vertx.nodeId", UUID.randomUUID().toString());
     return config;
   }
@@ -109,8 +105,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   @Test
   public void testEventBusWhenUsingACustomHazelcastInstance() throws Exception {
-    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
-    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    Config conf1 = createConfig();
+    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(conf1);
+    Config conf = createConfig();
+    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(conf);
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
@@ -169,8 +167,10 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
 
   @Test
   public void testSharedDataUsingCustomHazelcast() throws Exception {
-    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
-    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    Config conf1 = createConfig();
+    HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(conf1);
+    Config conf = createConfig();
+    HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(conf);
 
     HazelcastClusterManager mgr1 = new HazelcastClusterManager(instance1);
     HazelcastClusterManager mgr2 = new HazelcastClusterManager(instance2);
@@ -232,10 +232,12 @@ public class ProgrammaticHazelcastClusterManagerTest extends AsyncTestBase {
   @Test
   public void testThatExternalHZInstanceCanBeShutdown() {
     // This instance won't be used by vert.x
-    HazelcastInstance instance = Hazelcast.newHazelcastInstance(TestClusterManager.getConf(createConfig()));
+    Config conf1 = createConfig();
+    HazelcastInstance instance = Hazelcast.newHazelcastInstance(conf1);
     String nodeID = instance.getCluster().getLocalMember().getAttribute("__vertx.nodeId");
 
-    HazelcastClusterManager mgr = new HazelcastClusterManager(TestClusterManager.getConf(createConfig()));
+    Config conf = createConfig();
+    HazelcastClusterManager mgr = new HazelcastClusterManager(conf);
     VertxOptions options = new VertxOptions();
     options.getEventBusOptions().setHost("127.0.0.1");
 

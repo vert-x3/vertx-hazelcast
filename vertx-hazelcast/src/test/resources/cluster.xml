@@ -22,13 +22,19 @@
 
   <properties>
     <property name="hazelcast.wait.seconds.before.join">0</property>
-    <property name="hazelcast.local.localAddress">127.0.0.1</property>
+    <property name="hazelcast.local.localAddress">localhost</property>
+    <property name="hazelcast.tcp.join.port.try.count">10</property>
   </properties>
 
   <network>
     <join>
       <auto-detection enabled="false"/>
-      <multicast enabled="true"/>
+      <multicast enabled="false"/>
+      <tcp-ip enabled="true">
+        <member-list>
+          <member>localhost</member>
+        </member-list>
+      </tcp-ip>
     </join>
   </network>
 

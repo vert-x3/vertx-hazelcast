@@ -69,7 +69,6 @@
               <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
               <buildDirectory>${project.build.directory}</buildDirectory>
               <vertxVersion>${project.version}</vertxVersion>
-              <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
               <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
               <hazelcast.logging.type>slf4j</hazelcast.logging.type>
               <hazelcast.tracking.server>true</hazelcast.tracking.server>
@@ -95,7 +94,6 @@
               <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
               <buildDirectory>${project.build.directory}</buildDirectory>
               <vertxVersion>${project.version}</vertxVersion>
-              <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
               <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
               <hazelcast.logging.type>slf4j</hazelcast.logging.type>
             </systemPropertyVariables>

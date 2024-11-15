@@ -16,23 +16,22 @@
 
 package io.vertx.spi.cluster.hazelcast.it.litemembers;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
-import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
 import io.vertx.core.Vertx;
-import io.vertx.spi.cluster.hazelcast.tests.TestClusterManager;
-import io.vertx.tests.shareddata.ClusteredAsyncMapTest;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.ConfigUtil;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
+import io.vertx.spi.cluster.hazelcast.tests.LoggingTestWatcher;
+import io.vertx.tests.shareddata.ClusteredAsyncMapTest;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @author Thomas Segismont
@@ -44,21 +43,20 @@ public class HazelcastClusteredAsyncMapTest extends ClusteredAsyncMapTest {
   @Rule
   public LoggingTestWatcher watchman = new LoggingTestWatcher();
 
-  private List<HazelcastInstance> dataNodes = new ArrayList<>();
+  private final List<HazelcastInstance> dataNodes = new ArrayList<>();
 
   @Override
   public void setUp() throws Exception {
-    Random random = new Random();
-    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
     for (int i = 0; i < DATA_NODES; i++) {
-      dataNodes.add(Hazelcast.newHazelcastInstance(TestClusterManager.getConf(ConfigUtil.loadConfig())));
+      Config conf = ConfigUtil.loadConfig();
+      dataNodes.add(Hazelcast.newHazelcastInstance(conf));
     }
     super.setUp();
   }
 
   @Override
   protected ClusterManager getClusterManager() {
-    return TestClusterManager.getClusterManager(ConfigUtil.loadConfig().setLiteMember(true));
+    return new HazelcastClusterManager(ConfigUtil.loadConfig().setLiteMember(true));
   }
 
   @Override

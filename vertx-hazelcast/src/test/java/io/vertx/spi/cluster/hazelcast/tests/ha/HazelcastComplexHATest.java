@@ -16,30 +16,22 @@
 
 package io.vertx.spi.cluster.hazelcast.tests.ha;
 
-import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
 import io.vertx.core.Vertx;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.tests.TestClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import io.vertx.spi.cluster.hazelcast.tests.Lifecycle;
 
-import java.math.BigInteger;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class HazelcastComplexHATest extends io.vertx.tests.ha.ComplexHATest {
 
-  @Override
-  public void setUp() throws Exception {
-    Random random = new Random();
-    System.setProperty("vertx.hazelcast.test.group.name", new BigInteger(128, random).toString(32));
-    super.setUp();
-  }
 
   @Override
   protected ClusterManager getClusterManager() {
-    return TestClusterManager.getClusterManager();
+    return new HazelcastClusterManager();
   }
 
   @Override

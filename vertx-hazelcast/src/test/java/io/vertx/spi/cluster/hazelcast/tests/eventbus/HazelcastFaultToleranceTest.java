@@ -18,33 +18,21 @@ package io.vertx.spi.cluster.hazelcast.tests.eventbus;
 
 import com.hazelcast.core.Hazelcast;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.tests.TestClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 /**
  * @author Thomas Segismont
  */
 public class HazelcastFaultToleranceTest extends io.vertx.tests.eventbus.FaultToleranceTest {
 
-  private String groupName;
-
-  @Override
-  public void setUp() throws Exception {
-    Random random = new Random();
-    groupName = new BigInteger(128, random).toString(32);
-    System.setProperty("vertx.hazelcast.test.group.name", groupName);
-    super.setUp();
-  }
-
   @Override
   protected ClusterManager getClusterManager() {
-    return TestClusterManager.getClusterManager();
+    return new HazelcastClusterManager();
   }
 
   @Test
@@ -57,9 +45,7 @@ public class HazelcastFaultToleranceTest extends io.vertx.tests.eventbus.FaultTo
   protected List<String> getExternalNodeSystemProperties() {
     return Arrays.asList(
       "-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory",
-      "-Dhazelcast.logging.type=slf4j",
-      "-Djava.net.preferIPv4Stack=true",
-      "-Dvertx.hazelcast.test.group.name=" + groupName
+      "-Dhazelcast.logging.type=slf4j"
     );
   }
 
