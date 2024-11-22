@@ -95,7 +95,6 @@
               <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
               <buildDirectory>${project.build.directory}</buildDirectory>
               <vertxVersion>${project.version}</vertxVersion>
-              <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
               <vertx.logger-delegate-factory-class-name>io.vertx.core.logging.SLF4JLogDelegateFactory</vertx.logger-delegate-factory-class-name>
               <hazelcast.logging.type>slf4j</hazelcast.logging.type>
             </systemPropertyVariables>
@@ -107,6 +106,7 @@
               --add-opens java.base/sun.nio.ch=${vertx.surefire.opensModule}
               --add-opens java.management/sun.management=${vertx.surefire.opensModule}
               --add-opens jdk.management/com.sun.management.internal=${vertx.surefire.opensModule}
+              -Djava.net.preferIPv4Stack=true
             </argLine>
             <forkCount>1</forkCount>
             <reuseForks>true</reuseForks>
