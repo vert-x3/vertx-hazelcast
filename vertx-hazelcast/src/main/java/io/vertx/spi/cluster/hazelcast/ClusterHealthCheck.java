@@ -37,7 +37,7 @@ public interface ClusterHealthCheck {
     return healthCheckPromise -> {
       vertx.executeBlocking(() -> {
         VertxInternal vertxInternal = (VertxInternal) Vertx.currentContext().owner();
-        HazelcastClusterManager clusterManager = (HazelcastClusterManager) vertxInternal.getClusterManager();
+        HazelcastClusterManager clusterManager = (HazelcastClusterManager) vertxInternal.clusterManager();
         PartitionService partitionService = clusterManager.getHazelcastInstance().getPartitionService();
         return new Status().setOk(partitionService.isClusterSafe());
       }, false).onComplete(healthCheckPromise);

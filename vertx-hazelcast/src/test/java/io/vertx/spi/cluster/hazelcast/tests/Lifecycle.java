@@ -42,7 +42,7 @@ public class Lifecycle {
     for (Vertx vertx : clustered) {
       VertxInternal vertxInternal = (VertxInternal) vertx;
 
-      HazelcastClusterManager clusterManager = getHazelcastClusterManager(vertxInternal.getClusterManager());
+      HazelcastClusterManager clusterManager = getHazelcastClusterManager(vertxInternal.clusterManager());
 
       if (clusterManager != null) {
         HazelcastInstance hazelcastInstance = clusterManager.getHazelcastInstance();
