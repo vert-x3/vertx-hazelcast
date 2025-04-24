@@ -25,11 +25,11 @@ module io.vertx.clustermanager.hazelcast {
   requires io.vertx.core;
   requires io.vertx.core.logging;
   requires com.hazelcast.core;
-    requires io.netty.common;
+  requires io.netty.common;
 
-    exports io.vertx.spi.cluster.hazelcast;
+  exports io.vertx.spi.cluster.hazelcast;
   exports io.vertx.spi.cluster.hazelcast.spi;
-  exports io.vertx.spi.cluster.hazelcast.impl to io.vertx.clustermanager.hazelcast.tests, com.hazelcast.core;
+  exports io.vertx.spi.cluster.hazelcast.impl to io.vertx.clustermanager.hazelcast.tests, com.hazelcast.core, com.hazelcast.vertx;
 
   uses io.vertx.spi.cluster.hazelcast.spi.HazelcastObjectProvider;
 
