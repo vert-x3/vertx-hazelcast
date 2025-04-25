@@ -29,6 +29,7 @@ module io.vertx.clustermanager.hazelcast {
 
   exports io.vertx.spi.cluster.hazelcast;
   exports io.vertx.spi.cluster.hazelcast.spi;
+  // com.hazelcast.vertx export is needed for Vert.x Hazelcast EE (CP-based) library test.
   exports io.vertx.spi.cluster.hazelcast.impl to io.vertx.clustermanager.hazelcast.tests, com.hazelcast.core, com.hazelcast.vertx;
 
   uses io.vertx.spi.cluster.hazelcast.spi.HazelcastObjectProvider;
