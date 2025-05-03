@@ -13,6 +13,12 @@
 
   <name>Vert.x Hazelcast Cluster Manager</name>
 
+  <scm>
+    <connection>scm:git:git@github.com:vert-x3/vertx-hazelcast.git</connection>
+    <developerConnection>scm:git:git@github.com:vert-x3/vertx-hazelcast.git</developerConnection>
+    <url>git@github.com:vert-x3/vertx-hazelcast.git</url>
+  </scm>
+
   <properties>
     <asciidoc.dir>${project.basedir}/src/main/asciidoc</asciidoc.dir>
     <hazelcast.version>5.3.5</hazelcast.version>
