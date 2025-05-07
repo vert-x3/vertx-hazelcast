@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>vertx-hazelcast-parent</artifactId>
-  <version>5.0.0-SNAPSHOT</version>
+  <version>5.0.0.CR8</version>
   <packaging>pom</packaging>
 
   <name>Vert.x Hazelcast parent</name>
