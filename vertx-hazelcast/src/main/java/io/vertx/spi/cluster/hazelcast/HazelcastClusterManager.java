@@ -29,6 +29,7 @@ import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.map.IMap;
 import com.hazelcast.nio.serialization.DataSerializableFactory;
 import io.netty.util.internal.PlatformDependent;
+import io.vertx.core.Completable;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -117,7 +118,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void join(Promise<Void> promise) {
+  public void join(Completable<Void> promise) {
     vertx.<Void>executeBlocking(() -> {
       if (!active) {
         active = true;
@@ -200,7 +201,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void setNodeInfo(NodeInfo nodeInfo, Promise<Void> promise) {
+  public void setNodeInfo(NodeInfo nodeInfo, Completable<Void> promise) {
     synchronized (this) {
       this.nodeInfo = nodeInfo;
     }
@@ -221,7 +222,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void getNodeInfo(String nodeId, Promise<NodeInfo> promise) {
+  public void getNodeInfo(String nodeId, Completable<NodeInfo> promise) {
     vertx.executeBlocking(() -> {
       HazelcastNodeInfo value = nodeInfoMap.get(nodeId);
       if (value != null) {
@@ -233,8 +234,8 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public <K, V> void getAsyncMap(String name, Promise<AsyncMap<K, V>> promise) {
-    promise.complete(objectProvider.getAsyncMap(name));
+  public <K, V> void getAsyncMap(String name, Completable<AsyncMap<K, V>> promise) {
+    promise.succeed(objectProvider.getAsyncMap(name));
   }
 
   @Override
@@ -243,18 +244,18 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void getLockWithTimeout(String name, long timeout, Promise<Lock> promise) {
+  public void getLockWithTimeout(String name, long timeout, Completable<Lock> promise) {
     vertx.executeBlocking(() -> objectProvider.getLockWithTimeout(name, timeout), false)
       .onComplete(promise);
   }
 
   @Override
-  public void getCounter(String name, Promise<Counter> promise) {
-    promise.complete(objectProvider.createCounter(name));
+  public void getCounter(String name, Completable<Counter> promise) {
+    promise.succeed(objectProvider.createCounter(name));
   }
 
   @Override
-  public void leave(Promise<Void> promise) {
+  public void leave(Completable<Void> promise) {
     vertx.<Void>executeBlocking(() -> {
       // We need to synchronized on the cluster manager instance to avoid other call to happen while leaving the
       // cluster, typically, memberRemoved and memberAdded
@@ -376,19 +377,19 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public void addRegistration(String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
+  public void addRegistration(String address, RegistrationInfo registrationInfo, Completable<Void> promise) {
     SubsOpSerializer serializer = SubsOpSerializer.get(vertx.getOrCreateContext());
     serializer.execute(subsMapHelper::put, address, registrationInfo, promise);
   }
 
   @Override
-  public void removeRegistration(String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
+  public void removeRegistration(String address, RegistrationInfo registrationInfo, Completable<Void> promise) {
     SubsOpSerializer serializer = SubsOpSerializer.get(vertx.getOrCreateContext());
     serializer.execute(subsMapHelper::remove, address, registrationInfo, promise);
   }
 
   @Override
-  public void getRegistrations(String address, Promise<List<RegistrationInfo>> promise) {
+  public void getRegistrations(String address, Completable<List<RegistrationInfo>> promise) {
     vertx
       .executeBlocking(() -> subsMapHelper.get(address), false)
       .onComplete(promise);

@@ -16,6 +16,7 @@
 
 package io.vertx.spi.cluster.hazelcast.impl;
 
+import io.vertx.core.Completable;
 import io.vertx.core.Promise;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.internal.ContextInternal;
@@ -51,11 +52,11 @@ public class SubsOpSerializer {
     return instance;
   }
 
-  public void execute(BiConsumer<String, RegistrationInfo> op, String address, RegistrationInfo registrationInfo, Promise<Void> promise) {
+  public void execute(BiConsumer<String, RegistrationInfo> op, String address, RegistrationInfo registrationInfo, Completable<Void> promise) {
     executor.execute(() -> {
       try {
         op.accept(address, registrationInfo);
-        promise.complete();
+        promise.succeed();
       } catch (Exception e) {
         promise.fail(e);
       }
