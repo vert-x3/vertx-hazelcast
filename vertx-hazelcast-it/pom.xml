@@ -5,11 +5,11 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-hazelcast-parent</artifactId>
-    <version>5.0.3-SNAPSHOT</version>
+    <version>5.0.3</version>
   </parent>
 
   <artifactId>vertx-hazelcast-it</artifactId>
-  <version>5.0.3-SNAPSHOT</version>
+  <version>5.0.3</version>
 
   <!-- Holds tests that are not compatible with JPMS -->
   <name>Vert.x Hazelcast IT</name>
