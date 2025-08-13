@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>vertx-hazelcast</artifactId>
-  <version>4.5.18-SNAPSHOT</version>
+  <version>4.5.18</version>
 
   <name>Vert.x Hazelcast Cluster Manager</name>
 
