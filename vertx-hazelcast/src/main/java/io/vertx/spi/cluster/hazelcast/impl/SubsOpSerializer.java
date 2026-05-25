@@ -17,7 +17,6 @@
 package io.vertx.spi.cluster.hazelcast.impl;
 
 import io.vertx.core.Completable;
-import io.vertx.core.Promise;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.EventExecutor;

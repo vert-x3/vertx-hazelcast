@@ -19,7 +19,6 @@ package io.vertx.spi.cluster.hazelcast.impl;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
-import com.hazelcast.nio.serialization.IdentifiedDataSerializable;
 import io.vertx.core.spi.cluster.RegistrationInfo;
 
 import java.io.IOException;
