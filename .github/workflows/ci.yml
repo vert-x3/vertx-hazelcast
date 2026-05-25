@@ -34,4 +34,4 @@ jobs:
             ${{ inputs.jdk }}
           distribution: temurin
       - name: Run tests
-        run: mvn -s .github/maven-ci-settings.xml -Dhazelcast.version=${{ inputs.hz }} -B -DtestLogLevel=OFF  ${{ inputs.profile }} test
+        run: mvn -s .github/maven-ci-settings.xml -Dhazelcast.version=${{ inputs.hz }} -B -DtestLogLevel=OFF -Pcheckstyle ${{ inputs.profile }} test
