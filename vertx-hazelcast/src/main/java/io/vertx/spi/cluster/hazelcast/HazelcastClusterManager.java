@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 The original author or authors
+ * Copyright (c) 2011-2026 The original author or authors
  * ------------------------------------------------------
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -44,6 +44,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A cluster manager that uses Hazelcast
@@ -76,6 +77,7 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   private Config conf;
 
   private ExecutorService lockReleaseExec;
+  private ExecutorService eventExecutor;
 
   /**
    * Constructor - gets config from classpath
@@ -121,6 +123,12 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
         active = true;
 
         lockReleaseExec = Executors.newCachedThreadPool(r -> new Thread(r, "vertx-hazelcast-service-release-lock-thread"));
+
+        eventExecutor = Executors.newSingleThreadExecutor(r -> {
+          Thread thread = new Thread(r, "vertx-hazelcast-service-event-thread");
+          thread.setDaemon(true);
+          return thread;
+        });
 
         // The hazelcast instance has not been passed using the constructor.
         if (!customHazelcastCluster) {
@@ -254,34 +262,41 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   @Override
   public void leave(Completable<Void> promise) {
     vertx.<Void>executeBlocking(() -> {
-      // We need to synchronized on the cluster manager instance to avoid other call to happen while leaving the
-      // cluster, typically, memberRemoved and memberAdded
       synchronized (HazelcastClusterManager.this) {
-        if (active) {
-          active = false;
-          lockReleaseExec.shutdown();
-          subsMapHelper.close();
-          boolean left = hazelcast.getCluster().removeMembershipListener(membershipListenerId);
-          if (!left) {
-            log.warn("No membership listener");
-          }
-          hazelcast.getLifecycleService().removeLifecycleListener(lifecycleListenerId);
+        if (!active) {
+          return null;
+        }
+        active = false;
+      }
 
-          // Do not shutdown the cluster if we are not the owner.
-          while (!customHazelcastCluster && hazelcast.getLifecycleService().isRunning()) {
-            try {
-              // This can sometimes throw java.util.concurrent.RejectedExecutionException so we retry.
-              hazelcast.getLifecycleService().shutdown();
-            } catch (RejectedExecutionException ignore) {
-              log.debug("Rejected execution of the shutdown operation, retrying");
-            }
-            try {
-              Thread.sleep(1);
-            } catch (InterruptedException t) {
-              // Manage the interruption in another handler.
-              Thread.currentThread().interrupt();
-            }
-          }
+      boolean left = hazelcast.getCluster().removeMembershipListener(membershipListenerId);
+      if (!left) {
+        log.warn("No membership listener");
+      }
+      hazelcast.getLifecycleService().removeLifecycleListener(lifecycleListenerId);
+
+      eventExecutor.shutdownNow();
+      try {
+        if (!eventExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+          log.warn("Event executor did not terminate within 10 seconds");
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+
+      lockReleaseExec.shutdown();
+      subsMapHelper.close();
+
+      while (!customHazelcastCluster && hazelcast.getLifecycleService().isRunning()) {
+        try {
+          hazelcast.getLifecycleService().shutdown();
+        } catch (RejectedExecutionException ignore) {
+          log.debug("Rejected execution of the shutdown operation, retrying");
+        }
+        try {
+          Thread.sleep(1);
+        } catch (InterruptedException t) {
+          Thread.currentThread().interrupt();
         }
       }
       return null;
@@ -289,15 +304,26 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public synchronized void memberAdded(MembershipEvent membershipEvent) {
-    if (!active) {
-      return;
-    }
+  public void memberAdded(MembershipEvent membershipEvent) {
     Member member = membershipEvent.getMember();
     String nid = member.getAttribute(NODE_ID_ATTRIBUTE);
     try {
+      eventExecutor.execute(() -> handleMemberAdded(nid));
+    } catch (RejectedExecutionException ignore) {
+    }
+  }
+
+  private void handleMemberAdded(String nid) {
+    try {
+      synchronized (this) {
+        if (!active) {
+          return;
+        }
+        if (nodeListener != null) {
+          nodeIds.add(nid);
+        }
+      }
       if (nodeListener != null) {
-        nodeIds.add(nid);
         nodeListener.nodeAdded(nid);
       }
     } catch (Throwable t) {
@@ -306,28 +332,42 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public synchronized void memberRemoved(MembershipEvent membershipEvent) {
-    if (!active) {
-      return;
-    }
+  public void memberRemoved(MembershipEvent membershipEvent) {
     Member member = membershipEvent.getMember();
     String nid = member.getAttribute(NODE_ID_ATTRIBUTE);
     try {
-      membersRemoved(Collections.singleton(nid));
-    } catch (Throwable t) {
-      log.error("Failed to handle memberRemoved", t);
+      eventExecutor.execute(() -> handleMembersRemoved(Collections.singleton(nid)));
+    } catch (RejectedExecutionException ignore) {
     }
   }
 
-  private synchronized void membersRemoved(Set<String> ids) {
-    cleanSubs(ids);
-    cleanNodeInfos(ids);
-    nodeInfoMap.put(nodeId, wrapNodeInfo(getNodeInfo()));
-    registrationListener.registrationsLost();
-    republishOwnSubs();
-    if (nodeListener != null) {
-      nodeIds.removeAll(ids);
-      ids.forEach(nodeListener::nodeLeft);
+  private void handleMembersRemoved(Set<String> ids) {
+    try {
+      NodeInfo currentNodeInfo;
+      synchronized (this) {
+        if (!active) {
+          return;
+        }
+        currentNodeInfo = this.nodeInfo;
+      }
+
+      cleanSubs(ids);
+      cleanNodeInfos(ids);
+      nodeInfoMap.put(nodeId, wrapNodeInfo(currentNodeInfo));
+
+      registrationListener.registrationsLost();
+      republishOwnSubs();
+
+      synchronized (this) {
+        if (nodeListener != null) {
+          nodeIds.removeAll(ids);
+        }
+      }
+      if (nodeListener != null) {
+        ids.forEach(nodeListener::nodeLeft);
+      }
+    } catch (Throwable t) {
+      log.error("Failed to handle membersRemoved", t);
     }
   }
 
@@ -347,24 +387,46 @@ public class HazelcastClusterManager implements ClusterManager, MembershipListen
   }
 
   @Override
-  public synchronized void stateChanged(LifecycleEvent lifecycleEvent) {
-    if (!active) {
-      return;
-    }
-    // Safeguard to make sure members list is OK after a partition merge
+  public void stateChanged(LifecycleEvent lifecycleEvent) {
     if (lifecycleEvent.getState() == LifecycleEvent.LifecycleState.MERGED) {
+      try {
+        eventExecutor.execute(this::handleMerged);
+      } catch (RejectedExecutionException ignore) {
+      }
+    }
+  }
+
+  private void handleMerged() {
+    try {
+      Set<String> nodeIdsCopy;
+      synchronized (this) {
+        if (!active) {
+          return;
+        }
+        nodeIdsCopy = new HashSet<>(nodeIds);
+      }
+
       final List<String> currentNodes = getNodes();
+
       Set<String> newNodes = new HashSet<>(currentNodes);
-      newNodes.removeAll(nodeIds);
-      Set<String> removedMembers = new HashSet<>(nodeIds);
+      newNodes.removeAll(nodeIdsCopy);
+
+      Set<String> removedMembers = new HashSet<>(nodeIdsCopy);
       removedMembers.removeAll(currentNodes);
+
       if (nodeListener != null) {
         for (String nodeId : newNodes) {
           nodeListener.nodeAdded(nodeId);
         }
       }
-      membersRemoved(removedMembers);
-      nodeIds.retainAll(currentNodes);
+
+      handleMembersRemoved(removedMembers);
+
+      synchronized (this) {
+        nodeIds.retainAll(currentNodes);
+      }
+    } catch (Throwable t) {
+      log.error("Failed to handle cluster merge", t);
     }
   }
 
