@@ -45,7 +45,7 @@ public class DataSerializableHolder implements DataSerializable {
     try {
       switch (className) {
         case "io.vertx.core.buffer.Buffer":
-          clusterSerializable = Buffer.buffer();
+          clusterSerializable = (ClusterSerializable) Buffer.buffer();
           break;
         default:
           Class<?> clazz = loadClass(className);
